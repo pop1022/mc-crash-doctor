@@ -1,0 +1,34 @@
+# Seed repositories for tools/harvest_corpus.py
+#
+#   python tools/harvest_corpus.py --from-file tools/seed_repos.txt
+#
+# One owner/name per line; '#' starts a comment. Chosen for issue volume and
+# maintainer labelling habits -- labels like `confirmed` / `Not <Mod>` /
+# `Loader Issue` / `Support` are the weak supervision that makes the corpus
+# self-labelling.
+#
+# Every entry below was verified to resolve (HTTP 200 on api.github.com) on
+# 2026-09-22. Re-check with tools/verify_seed_repos.py before extending.
+
+# ── Forge / NeoForge, high issue volume, actively labelled ──
+mekanism/Mekanism
+Creators-of-Create/Create
+AppliedEnergistics/Applied-Energistics-2
+IrisShaders/Iris
+SlimeKnights/TinkersConstruct
+McJtyMods/RFTools
+TeamTwilight/twilightforest
+
+# ── client-side / rendering (different failure mix) ──
+CaffeineMC/sodium
+embeddedt/ModernFix
+
+# ── library mods (dependency-chain failures) ──
+TheIllusiveC4/Curios
+Snownee/Jade
+Shadows-of-Fire/Placebo
+
+# ── Fabric / Quilt side ──
+FabricMC/fabric-api
+FabricMC/fabric-loader
+QuiltMC/quilt-loader

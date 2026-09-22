@@ -30,7 +30,23 @@ from mcd.parser.report import parse_file  # noqa: E402
 from mcd.rules.engine import RuleSet, run_rules  # noqa: E402
 from mcd.triage.attribution import triage  # noqa: E402
 
-MC_DIR = Path(os.environ.get("MCD_MC_DIR", r"C:\Users\Administrator\Desktop\mc"))
+# Ground-truth reports ship in-repo (redacted) so the suite runs on any
+# machine, including CI. Set MCD_MC_DIR to a live server directory to run
+# against its real crash-reports/ instead.
+FIXTURE_DIR = ROOT / "tests" / "fixtures" / "ground-truth"
+_MC_ENV = os.environ.get("MCD_MC_DIR")
+MC_DIR = Path(_MC_ENV) if _MC_ENV else None
+
+
+def _ground_truth_files() -> list:
+    """In-repo fixtures first; fall back to a live server dir if provided."""
+    if FIXTURE_DIR.is_dir():
+        fs = sorted(FIXTURE_DIR.glob("crash-*.txt"))
+        if fs:
+            return fs
+    if MC_DIR and (MC_DIR / "crash-reports").is_dir():
+        return sorted((MC_DIR / "crash-reports").glob("crash-*.txt"))
+    return []
 
 # Ground truth, established from the reports' OWN evidence (verified 2026-09):
 # none of these six contains "Saving worlds"/"Saving chunks", so none of them is
@@ -58,15 +74,14 @@ MUST_NOT_FIRE: dict[str, list[str]] = {
 
 
 def run_ground_truth(ruleset: RuleSet, verbose: bool) -> tuple[int, int]:
-    if not MC_DIR.exists():
-        print("⚠ ground-truth dir not found:", MC_DIR, "-> skipped")
-        return 0, 0
-    files = sorted(glob.glob(str(MC_DIR / "crash-reports" / "crash-*.txt")))
+    files = _ground_truth_files()
     if not files:
-        print("⚠ no crash reports in", MC_DIR, "-> skipped")
+        print("⚠ no ground-truth reports found "
+              f"(looked in {FIXTURE_DIR} and MCD_MC_DIR) -> skipped")
         return 0, 0
-
-    print(f"\n═══ 1. GROUND TRUTH ({len(files)} real reports) ═══")
+    src = "in-repo fixtures" if FIXTURE_DIR.is_dir() and files[0].parent == FIXTURE_DIR \
+        else f"live dir {MC_DIR}"
+    print(f"\n═══ 1. GROUND TRUTH ({len(files)} real reports, {src}) ═══")
     ok = 0
     for f in files:
         stem = Path(f).stem.replace("-server", "")

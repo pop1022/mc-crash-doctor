@@ -22,13 +22,8 @@ if ! "$PY" tests/eval_parser.py --strict; then fail=1; fi
 
 echo
 echo "── [3/4] end-to-end + ground truth ──"
-# --corpus when the local ground-truth dir is absent (CI has no Minecraft server)
-if [ -n "${MCD_MC_DIR:-}" ] || [ -d "/c/Users/Administrator/Desktop/mc" ]; then
-  if ! "$PY" tests/test_e2e.py; then fail=1; fi
-else
-  echo "   (no ground-truth MC dir; running corpus groups only)"
-  if ! "$PY" tests/test_e2e.py --corpus; then fail=1; fi
-fi
+# Ground-truth reports ship in-repo, so this runs on any machine / in CI.
+if ! "$PY" tests/test_e2e.py; then fail=1; fi
 
 echo
 echo "── [4/4] import + CLI smoke ──"

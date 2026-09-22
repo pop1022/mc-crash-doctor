@@ -67,16 +67,49 @@ MIXIN_RE = re.compile(r"pl:mixin:APP:([\w.\-]+)\.mixins\.json:([\w.$]+)")
 # Published index and any committed fixture must not carry player names,
 # absolute home paths, or IPs.
 #
-# IPv4 needs care: mod jar filenames contain four-segment version numbers
-# (Mekanism-1.21.1-10.7.13.78.jar, minecraft-client-patched-26.1.2.75.jar).
-# Redacting those destroys the mod attribution the index exists to record.
-# So an IPv4 only counts when (a) every octet is <= 255, (b) it is not part of
-# a hyphenated filename token, and (c) it is not followed by .jar/.zip/.log.
-_IPV4 = (
-    r"(?<![\w.\-])"
-    r"(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}"
-    r"(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)"
-    r"(?![\w\-])(?!\.(?:jar|zip|log)\b)"
+# IPv4 needs real care, because four-segment version numbers are everywhere in
+# a crash report and are indistinguishable from an address by shape alone:
+#
+#     |jei   |15.20.0.129|      <- Mod List version column
+#     DriverVersion=15.6.5.199  <- graphics driver
+#     prefab-1.10.0.1.jar       <- jar filename
+#     Mekanism-1.21.1-10.7.13.78.jar
+#
+# All of those have every octet <= 255, so an octet-range check does NOT save
+# you. Blanking them destroys the mod attribution this whole project is built
+# on. Therefore an IPv4 is only redacted when it appears in a *network*
+# context, and never when it appears in a version context.
+
+_OCTET = r"(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)"
+_DOTTED = rf"(?:{_OCTET}\.){{3}}{_OCTET}"
+
+# Version contexts take priority: never redact here.
+#
+# The keyword must literally be "version". An earlier draft listed bare
+# "Server|Mod|Game|Minecraft" as version keywords with a `[\w \-]*` gap, which
+# happily swallowed "server ip = 8.8.8.8" as a version context and left a real
+# address in the published fixture. Requiring the word "version" (optionally
+# preceded by other words, optionally followed by = or :) is what makes this
+# safe: "DriverVersion=", "Server version 10.4.16.80" and "API version: x" all
+# match, "server ip = ..." does not.
+_VERSION_CTX = re.compile(
+    r"(?:"
+    r"(?:[\w.\-]+\s+)*version\s*[=:]?\s*" + _DOTTED +   # ... version: 1.2.3.4
+    r"|(?:[\w.]+-)" + _DOTTED +                          # jar token: mod-1.2.3.4
+    r"|(?:\|\s*)" + _DOTTED +                            # Mod List column
+    r"|" + _DOTTED + r"(?=\.jar\b)"                      # 1.2.3.4.jar
+    r")",
+    re.I,
+)
+
+# Network contexts: these ARE addresses worth redacting.
+_IP_CTX = re.compile(
+    r"(?:(?:\bip\b|\baddress\b|\bhost(?:name)?\b|\bbound?\b|\bbinding\b"
+    r"|\bconnect(?:ed|ing|ion)?\b|\bfrom\b|\bto\b|\bremote\b|\blocal\b"
+    r"|server-ip|query)\s*[:=]?\s*)"
+    rf"{_DOTTED}"
+    rf"(?::\d{{1,5}})?",       # optional :port
+    re.I,
 )
 
 _REDACTORS: list[tuple[re.Pattern[str], str]] = [
@@ -88,18 +121,52 @@ _REDACTORS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"(Player:\s*)\S+(.*?)(\s*\(\s*[0-9a-fA-F\-]{8,})"), r"\1<PLAYER>\2\3"),
     # bare usernames in typical launcher paths
     (re.compile(r"(\.minecraft[\\/])([^\\/]+)"), r"\1<INSTANCE>"),
-    # IPv4 (see _IPV4 above for why this is not a naive dotted-quad match)
-    (re.compile(_IPV4), "<IP>"),
     # UUIDs
     (re.compile(r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
                 r"[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b"), "<UUID>"),
 ]
 
+# Placeholders must not themselves be re-redacted on a second pass.
+_PLACEHOLDERS = ("<HOME>", "<PLAYER>", "<INSTANCE>", "<UUID>", "<IP>")
+
+
+def _redact_ip(text: str) -> str:
+    """Redact IPv4 only in network contexts, never in version contexts."""
+    # Walk the text once, protecting version contexts by temporarily masking
+    # them, then redact remaining contextual IPs.
+    masked: list[str] = []
+
+    def _stash(m: re.Match) -> str:
+        masked.append(m.group(0))
+        return f"\x00{len(masked) - 1}\x00"
+
+    guarded = _VERSION_CTX.sub(_stash, text)
+    guarded = _IP_CTX.sub(lambda m: _mask_keep_prefix(m), guarded)
+
+    def _restore(m: re.Match) -> str:
+        return masked[int(m.group(1))]
+
+    return re.sub(r"\x00(\d+)\x00", _restore, guarded)
+
+
+def _mask_keep_prefix(m: re.Match) -> str:
+    """Replace just the address part, keeping the leading context word."""
+    s = m.group(0)
+    addr = re.search(_DOTTED, s)
+    if not addr:
+        return s
+    return s[:addr.start()] + "<IP>" + s[addr.end():]
+
 
 def redact(text: str) -> str:
-    """Strip personal identifiers from crash text."""
+    """Strip personal identifiers from crash text.
+
+    Idempotent: running it twice yields the same result (placeholders are
+    never matched again).
+    """
     for pat, repl in _REDACTORS:
         text = pat.sub(repl, text)
+    text = _redact_ip(text)
     return text
 
 

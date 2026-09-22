@@ -1,0 +1,14 @@
+# Normalise line endings so cross-platform checkouts do not churn diffs.
+* text=auto eol=lf
+
+# Binary fixtures must never be text-converted.
+*.jar binary
+*.png binary
+*.gz binary
+*.dat binary
+*.mca binary
+
+# Windows-only helper scripts keep CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf

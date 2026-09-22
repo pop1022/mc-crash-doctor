@@ -1,0 +1,61 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  gates:
+    name: parser accuracy + ground truth + redaction
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.11", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[pretty]"
+
+      - name: Redaction (privacy boundary)
+        run: python tests/test_redaction.py
+
+      - name: Parser accuracy vs upstream expectations
+        run: python tests/eval_parser.py --strict
+
+      - name: End-to-end + ground truth
+        run: python tests/test_e2e.py
+
+      - name: CLI smoke
+        run: |
+          mc-crash-doctor --rules | head -30
+          mc-crash-doctor tests/fixtures/ground-truth/crash-2026-09-08_22.42.32-server.txt --markdown | head -40
+          cat tests/fixtures/ground-truth/crash-2026-09-08_18.45.43-server.txt \
+            | mc-crash-doctor --stdin --json > /tmp/out.json
+          python -c "import json;d=json.load(open('/tmp/out.json'));assert d['summary']['loader']=='forge', d['summary'];print('json ok, loader =', d['summary']['loader'])"
+
+      - name: Wheel ships the YAML rules
+        run: |
+          pip install build
+          python -m build --wheel --outdir dist
+          python - <<'PY'
+          import glob, sys, zipfile
+          whl = sorted(glob.glob("dist/*.whl"))[-1]
+          names = zipfile.ZipFile(whl).namelist()
+          yml = [n for n in names if n.endswith((".yaml", ".yml"))]
+          assert yml, f"no YAML rules in {whl}: {names}"
+          assert len(yml) >= 2, f"expected >=2 rule packs, got {yml}"
+          print(f"ok: {whl} ships {len(yml)} rule files")
+          PY
