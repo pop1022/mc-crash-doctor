@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mc-crash-doctor"
+version = "0.1.0"
+description = "Diagnose Minecraft crash reports and logs: root cause, the mod at fault, and the fix."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "mc-crash-doctor contributors" }]
+keywords = ["minecraft", "crash", "log", "diagnostics", "forge", "neoforge",
+            "fabric", "modpack", "server", "oom", "mixin"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Games/Entertainment",
+    "Topic :: System :: Logging",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+# Pretty terminal output. The CLI falls back to plain text without it.
+pretty = ["rich>=13.0"]
+
+[project.urls]
+Homepage = "https://github.com/YOURNAME/mc-crash-doctor"
+Issues = "https://github.com/YOURNAME/mc-crash-doctor/issues"
+
+[project.scripts]
+mc-crash-doctor = "mcd.cli:main"
+mcd = "mcd.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["mcd*"]
+
+[tool.setuptools.package-data]
+"mcd.rules.builtin" = ["*.yaml", "*.yml"]

@@ -1,0 +1,43 @@
+<frozen runpy>:128: RuntimeWarning: 'mcd.cli' found in sys.modules after import of package 'mcd', but prior to execution of 'mcd.cli'; this may result in unpredictable behaviour
+
+==========================================================================
+ Minecraft crash diagnosis
+==========================================================================
+
+  source   : C:\Users\Administrator\Desktop\mc\crash-reports\crash-2026-09-08_22.42.32-server.txt
+  platform : forge 47.4.16
+  version  : Minecraft 1.20.1 | Java 21.0.12, Oracle Corporation
+  heap     : 6965/8192 MiB (85% used)   mods: 266
+  desc     : Watching Server
+  root     : java.lang.Error: ServerHangWatchdog detected that a single server tick took 120.00 seconds (shoul
+
+==========================================================================
+ SUSPECT MODS
+==========================================================================
+  ● lithium                      97%
+      - stack frame #32: me.jellysquid.mods.lithium.common.reflection.ReflectionUtil.hasMethodOverride (line 13)
+      - stack frame #33: me.jellysquid.mods.lithium.common.block.BlockStateFlags$5.test (line 114)
+      - stack frame #34: me.jellysquid.mods.lithium.common.block.BlockStateFlags$5.test (line 107)
+
+==========================================================================
+ FINDINGS (1)
+==========================================================================
+
+[1] FATAL  Server hung for 120.00s and was killed by the watchdog
+    rule=hang.watchdog  confidence=90%
+    One server tick took 120.00 seconds (the limit is 60). The watchdog
+    then killed the JVM, so this report shows *where it was stuck*, not
+    what threw. Read the top frames to find the blocked code path -- a mod
+    doing synchronous IO, a huge chunk operation, or a deadlock.
+    evidence:
+      | java.lang.Error
+      | ServerHangWatchdog
+      | single server tick took 120.00 seconds
+    fix:
+      1. Look at the top stack frames below -- the first non-vanilla class
+         is usually the culprit.
+      2. If it happens during chunk saving, treat it as a memory problem
+         (see oom.save-time).
+      3. As a last resort only: `-Dfml.watchdogKillTimeout=180` buys time
+         but hides the cause.
+

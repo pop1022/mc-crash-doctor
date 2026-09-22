@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editor
+.idea/
+.vscode/
+*.swp
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Project-local artifacts
+corpus/.cache/
+*.log.local
+tmp/
+
+# Harvested crash text is other people's bug reports -- keep it local.
+# Only the redacted factual index (corpus/index.jsonl) is committed.
+corpus/github/
+corpus/harvest_summary.json
+
+# The aternos corpus IS committed (MIT, with attribution in NOTICE.md).
+!corpus/aternos/

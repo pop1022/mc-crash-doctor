@@ -1,0 +1,373 @@
+# Memory & performance rules.
+#
+# This is the category mclo.gs's engine (aternosorg/codex-minecraft, MIT) has
+# zero coverage for. Verified 2026-09 by reading its whole rule set: 69 Problem
+# classes and 96 message strings, none of which match memory / heap / OOM /
+# watchdog / GC. A regex sweep of all 96 strings for
+# `memory|heap|oom|watchdog|hang|gc|xmx` returns 4 hits, all false positives
+# ("c-hang-e-motd", "forge-confirm"). Its 201-file test corpus contains no
+# memory-class crash at all -- the oom.* rules below never fire against it,
+# which is the empirical version of the same finding.
+#
+# Modded servers most commonly die of exactly these, so this file is the core
+# differentiator. Rules are evaluated in priority order (lower = first).
+# Add new ones by PR: no Python changes needed.
+#
+# Ground truth: 6 real reports from a 266-mod Forge 1.20.1 server
+# (tests/test_e2e.py) assert these rules fire -- and that oom.save-time does
+# NOT fire on reports whose stacks show no chunk-serialisation path.
+
+rules:
+- id: oom.save-time
+  title: Ran out of heap while saving the world
+  severity: fatal
+  priority: 5
+  confidence: 0.95
+  tags:
+  - memory
+  - oom
+  - world-save
+  when:
+    exception:
+    - java\.lang\.OutOfMemoryError
+    exception_msg:
+    - Java heap space
+    frame:
+    - ChunkTaskPriorityQueueSorter|ChunkSerializer|CompoundTag|NbtIo|write\(
+    text:
+    - Saving worlds|Saving chunks|ThreadedAnvilChunkStorage|stop\(\)
+  explanation: The server ran out of heap while serialising chunks to disk. On shutdown (`stop`) or autosave
+    the whole loaded region set is encoded into memory at once, so peak usage spikes far above normal
+    gameplay. This is NOT a memory leak -- do not go hunting for one. The fix is a larger heap. Current
+    max heap is {{heap_max_mib}} MiB with {{mod_count}} mods loaded.
+  fixes:
+  - 'Raise the heap in the JVM args file (Forge/NeoForge: `user_jvm_args.txt`, first line `-Xms8G -Xmx8G`).'
+  - Keep `-Xms` equal to `-Xmx` so the heap does not resize at runtime.
+  - 'Do not exceed ~12G: G1GC pause times grow and the benefit flattens out.'
+  - Re-run `stop` while memory is still low (right after startup), then restart with the new args.
+  suspects_from: []
+  refs:
+  - https://docs.minecraftforge.net/en/latest/gettingstarted/installation/#installing-the-server
+- id: oom.heap
+  title: 'Java heap exhausted (OutOfMemoryError: Java heap space)'
+  severity: fatal
+  priority: 10
+  confidence: 0.85
+  tags:
+  - memory
+  - oom
+  when:
+    exception:
+    - java\.lang\.OutOfMemoryError
+    exception_msg:
+    - Java heap space|heap space
+  explanation: The JVM could not allocate more objects. Max heap was {{heap_max_mib}} MiB at crash time.
+    Modded 1.20.1 servers with 200+ mods need 8G to be comfortable; 2G-4G is a common default and is simply
+    too small.
+  fixes:
+  - 'Increase `-Xmx` (and `-Xms` to match). 200+ mods on 1.20.1: start at 8G.'
+  - If the heap is already large (>=10G), suspect a leaking mod instead -- note which mod the stack points
+    at.
+  - Take a heap dump next time with `-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=dumps/`.
+  suspects_from:
+  - frame_mods
+  - jar
+  refs: []
+- id: oom.metaspace
+  title: Metaspace exhausted (too many loaded classes)
+  severity: fatal
+  priority: 8
+  confidence: 0.9
+  tags:
+  - memory
+  - oom
+  - metaspace
+  - mixin
+  when:
+    exception:
+    - java\.lang\.OutOfMemoryError
+    exception_msg:
+    - Metaspace|Compressed class space
+  explanation: Metaspace holds class metadata. Heavy mixin users generate large numbers of synthetic classes,
+    so big modpacks exhaust it even with a huge heap -- raising `-Xmx` will NOT help here.
+  fixes:
+  - Add or raise `-XX:MaxMetaspaceSize=512M` (768M-1G for 300+ mod packs).
+  - Remove `-XX:MaxMetaspaceSize` entirely to let it grow, if host RAM allows.
+  suspects_from:
+  - mixin
+- id: oom.gc-overhead
+  title: GC overhead limit exceeded -- heap is thrashing
+  severity: fatal
+  priority: 9
+  confidence: 0.85
+  tags:
+  - memory
+  - gc
+  when:
+    exception_msg:
+    - GC overhead limit exceeded|Out of memory
+  explanation: The JVM spent >98% of time in garbage collection while reclaiming <2% of the heap. Effectively
+    the same diagnosis as a too-small heap, just reported differently.
+  fixes:
+  - Raise `-Xmx` as for a heap OOM.
+  - Do NOT paper over it with `-XX:-UseGCOverheadLimit` -- that only hides the real problem.
+- id: hang.watchdog
+  title: Server hung for {{cap:text:1}}s and was killed by the watchdog
+  severity: fatal
+  priority: 6
+  confidence: 0.9
+  tags:
+  - hang
+  - watchdog
+  - performance
+  when:
+    exception:
+    - java\.lang\.Error
+    exception_msg:
+    - ServerHangWatchdog
+    text:
+    - single server tick took ([\d.]+) seconds
+  explanation: One server tick took {{cap:text:1}} seconds (the limit is 60). The watchdog then killed
+    the JVM, so this report shows *where it was stuck*, not what threw. Read the top frames to find the
+    blocked code path -- a mod doing synchronous IO, a huge chunk operation, or a deadlock.
+  fixes:
+  - Look at the top stack frames below -- the first non-vanilla class is usually the culprit.
+  - If it happens during chunk saving, treat it as a memory problem (see oom.save-time).
+  - 'As a last resort only: `-Dfml.watchdogKillTimeout=180` buys time but hides the cause.'
+  suspects_from:
+  - frame_mods
+  - mixin
+  - jar
+- id: perf.tick-timeout
+  title: A single tick ran long (server can't keep up)
+  severity: warning
+  priority: 40
+  confidence: 0.6
+  tags:
+  - performance
+  - lag
+  when:
+    text:
+    - Can't keep up! Is the server overloaded|Running ([\d.]+)ms or ([\d.]+) ticks behind
+  explanation: The server is falling behind its 50ms tick budget. With many mods this is usually world
+    generation, entity counts, or a specific mod's tick handler.
+  fixes:
+  - 'Install a profiler (Spark: `spark sampler --timeout 60`) and read the flamegraph.'
+  - Reduce simulation distance before view distance -- it cuts entity/chunk ticks.
+  - Pre-generate the world (Chunky) so exploration does not generate on the fly.
+- id: java.class-version
+  title: Java {{java_major}} is too old for this mod / Minecraft version
+  severity: fatal
+  priority: 7
+  confidence: 0.95
+  tags:
+  - java
+  - version
+  when:
+    exception:
+    - java\.lang\.UnsupportedClassVersionError
+    text:
+    - class file version ([\d.]+)
+  explanation: A class file was compiled for a newer JVM than the one running the server. Class file 61
+    = Java 17, 65 = Java 21. Minecraft 1.20.5+ and NeoForge 1.21+ require Java 21; 1.17-1.20.4 require
+    Java 17.
+  fixes:
+  - Install the required JDK and point the launcher/start script at it.
+  - 'Minecraft 1.21+ / NeoForge: Java 21. Minecraft 1.17-1.20.4: Java 17. 1.16.5 and older: Java 8.'
+  - On Forge, edit `run.bat` / `user_jvm_args.txt` or set JAVA_HOME so the *server* uses the right JVM.
+  suspects_from:
+  - jar
+- id: mixin.apply-failed
+  title: Mixin transformation failed ({{cap:text:1}})
+  severity: fatal
+  priority: 15
+  confidence: 0.85
+  tags:
+  - mixin
+  - conflict
+  when:
+    exception:
+    - MixinApplyError|MixinTransformerError
+    - org\.spongepowered\.asm\.mixin\.transformer\.[\w.]+(?:Error|Exception)
+    - org\.spongepowered\.asm\.mixin\.injection\.[\w.]+(?:Error|Exception)
+    - org\.spongepowered\.asm\.mixin\.[\w.]*(?:Error|Exception)
+    text:
+    - Mixin transformation of ([\w.$]+) failed
+    - Mixin apply (?:failed|for config)[^\n]*?([\w.\-]+)\.mixins\.json
+    - Mixin (?:apply )?failed[^\n]{0,120}?([\w.\-]+)\.mixins\.json
+  explanation: A mixin could not patch its target. Nearly always two mods patching the same class, or
+    a mod built for a different Minecraft version. The failing mixin config is named in the evidence below.
+  fixes:
+  - Note the mixin config named above (`xxx.mixins.json`) -- the prefix is the mod id.
+  - Update that mod and the mods it is likely colliding with (performance mods are common offenders).
+  - If it started after adding one mod, remove that mod and confirm.
+  - Mixins that target `net.minecraft` internals break across minor MC versions -- check the mod supports
+    {{mc_version}}.
+  suspects_from:
+  - mixin
+  - frame_mods
+- id: mixin.target-missing
+  title: Mixin target method/field no longer exists
+  severity: error
+  priority: 16
+  confidence: 0.75
+  tags:
+  - mixin
+  - version-mismatch
+  when:
+    exception_msg:
+    - target was not located|could not find|does not exist|@Redirect annotation on
+    text:
+    - '@Mixin target ([\w.$]+) was not found ([\w.\-]+)\.mixins\.json'
+    - target was not located|could not find|does not exist
+    - 'Error loading class: ([\w/$]+)'
+    exception:
+    - ClassNotFoundException
+    - NoClassDefFoundError
+    - MixinApplyError|InjectionError
+  explanation: A mixin could not find its target class/method in this Minecraft version -- the mod is
+    built for a different MC version, or a mixin it depends on already renamed the target.
+  fixes:
+  - Install the mod build that matches Minecraft {{mc_version}} exactly.
+  - If the mod is unmaintained, look for a fork updated for {{mc_version}}.
+  suspects_from:
+  - mixin
+  - frame_mods
+- id: crash.ticking-entity
+  title: Crash while ticking an entity
+  severity: error
+  priority: 50
+  confidence: 0.6
+  tags:
+  - ticking
+  - entity
+  when:
+    description:
+    - Ticking entity
+  explanation: An entity's per-tick update threw. The entity's id and position are in the report below
+    the trace -- that lets you delete the single bad entity instead of the whole world.
+  fixes:
+  - Find `Entity Type:` / `Entity's Exact location:` in the report.
+  - If a mod owns the entity type, that mod is the prime suspect -- update or remove it.
+  - As a last resort remove the entity from the region file (MCA Selector / NBTExplorer). Back up the
+    world first.
+  suspects_from:
+  - frame_mods
+  - jar
+- id: crash.ticking-blockentity
+  title: Crash while ticking a block entity
+  severity: error
+  priority: 51
+  confidence: 0.6
+  tags:
+  - ticking
+  - block-entity
+  when:
+    description:
+    - Ticking block entity|Ticking Block Entity
+  explanation: A block entity (chest, machine, conduit...) threw during its tick. Its block type and coordinates
+    are in the report.
+  fixes:
+  - Read `Block entity ID:` and `Location:` from the report.
+  - Remove that one block (or its chunk) with MCA Selector / Region Fixer. Back up first.
+  suspects_from:
+  - frame_mods
+  - jar
+- id: crash.rendering
+  title: Crash while rendering (client)
+  severity: error
+  priority: 55
+  confidence: 0.6
+  tags:
+  - rendering
+  - client
+  when:
+    description:
+    - Rendering (?:screen|overlay|item|entity|world)|Rendering Layer
+  explanation: The client crashed drawing something. On modded clients the usual suspects are shader mods,
+    HUD/overlay mods, and item-model overrides.
+  fixes:
+  - Disable shaders and retest -- that isolates the most common cause.
+  - The first non-minecraft class in the trace names the mod that was drawing.
+  suspects_from:
+  - frame_mods
+  - jar
+- id: crash.rendering-entity
+  title: Crash while rendering an entity
+  severity: error
+  priority: 54
+  confidence: 0.65
+  tags:
+  - rendering
+  - client
+  - entity
+  when:
+    description:
+    - Rendering entity in world
+  explanation: An entity model or its renderer threw. Frequently a mod entity rendered with a missing
+    model/texture after an update.
+  fixes:
+  - '`Entity Type:` in the report names the owning mod.'
+  - Update or remove that mod; also update the renderer mods (e.g. entity-model/animation libraries).
+  suspects_from:
+  - frame_mods
+- id: native.gl
+  title: Graphics driver / OpenGL failure
+  severity: error
+  priority: 60
+  confidence: 0.75
+  tags:
+  - graphics
+  - driver
+  - client
+  when:
+    exception:
+    - org\.lwjgl\.LWJGLException|org\.spongepowered\.asm\.mixin\.InjectionError
+    exception_msg:
+    - Pixel format not accelerated|OpenGL|GLFW
+    text:
+    - Pixel format not accelerated|glGenTextures|GLFW error
+  explanation: 'The client could not get a working OpenGL context. Causes: outdated GPU driver, remote-desktop
+    session, or a GPU the driver refuses to accelerate.'
+  fixes:
+  - Update the GPU driver from the vendor (not Windows Update).
+  - Never launch over RDP/remote desktop -- it has no GL acceleration.
+  - Try `-Dorg.lwjgl.opengl.Display.allowSoftwareOpenGL=true` as a diagnostic only.
+- id: disk.space
+  title: Disk full or filesystem not writable
+  severity: fatal
+  priority: 20
+  confidence: 0.85
+  tags:
+  - disk
+  - io
+  when:
+    exception:
+    - java\.io\.IOException
+    exception_msg:
+    - No space left on device|There is not enough space on the disk|Access is denied|Permission denied
+  explanation: The server could not write. Either the volume is full or the process lacks write permission
+    on the world directory.
+  fixes:
+  - Check free space on the drive holding `world/` and the logs.
+  - On Windows, do not run the server from `C:\Program Files\` (needs admin) -- use a normal user folder.
+  - Old gzipped logs and crash-reports accumulate; prune them.
+- id: world.corrupt-region
+  title: A region/chunk file is corrupt
+  severity: fatal
+  priority: 22
+  confidence: 0.8
+  tags:
+  - world
+  - corruption
+  when:
+    exception_msg:
+    - Failed to load chunk|Corrupt|Unexpected end of ZLIB input stream|invalid literal/lengths set|NBT
+    text:
+    - region|r\.\d+\.\d+\.mca|ChunkSerializer|loadChunk
+  explanation: A saved chunk could not be read back -- truncated or damaged region file, usually from
+    a hard power loss or a full disk during a save.
+  fixes:
+  - Back up `world/` before touching anything.
+  - Delete only the named region file (`world/region/r.X.Y.mca`) to lose that 512x512 area, not the world.
+  - Run Minecraft Region Fixer to repair or delete damaged chunks surgically.

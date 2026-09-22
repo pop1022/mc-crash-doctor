@@ -1,0 +1,39 @@
+<frozen runpy>:128: RuntimeWarning: 'mcd.cli' found in sys.modules after import of package 'mcd', but prior to execution of 'mcd.cli'; this may result in unpredictable behaviour
+
+==========================================================================
+ Minecraft crash diagnosis
+==========================================================================
+
+  source   : C:\Users\Administrator\Desktop\mc\crash-reports\crash-2026-09-08_18.45.43-server.txt
+  platform : forge 47.4.16
+  version  : Minecraft 1.20.1 | Java 21.0.12, Oracle Corporation
+  heap     : 826/2048 MiB (40% used)   mods: 266
+  desc     : Exception in server tick loop
+  root     : java.lang.OutOfMemoryError: Java heap space
+
+==========================================================================
+ SUSPECT MODS
+==========================================================================
+  ● harium                       97%  Harium 2.0
+      - mixin config 'harium.mixins.json' patches the failing path
+
+==========================================================================
+ FINDINGS (1)
+==========================================================================
+
+[1] FATAL  Java heap exhausted (OutOfMemoryError: Java heap space)
+    rule=oom.heap  confidence=85%
+    The JVM could not allocate more objects. Max heap was 2048 MiB at
+    crash time. Modded 1.20.1 servers with 200+ mods need 8G to be
+    comfortable; 2G-4G is a common default and is simply too small.
+    evidence:
+      | java.lang.OutOfMemoryError
+      | Java heap space
+    fix:
+      1. Increase `-Xmx` (and `-Xms` to match). 200+ mods on 1.20.1: start
+         at 8G.
+      2. If the heap is already large (>=10G), suspect a leaking mod
+         instead -- note which mod the stack points at.
+      3. Take a heap dump next time with `-XX:+HeapDumpOnOutOfMemoryError
+         -XX:HeapDumpPath=dumps/`.
+

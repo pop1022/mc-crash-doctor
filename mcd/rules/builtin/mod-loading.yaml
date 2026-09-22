@@ -1,0 +1,198 @@
+# Mod-loading failures: missing/incompatible dependencies, duplicate mods,
+# wrong Minecraft version, fatal load errors.
+#
+# These are the highest-volume modded-server failures and the ones users find
+# hardest to read, because the loader's wording differs completely between
+# Forge (1.7-1.12 vs 1.13+) and Fabric/Quilt. Patterns below were derived from
+# real reports, not guessed.
+
+rules:
+  - id: mod.dep-missing.forge
+    title: "Missing required mod: {{cap:text:1}}"
+    severity: fatal
+    priority: 11
+    confidence: 0.95
+    tags: [dependency, load-time, forge]
+    when:
+      exception:
+        - "MissingModsException"
+      text:
+        - "requires \\[([\\w@.\\-,\\s()\\[\\]]+)\\]"
+    explanation: >-
+      Forge refused to start because a mod declared a mandatory dependency that
+      is not installed. The bracketed list is Forge's version-range syntax:
+      `redstoneflux@[2.1.0,2.2.0)` means "redstoneflux, any version from
+      2.1.0 up to but not including 2.2.0".
+    fixes:
+      - "Install the mod(s) named in the range, at a version inside that range."
+      - "Download them for Minecraft {{mc_version}} and loader {{loader}}."
+      - "If you deliberately removed the dependency, also remove the mod that needs it."
+    suspects_from: []
+    refs:
+      - "https://docs.minecraftforge.net/en/latest/concepts/dependencies/"
+
+  - id: mod.dep-missing.forge-old
+    title: "Missing required mod (Forge 1.12 and older)"
+    severity: fatal
+    priority: 11
+    confidence: 0.9
+    tags: [dependency, load-time, forge]
+    when:
+      exception:
+        - "MissingModsException"
+      text:
+        - "MissingModsException:\\s*Mod\\s+(\\w+)"
+    explanation: >-
+      Same diagnosis as above, matched without a version range (older Forge
+      prints only the mod ids).
+    fixes:
+      - "Install every mod id listed in the log line."
+      - "Match the Minecraft version exactly -- a 1.12.2 dependency will not satisfy 1.16.5."
+    suspects_from: []
+
+  - id: mod.dep-missing.fabric
+    title: "Missing required mod: {{cap:text:1}}"
+    severity: fatal
+    priority: 11
+    confidence: 0.95
+    tags: [dependency, load-time, fabric]
+    when:
+      exception:
+        - "ModResolutionException"
+        - "net\\.fabricmc\\.loader\\.discovery\\.[\\w.]+Exception"
+      text:
+        - "requires (?:any version of mod|version [\\w.\\-]+ or later of mod) ([\\w\\-]+), which is missing"
+    explanation: >-
+      Fabric's mod resolver could not satisfy a dependency. The line names both
+      the mod that needs it and the mod that is missing.
+    fixes:
+      - "Install the missing mod named in the log, for {{mc_version}} / fabric."
+      - "If a specific version is required (`version 0.4.6 or later`), install that version or newer."
+      - "Fabric needs every entry in the dependency chain -- install the mod *and* its libraries."
+    suspects_from: []
+    refs:
+      - "https://docs.modrinth.com/docs/mods/dependencies/"
+
+  - id: mod.incompatible-set
+    title: "Incompatible mod set"
+    severity: fatal
+    priority: 12
+    confidence: 0.9
+    tags: [dependency, conflict, load-time]
+    when:
+      exception:
+        - "FormattedException"
+        - "ModResolutionException"
+      text:
+        - "incompatible mod set|is incompatible with any version of mod '([\\w\\- ]+)'"
+    explanation: >-
+      Two mods declare they cannot coexist, or one needs a version the other
+      forbids. The resolver lists the exact pair.
+    fixes:
+      - "Read the `Mod 'A' is incompatible with 'B'` line -- remove one of the two."
+      - "If both are wanted, check whether a newer build of either drops the conflict."
+      - "Common cause: two mods providing the same library (e.g. two different config libs)."
+    suspects_from: []
+
+  - id: mod.wrong-mc-version
+    title: "Mod {{cap:text:1}} does not support Minecraft {{mc_version}}"
+    severity: fatal
+    priority: 14
+    confidence: 0.92
+    tags: [version-mismatch, load-time]
+    when:
+      text:
+        - "The mod ([\\w\\-]+) does not wish to run in Minecraft version"
+        - "Wrong Minecraft version for ([\\w\\-]+)"
+        - "does not support Minecraft|was built for Minecraft|Unsupported Minecraft version"
+    explanation: >-
+      The server is Minecraft {{mc_version}} but this mod was built for a
+      different version. Forge refuses to load it rather than risk corrupting
+      the world.
+    fixes:
+      - "Remove the named mod, or install its build for {{mc_version}}."
+      - "If no build exists for {{mc_version}}, look for a maintained fork."
+      - "After updating a modpack, re-download the whole set -- partial updates cause exactly this."
+    suspects_from: []
+
+  - id: mod.duplicate
+    title: "Duplicate mod files installed"
+    severity: fatal
+    priority: 13
+    confidence: 0.9
+    tags: [duplicate, load-time]
+    when:
+      text:
+        - "Found duplicate mods|Duplicate mod|multiple mod files|is present more than once|Found a duplicate id"
+    explanation: >-
+      Two files in the mods folder provide the same mod id. Almost always an
+      old jar left behind after a manual update.
+    fixes:
+      - "Search the mods folder for the mod name and keep exactly ONE file -- the newest for {{mc_version}}."
+      - "Sort the folder by name to spot `foo-1.0.jar` next to `foo-1.1.jar`."
+    suspects_from: []
+
+  - id: mod.load-fatal
+    title: "A mod failed fatally during {{cap:text:1}}"
+    severity: fatal
+    priority: 18
+    confidence: 0.8
+    tags: [mod, load-time]
+    when:
+      text:
+        - "Fatal errors were detected during the transition from (\\w+) to (\\w+)"
+        - "Caught exception from ([\\w\\-]+)|Loading entrypoint .{0,40} threw"
+    explanation: >-
+      A mod threw while the loader was moving through its startup phases. The
+      states table just below this line in your log shows which mods reached
+      which phase -- the first `E` (Errored) entry is the culprit.
+    fixes:
+      - "In the log's `States:` table, find the mod marked `E` instead of `A`."
+      - "Update that mod; if it is unmaintained for {{mc_version}}, remove it."
+      - "On Fabric/Quilt the equivalent line names the failing entrypoint directly."
+    suspects_from: ["frame_mods", "jar"]
+
+  - id: mod.config-invalid
+    title: "A config file failed to parse"
+    severity: error
+    priority: 30
+    confidence: 0.85
+    tags: [config, load-time]
+    when:
+      exception:
+        - "com\\.google\\.gson\\.JsonSyntaxException"
+        - "com\\.electronwill\\.nightconfig[\\w.]*"
+        - "ConfigParseException"
+        - "JsonSyntaxException"
+      text:
+        - "(?:config|\\.toml|\\.json5?|\\.cfg)[^\\n]{0,80}(?:invalid|syntax|parse|error|malformed)"
+    explanation: >-
+      A configuration file is malformed -- typically a hand-edit that broke the
+      syntax (trailing comma, unquoted key, mismatched bracket, tabs in YAML).
+    fixes:
+      - "The log names the file. Validate it: a trailing comma is the usual JSON cause."
+      - "Deleting the file makes the mod regenerate a default -- the server starts, you lose your edits."
+      - "Diff against the same file from a fresh instance to find the broken line."
+    suspects_from: ["jar"]
+
+  - id: mod.coremod-missing
+    title: "A coremod / library jar is missing from the classpath"
+    severity: fatal
+    priority: 19
+    confidence: 0.75
+    tags: [load-time, classpath]
+    when:
+      exception:
+        - "java\\.lang\\.NoClassDefFoundError"
+        - "java\\.lang\\.ClassNotFoundException"
+      text:
+        - "Attempted to load class ([\\w/$]+)|NoClassDefFoundError:? ?([\\w/$]+)"
+    explanation: >-
+      A class the loader needed is not on the classpath. On modded servers this
+      usually means a library mod is missing, or a mod jar was deleted while its
+      dependents stayed.
+    fixes:
+      - "Identify the missing class's package prefix in the evidence line -- that is usually the library mod."
+      - "Install that library mod for {{mc_version}}."
+      - "If the class is `net/minecraft/client/...` on a *server*, a client-only mod is installed on the server -- remove it."
+    suspects_from: ["frame_mods", "jar"]
