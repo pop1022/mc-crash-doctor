@@ -9,7 +9,7 @@ rule set is YAML; no Python needed.
 git clone https://github.com/YOURNAME/mc-crash-doctor
 cd mc-crash-doctor
 pip install -e ".[pretty]"
-bash run_tests.sh          # all four gates
+bash run_tests.sh          # all gates
 ```
 
 Python 3.9+. The suite runs offline (corpus is vendored).
@@ -17,8 +17,10 @@ Python 3.9+. The suite runs offline (corpus is vendored).
 ## Adding a rule
 
 1. Pick the right pack under [`mcd/rules/builtin/`](mcd/rules/builtin/):
-   `memory-performance.yaml` (OOM, hangs, mixins, ticking, rendering, disk)
-   or `mod-loading.yaml` (dependencies, versions, duplicates, startup).
+   `memory-performance.yaml` (OOM, hangs, mixins, ticking, rendering, disk),
+   `mod-loading.yaml` (dependencies, versions, duplicates, startup), or
+   `runtime-crashes.yaml` (runtime exceptions, loader-failure wordings,
+   threading, catch-alls).
    A new pack is fine too — any `*.yaml` in that directory is auto-loaded.
 
 2. Copy the shape from [the README](README.md#add-a-rule) or a neighbouring
@@ -47,7 +49,7 @@ Python 3.9+. The suite runs offline (corpus is vendored).
    the wrong report actively misleads users (see the `oom.save-time` note in
    `tests/fixtures/ground-truth/README.md`).
 
-5. Run `bash run_tests.sh` — all four gates must pass.
+5. Run `bash run_tests.sh` — every gate must pass.
 
 ## Writing good rules
 
@@ -110,7 +112,7 @@ that fired, its tier, rank and offset. Fix from evidence.
   how you know it is fixed (test names, accuracy numbers).
 - PRs: describe the crash the rule addresses, link the report/issue if it is
   public, and show the `mc-crash-doctor` output before/after.
-- CI runs the same four gates on 3.9/3.11/3.13 plus a wheel-packaging check.
+- CI runs the same gates on 3.9/3.11/3.13 plus a wheel-packaging check.
 
 ## Things we will not merge
 

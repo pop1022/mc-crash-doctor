@@ -6,6 +6,31 @@ versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- `runtime-crashes.yaml` rule pack (7 rules), derived from 20 real harvested
+  reports that the first two packs left undiagnosed: NeoForge/Fabric
+  load-failure wordings, client-only class on dedicated server, threading
+  violations, block-entity rendering, datapack/book failures, and an
+  attributed runtime catch-all gated on `has_suspect` (never fires without
+  a named mod).
+- Rule engine: `has_suspect` condition and `{{suspect_top}}` /
+  `{{suspect_top_id}}` / `{{suspect_top_conf}}` placeholders — rules can now
+  build on attribution results.
+- Attribution: exception-message class mining (`message_modids`). Java 14+
+  NPE/CCE messages quote fully-qualified class names, which resolves the
+  owning mod even for issue-tracker fragments with no Mod List. Added
+  `mekanism.api` package override.
+- `tests/test_gaps.py`: 11 harvested reports pinned to the rules that must
+  fire (and the suspects that must be attributed); blind-spot bound (≤3);
+  catch-all honesty check on the full vendored corpus.
+
+### Changed
+- Harvested-corpus coverage: diagnosed 14/34 → 31/34; attributed 15/34 →
+  19/34 (56%). The 3 remaining blind spots are generic exceptions with pure
+  vanilla stacks — deliberately not guessed at.
+- `run_tests.sh` / CI now run the whole `tests/` directory (corpus + gaps).
+- Rule count 25 → 32.
+
 ## [0.1.0] - 2026-09-22
 
 Initial release.

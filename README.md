@@ -130,12 +130,13 @@ for f in findings:
 
 ## Covered failure modes
 
-25 rules across two packs. Rules are YAML — adding one needs no Python.
+32 rules across three packs. Rules are YAML — adding one needs no Python.
 
 | Pack | Rules |
 |---|---|
 | [`memory-performance.yaml`](mcd/rules/builtin/memory-performance.yaml) | heap OOM · save-time OOM · Metaspace OOM · GC overhead · ServerHangWatchdog · tick timeout · Java class version · mixin apply failure · mixin target missing · ticking entity/block entity · rendering · OpenGL/driver · disk full · corrupt region |
 | [`mod-loading.yaml`](mcd/rules/builtin/mod-loading.yaml) | missing dependency (Forge 1.13+/1.12 and older, Fabric/Quilt) · incompatible mod set · wrong MC version · duplicate mods · fatal load error · config parse error · missing coremod/library |
+| [`runtime-crashes.yaml`](mcd/rules/builtin/runtime-crashes.yaml) | NeoForge/Fabric load-failed wording · client-only class on dedicated server · threading violations · block-entity rendering · datapack/book failures · attributed runtime catch-all (fires only when the triage layer names a mod) |
 
 Platform detection covers Forge, NeoForge, Fabric, Quilt, Paper, Purpur, Folia, Spigot, CraftBukkit, Glowstone, Magma, Mohist, Arclight, CatServer, Velocity, Waterfall, BungeeCord, Bedrock, PocketMine, Geyser, and the major launchers — **100% on the 201-file regression corpus**.
 
@@ -177,9 +178,9 @@ rules:
     suspects_from: [frame_mods, mixin, jar]
 ```
 
-Available placeholders: `{{description}} {{loader}} {{loader_version}} {{mc_version}} {{java_version}} {{java_major}} {{xms_mib}} {{xmx_mib}} {{heap_used_mib}} {{heap_max_mib}} {{mod_count}} {{os}} {{time}} {{root_exception}} {{root_message}}`, plus `{{cap:<key>:<group>}}` for regex captures.
+Available placeholders: `{{description}} {{loader}} {{loader_version}} {{mc_version}} {{java_version}} {{java_major}} {{xms_mib}} {{xmx_mib}} {{heap_used_mib}} {{heap_max_mib}} {{mod_count}} {{os}} {{time}} {{root_exception}} {{root_message}}`, plus regex captures `{{cap:<key>:<group>}}`. When the triage layer named a mod, `{{suspect_top}}`, `{{suspect_top_id}}` and `{{suspect_top_conf}}` are also filled (empty otherwise).
 
-`when` supports: `description exception exception_msg exception_any caused_by frame frame_top jar mixin text` (regex), `loader kind` (exact), `java_major max_heap_mib mod_count` (`{lt,le,gt,ge,eq}`), `has_mod not_has_mod` (glob).
+`when` supports: `description exception exception_msg exception_any caused_by frame frame_top jar mixin text` (regex), `loader kind` (exact), `java_major max_heap_mib mod_count` (`{lt,le,gt,ge,eq}`), `has_mod not_has_mod` (glob), and `has_suspect: true` (only match when attribution resolved at least one mod — use it for catch-all rules so they never fire on vanilla crashes with nothing to blame).
 
 Test your rule without installing anything:
 

@@ -174,6 +174,7 @@ class MatchCtx:
     mixins: list[str]
     modids: set[str]
     text: str
+    triage: object | None = None   # TriageResult, set by run_rules
 
     @classmethod
     def build(cls, rep: CrashReport) -> "MatchCtx":
@@ -292,6 +293,13 @@ def evaluate_rule(rule: Rule, ctx: MatchCtx) -> dict[str, re.Match] | None:
         if key == "not_has_mod" and hit:
             return None
 
+    # attribution gate: rules that say "mod X crashed at runtime" are only
+    # honest when the triage layer actually resolved a suspect mod. Without
+    # this gate a catch-all rule fires on vanilla crashes and blames nothing.
+    if w.get("has_suspect"):
+        if ctx.triage is None or not ctx.triage.suspects:
+            return None
+
     return caps
 
 
@@ -315,6 +323,14 @@ def _render(template: str, ctx: MatchCtx, caps: dict[str, re.Match]) -> str:
         "root_exception": (ctx.rep.root_cause.kind if ctx.rep.root_cause else ""),
         "root_message": (ctx.rep.root_cause.message if ctx.rep.root_cause else ""),
     }
+    if ctx.triage is not None and getattr(ctx.triage, "suspects", None):
+        top = ctx.triage.suspects[0]
+        values["suspect_top"] = top.name or top.modid
+        values["suspect_top_id"] = top.modid
+        values["suspect_top_conf"] = f"{top.confidence:.0%}"
+    else:
+        values["suspect_top"] = values["suspect_top_id"] = ""
+        values["suspect_top_conf"] = ""
     # regex captures: {{cap:key}} or {{cap:key:1}}
     def _cap(m: re.Match) -> str:
         parts = m.group(1).split(":")
@@ -339,6 +355,14 @@ def run_rules(rep: CrashReport, ruleset: RuleSet | None = None,
     """Evaluate all rules against a parsed report."""
     rs = ruleset or RuleSet.load()
     ctx = MatchCtx.build(rep)
+    # Run attribution once so rules can gate on it (has_suspect) and name the
+    # top mod ({{suspect_top}}) without recomputing.
+    try:
+        from ..triage.attribution import triage as _triage
+
+        ctx.triage = _triage(rep)
+    except Exception:  # noqa: BLE001 - attribution must never break diagnosis
+        ctx.triage = None
     findings: list[Finding] = []
     for rule in rs.rules:
         caps = evaluate_rule(rule, ctx)

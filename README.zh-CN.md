@@ -128,12 +128,13 @@ for f in findings:
 
 ## 已覆盖的故障类型
 
-两个规则包共 25 条规则。规则是 YAML——加一条不用写 Python。
+三个规则包共 32 条规则。规则是 YAML——加一条不用写 Python。
 
 | 规则包 | 规则 |
 |---|---|
 | [`memory-performance.yaml`](mcd/rules/builtin/memory-performance.yaml) | 堆 OOM · 保存时 OOM · Metaspace OOM · GC overhead · ServerHangWatchdog · tick 超时 · Java 类版本 · mixin 应用失败 · mixin 目标缺失 · ticking entity/block entity · 渲染崩溃 · OpenGL/驱动 · 磁盘满 · 区块文件损坏 |
 | [`mod-loading.yaml`](mcd/rules/builtin/mod-loading.yaml) | 缺依赖（Forge 1.13+/1.12 及更早、Fabric/Quilt）· 模组集不兼容 · MC 版本不符 · 重复模组 · 加载期致命错误 · 配置解析失败 · 缺 coremod/前置库 |
+| [`runtime-crashes.yaml`](mcd/rules/builtin/runtime-crashes.yaml) | NeoForge/Fabric 加载失败措辞 · 服务端加载客户端类 · 线程违规 · 方块实体渲染 · 数据包/书籍加载失败 · 归因兜底规则（仅在定位到具体模组时触发） |
 
 平台识别覆盖 Forge、NeoForge、Fabric、Quilt、Paper、Purpur、Folia、Spigot、CraftBukkit、Glowstone、Magma、Mohist、Arclight、CatServer、Velocity、Waterfall、BungeeCord、Bedrock、PocketMine、Geyser 及主流启动器——在 201 份回归语料上 **100% 准确**。
 
@@ -175,9 +176,9 @@ rules:
     suspects_from: [frame_mods, mixin, jar]
 ```
 
-可用占位符：`{{description}} {{loader}} {{loader_version}} {{mc_version}} {{java_version}} {{java_major}} {{xms_mib}} {{xmx_mib}} {{heap_used_mib}} {{heap_max_mib}} {{mod_count}} {{os}} {{time}} {{root_exception}} {{root_message}}`，以及正则捕获 `{{cap:<key>:<group>}}`。
+可用占位符：`{{description}} {{loader}} {{loader_version}} {{mc_version}} {{java_version}} {{java_major}} {{xms_mib}} {{xmx_mib}} {{heap_used_mib}} {{heap_max_mib}} {{mod_count}} {{os}} {{time}} {{root_exception}} {{root_message}}`，以及正则捕获 `{{cap:<key>:<group>}}`。当归因层定位到了模组时，`{{suspect_top}}`、`{{suspect_top_id}}`、`{{suspect_top_conf}}` 也会被填充（否则为空）。
 
-`when` 支持的键：`description exception exception_msg exception_any caused_by frame frame_top jar mixin text`（正则）、`loader kind`（精确匹配）、`java_major max_heap_mib mod_count`（`{lt,le,gt,ge,eq}`）、`has_mod not_has_mod`（通配符）。
+`when` 支持的键：`description exception exception_msg exception_any caused_by frame frame_top jar mixin text`（正则）、`loader kind`（精确匹配）、`java_major max_heap_mib mod_count`（`{lt,le,gt,ge,eq}`）、`has_mod not_has_mod`（通配符）、`has_suspect: true`（仅当归因层至少定位到一个模组时才匹配——兜底规则必须用它门控，确保永远不会在"无模组可指认"的原版崩溃上触发）。
 
 不用安装就能测你的规则：
 

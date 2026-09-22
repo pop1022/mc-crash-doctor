@@ -35,6 +35,7 @@ W_MIXIN_CFG = 7.0       # mixin config prefix, ownership not printed
 W_FRAME_TOP = 5.0       # mod-owned frame in the top 3 of the root cause
 W_FRAME = 2.5           # mod-owned frame deeper in the root cause
 W_JAR = 3.0             # jar seen at a failing frame
+W_MSG_CLASS = 4.0       # mod class quoted in the exception message (no Mod List needed)
 W_DESC = 1.0            # mod named in the description text only
 
 # Vanilla / loader / library roots: a frame starting with one of these is NOT
@@ -65,6 +66,7 @@ PACKAGE_OVERRIDES: dict[str, str] = {
     "mcjty.theoneprobe": "theoneprobe",
     "mcjty.rftools": "rftools",
     "mcjty.xnet": "xnet",
+    "mekanism.api": "mekanism",
     "mekanism.common": "mekanism",
     "mekanism.generators": "mekanismgenerators",
     "mekanism.additions": "mekanismadditions",
@@ -217,6 +219,40 @@ def _modid_from_class(cls: str, by_id: dict[str, Mod]) -> str | None:
     return None
 
 
+# Well-known top-level org tokens that say nothing about the mod; used to
+# decide whether a message class name is worth attributing at all.
+_GENERIC_ROOTS = (
+    "java", "javax", "jdk", "sun", "com.sun", "org.apache", "com.google",
+    "com.mojang", "net.minecraft", "it.unimi", "oshi", "io.netty",
+    "org.lwjgl", "kotlin", "scala", "org.spongepowered", "cpw", "dev.architectury",
+)
+
+_FQCN_RE = re.compile(r"\b((?:[\w$]+\.)+[A-Z][\w$]*)")
+
+
+def message_modids(rep: CrashReport) -> list[tuple[str, str]]:
+    """Mine exception messages for fully-qualified class names.
+
+    Reports harvested from issue trackers are often fragments with no Mod
+    List, but Java 14+ NPE messages quote the exact class and method:
+    ``Cannot invoke "mekanism.common.lib.frequency.FrequencyController...``.
+    That names the mod as surely as a stack frame does. Resolution order:
+    PACKAGE_OVERRIDES, then Mod List match, then the package token heuristic.
+    """
+    out: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    for e in rep.exceptions:
+        for m in _FQCN_RE.finditer(e.message or ""):
+            cls = m.group(1)
+            if cls in seen or cls.startswith(_GENERIC_ROOTS):
+                continue
+            seen.add(cls)
+            mid = _modid_from_class(cls, {})
+            if mid:
+                out.append((mid, f"exception message references {cls}"))
+    return out
+
+
 def _mixin_config_modid(cfg: str, by_id: dict[str, Mod]) -> str | None:
     """'create.mixins.json' -> 'create'; 'harium.mixins' -> 'harium'."""
     c = cfg.replace(".mixins.json", "").replace(".mixins", "")
@@ -300,6 +336,12 @@ def triage(rep: CrashReport, *, top_n: int = 5) -> TriageResult:
                 if stem and not f.jar.startswith(("server-", "client-", "forge-",
                                                  "neoforge-", "minecraft-")):
                     unresolved.append(f"{stem} (jar {f.jar})")
+
+    # 3.5 classes quoted in exception messages -- the only signal that works
+    # on issue-tracker fragments, which often carry the NPE/ISE message but no
+    # Mod List at all (by_id empty). Java 14+ messages name the exact class.
+    for mid, reason in message_modids(rep):
+        add(mid, W_MSG_CLASS, reason)
 
     # 4. mod named in the description / exception message
     blob = f"{rep.description} {' '.join(e.message for e in rep.exceptions)}".lower()

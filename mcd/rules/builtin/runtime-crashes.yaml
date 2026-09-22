@@ -1,0 +1,137 @@
+# Runtime crash catch-alls and loader-message variants.
+#
+# Derived from 20 real harvested reports (mekanism/Mekanism issues, 2026-09)
+# that the original rule packs left undiagnosed. Each pattern below was copied
+# from an actual report, not invented -- see tests/test_gaps.py which pins
+# every rule here against the file that motivated it.
+
+rules:
+  - id: mod.load-failed.neoforge
+    title: "Mod loading failed (NeoForge loader error)"
+    severity: fatal
+    priority: 17
+    confidence: 0.85
+    tags: [mod, load-time, neoforge]
+    when:
+      exception: ["net\\.neoforged\\.fml\\.ModLoadingException|ModLoadingException"]
+      text: ["Loading errors encountered"]
+    explanation: >-
+      NeoForge aborted startup because one or more mods threw while loading.
+      The detailed cause is deeper in the report -- look for the first
+      `Caused by:` or the mod named in the loading-error section.
+    fixes:
+      - "Scroll to the first 'Caused by:' under this exception -- that names the mod and the real error."
+      - "Update or remove the mod named there; if it was just added/updated, revert that change first."
+      - "If the cause is a missing dependency, install the library mod it names for {{mc_version}}."
+    suspects_from: ["frame_mods", "jar", "mixin"]
+
+  - id: mod.load-failed.fabric-entry
+    title: "Mod loading failed: {{cap:text:1}}"
+    severity: fatal
+    priority: 17
+    confidence: 0.85
+    tags: [mod, load-time]
+    when:
+      description: ["Mod loading error has occurred"]
+      text: ["Mod Loading has failed|Loading errors were encountered|Error loading mod"]
+    explanation: >-
+      A mod threw during loading and the loader aborted. The report lists the
+      failing mod and its entrypoint near the top of the error section.
+    fixes:
+      - "Find the mod named in the 'Mod Loading has failed' section -- that is the one to update or remove."
+      - "Check its dependencies are present at the versions it requires."
+      - "If the mod was recently updated, try the previous version."
+    suspects_from: ["frame_mods", "jar"]
+
+  - id: mod.client-class-on-server
+    title: "A client-only class was loaded on the dedicated server"
+    severity: fatal
+    priority: 17
+    confidence: 0.95
+    tags: [mod, load-time, dist, server]
+    when:
+      text: ["Attempted to load class (net/minecraft/client/[\\w/$]+) for invalid dist DEDICATED_SERVER"]
+    explanation: >-
+      A mod (or one of its mixins) referenced a client-only class
+      (`{{cap:text:1}}`) from common/server code. Forge/NeoForge block this to
+      stop the dedicated server from crashing at runtime -- the mod's dist
+      separation is broken.
+    fixes:
+      - "The stack frames below the error name the mod doing the loading -- update it; this is a known bug class with a known fix."
+      - "If it appeared after updating one mod, roll that mod back."
+      - "This is always the mod's bug, never your server config -- report it upstream with this crash report."
+    suspects_from: ["frame_mods", "jar", "mixin"]
+
+  - id: crash.runtime-mod
+    title: "{{suspect_top}} crashed at runtime"
+    severity: error
+    priority: 80
+    confidence: 0.55
+    tags: [mod, runtime]
+    when:
+      has_suspect: true
+      exception: ["java\\.lang\\.[\\w.]*(?:Exception|Error)"]
+      # must NOT shadow the specific crash.* rules (they run at priority 50-60)
+    explanation: >-
+      The failing code path runs through {{suspect_top}}
+      (attribution confidence {{suspect_top_conf}}). The exception itself is
+      generic, but the stack points at this mod's classes.
+    fixes:
+      - "Update {{suspect_top}} to the latest build for {{mc_version}} -- runtime NPEs/ISEs like this are usually fixed quickly."
+      - "If it is already up to date, report this crash report to the mod's issue tracker."
+      - "As a workaround, remove {{suspect_top}} and anything that depends on it."
+    suspects_from: ["frame_mods", "mixin", "jar"]
+
+  - id: crash.rendering-blockentity
+    title: "Crash while rendering a block entity"
+    severity: error
+    priority: 53
+    confidence: 0.65
+    tags: [rendering, client, block-entity]
+    when:
+      description: ["Rendering Block Entity"]
+    explanation: >-
+      The client crashed drawing a block entity (a machine, chest, display
+      block...). The block's type and position are in the report.
+    fixes:
+      - "Read 'Block entity type' and 'Location' from the report -- that names the owning mod."
+      - "Update that mod; rendering crashes usually follow a model/registry change after an update."
+      - "Removing the block (via MCA Selector or a world edit) stops the crash loop if it re-triggers on chunk load."
+    suspects_from: ["frame_mods", "jar"]
+
+  - id: crash.threading-race
+    title: "Threading violation: world data touched off-thread"
+    severity: error
+    priority: 45
+    confidence: 0.8
+    tags: [threading, runtime]
+    when:
+      exception_msg: ["Accessing LegacyRandomSource from multiple threads|not on the server thread|main thread only"]
+    explanation: >-
+      Vanilla's RNG and several registries are single-threaded on purpose;
+      Minecraft now detects cross-thread access and throws instead of
+      corrupting the world. A mod is calling world code from a worker thread
+      (or a parallel chunk loader is racing it).
+    fixes:
+      - "The top non-vanilla frame in the trace names the mod doing the off-thread call."
+      - "If a parallel-loading mod is installed (modernfix, starlight-style chunk threading), try updating it or disabling its threading option first."
+      - "Update the offending mod; this is a mod bug, not a config problem."
+    suspects_from: ["frame_mods", "mixin"]
+
+  - id: crash.datapack-book
+    title: "A datapack/resourcepack entry failed to load"
+    severity: error
+    priority: 46
+    confidence: 0.8
+    tags: [datapack, resourcepack, load-time]
+    when:
+      exception_msg: ["has use_resource_pack|Failed to load (?:datapack|resource pack)|Couldn't pack"]
+      text: ["Book ([\\w:]+) has use_resource_pack|datapack|resource pack"]
+    explanation: >-
+      A book/datapack definition is malformed or references a pack that is
+      not installed. The id in the error names the offending content.
+    fixes:
+      - "Find the pack that registers the named id (books come from Patchouli-based mods) and update it."
+      - "If it is a custom datapack in world/datapacks, validate its JSON -- a single bad file fails the whole load."
+      - "Removing the datapack folder lets the world load without it."
+    suspects_from: ["frame_mods"]

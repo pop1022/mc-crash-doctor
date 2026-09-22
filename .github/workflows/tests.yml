@@ -39,7 +39,7 @@ jobs:
         run: python tests/test_e2e.py
 
       - name: Pytest corpus suite
-        run: python -m pytest tests/test_corpus.py -q
+        run: python -m pytest tests/ -q
 
       - name: CLI smoke
         run: |

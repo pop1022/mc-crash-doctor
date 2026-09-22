@@ -13,22 +13,22 @@ echo " mc-crash-doctor test suite"
 echo "════════════════════════════════════════════════"
 
 echo
-echo "── [1/4] redaction (privacy boundary) ──"
+echo "── [1/5] redaction (privacy boundary) ──"
 if ! "$PY" tests/test_redaction.py; then fail=1; fi
 
 echo
-echo "── [2/4] parser accuracy vs upstream expectations ──"
+echo "── [2/5] parser accuracy vs upstream expectations ──"
 if ! "$PY" tests/eval_parser.py --strict; then fail=1; fi
 
 echo
-echo "── [3/4] end-to-end + ground truth ──"
+echo "── [3/5] end-to-end + ground truth ──"
 # Ground-truth reports ship in-repo, so this runs on any machine / in CI.
 if ! "$PY" tests/test_e2e.py; then fail=1; fi
 
 echo
-echo "── [4/5] pytest suite (per-file corpus cases) ──"
+echo "── [4/5] pytest suite (per-file corpus + gap pinning) ──"
 if "$PY" -m pytest --version >/dev/null 2>&1; then
-  if ! "$PY" -m pytest tests/test_corpus.py -q; then fail=1; fi
+  if ! "$PY" -m pytest tests/ -q; then fail=1; fi
 else
   echo "  (pytest not installed -- skipping; pip install pytest)"
 fi
