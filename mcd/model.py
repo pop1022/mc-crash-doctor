@@ -69,6 +69,11 @@ class ExceptionBlock:
     frames: list[StackFrame] = field(default_factory=list)
     is_caused_by: bool = False
     depth: int = 0                  # 0 = outermost, 1 = first Caused by, ...
+    # True when the block was introduced by a FATAL-level log line
+    # ("[Render thread/FATAL]: Unreported exception thrown!"). Log files carry
+    # a whole timeline of exceptions; the FATAL one is the actual crash, so
+    # root_cause prefers it over earlier WARN/INFO noise.
+    fatal: bool = False
 
     @property
     def signature(self) -> str:
@@ -172,12 +177,36 @@ class CrashReport:
     system: SystemDetails = field(default_factory=SystemDetails)
     mods: list[Mod] = field(default_factory=list)
     coremods: list[str] = field(default_factory=list)
+    # Vanilla/Fabric's OWN diagnosis: the `Suspected Mods:` line in the report
+    # header (System Details on Forge, a bare log line on Fabric). The game
+    # computes this from the crash-time classloader context, so it is stronger
+    # evidence than anything we can infer. Empty when the line is absent or
+    # reads `NONE`.
+    suspected_mods: list[str] = field(default_factory=list)
     full_text: str = ""
 
     # --- convenience views -------------------------------------------------
     @property
     def root_cause(self) -> ExceptionBlock | None:
-        """Deepest `Caused by:` if present, else the outermost exception."""
+        """The exception that actually killed the process.
+
+        Preference order:
+        1. the last FATAL-marked chain (log files contain a timeline of
+           exceptions; `Unreported exception thrown!` / `/FATAL]` marks the
+           crash -- anything before it is noise, e.g. a WARN-level
+           NumberFormatException from a config read);
+        2. else the deepest `Caused by:` of the parsed chain;
+        3. else the outermost exception.
+        """
+        fatal_idx = [i for i, b in enumerate(self.exceptions) if b.fatal]
+        if fatal_idx:
+            i = fatal_idx[-1]
+            chain = [self.exceptions[i]]
+            j = i + 1
+            while j < len(self.exceptions) and self.exceptions[j].is_caused_by:
+                chain.append(self.exceptions[j])
+                j += 1
+            return max(chain, key=lambda b: b.depth)
         caused = [e for e in self.exceptions if e.is_caused_by]
         if caused:
             return max(caused, key=lambda e: e.depth)
@@ -223,6 +252,7 @@ class CrashReport:
             "system": self.system.to_dict(),
             "mods": [m.to_dict() for m in self.mods],
             "coremods": self.coremods,
+            "suspected_mods": self.suspected_mods,
             "mod_count_parsed": len(self.mods),
             "root_cause": (self.root_cause or ExceptionBlock()).to_dict(),
         }

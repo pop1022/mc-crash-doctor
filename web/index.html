@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mc-crash-doctor — diagnose Minecraft crashes in your browser</title>
+<meta name="description" content="Paste a Minecraft crash report or server log. Diagnosed entirely in your browser by the mc-crash-doctor rule engine — the log never leaves your machine.">
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --border: #30363d;
+    --fg: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+    --fatal: #f85149; --error: #f85149; --warn: #d29922;
+    --hint: #39c5cf; --ok: #3fb950;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#fff; --panel:#f6f8fa; --border:#d0d7de; --fg:#1f2328;
+            --muted:#656d76; --accent:#0969da; --fatal:#cf222e; --error:#cf222e;
+            --warn:#9a6700; --hint:#1b7c83; --ok:#1a7f37; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:15px/1.55 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 28px 20px 60px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  h1 .logo { color: var(--accent); }
+  .sub { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+  .privacy { display:inline-block; background:var(--panel); border:1px solid var(--border);
+             border-radius:999px; padding:3px 12px; font-size:12.5px; color:var(--muted);
+             margin-bottom:18px; }
+  .privacy b { color: var(--ok); font-weight:600; }
+  textarea { width:100%; min-height:220px; resize:vertical; background:var(--panel);
+             color:var(--fg); border:1px solid var(--border); border-radius:8px;
+             padding:12px; font:12.5px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; }
+  textarea:focus { outline:none; border-color:var(--accent); }
+  .row { display:flex; gap:10px; align-items:center; margin-top:12px; flex-wrap:wrap; }
+  button { background:var(--accent); color:#fff; border:0; border-radius:8px;
+           padding:9px 22px; font-size:15px; font-weight:600; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:wait; }
+  button.ghost { background:transparent; color:var(--muted); border:1px solid var(--border);
+                 font-weight:400; padding:8px 16px; font-size:13.5px; }
+  #status { color:var(--muted); font-size:13.5px; }
+  #status.err { color: var(--fatal); }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:10px;
+          padding:16px 18px; margin-top:16px; }
+  .card h2 { margin:0 0 10px; font-size:16px; }
+  .sev { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.5px;
+         border-radius:4px; padding:2px 7px; margin-right:8px; vertical-align:2px; }
+  .sev.fatal,.sev.error { background:var(--fatal); color:#fff; }
+  .sev.warning { background:var(--warn); color:#000; }
+  .sev.hint { background:var(--hint); color:#000; }
+  .sev.info { background:var(--muted); color:#fff; }
+  .finding + .finding { margin-top:18px; padding-top:16px; border-top:1px solid var(--border); }
+  .finding h3 { margin:0 0 6px; font-size:15.5px; }
+  .finding p { margin:6px 0; }
+  .finding ul { margin:6px 0 6px 0; padding-left:20px; }
+  .finding li { margin:3px 0; }
+  .label { color:var(--muted); font-size:12px; text-transform:uppercase;
+           letter-spacing:.6px; margin-top:10px; }
+  .evidence { background:var(--bg); border:1px solid var(--border); border-radius:6px;
+              padding:8px 10px; font:12px/1.5 ui-monospace,Consolas,monospace;
+              white-space:pre-wrap; word-break:break-all; color:var(--muted); margin-top:4px; }
+  .suspects { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+  .suspect { border:1px solid var(--border); border-radius:8px; padding:6px 12px;
+             background:var(--bg); font-size:13.5px; }
+  .suspect b { color:var(--accent); }
+  .suspect .conf { color:var(--muted); font-size:12px; margin-left:6px; }
+  .meta { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+          gap:6px 18px; font-size:13.5px; }
+  .meta div b { color:var(--fg); font-weight:600; }
+  .meta div span { color:var(--muted); }
+  .none { color:var(--muted); }
+  a { color:var(--accent); }
+  footer { margin-top:36px; color:var(--muted); font-size:13px; text-align:center; }
+  details.raw summary { cursor:pointer; color:var(--muted); font-size:13px; margin-top:14px; }
+  details.raw pre { overflow:auto; background:var(--bg); border:1px solid var(--border);
+                    border-radius:6px; padding:10px; font-size:11.5px; color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span class="logo">▣</span> mc-crash-doctor</h1>
+  <p class="sub">Paste a Minecraft crash report or server log → root cause, fix steps, and the mod to blame.</p>
+  <p class="privacy">🔒 <b>Diagnosed entirely in your browser.</b> The log never leaves your machine — no upload, no server, no analytics.</p>
+
+  <textarea id="log" placeholder="Paste your crash-report.txt / latest.log here…&#10;&#10;(Tip: the full crash report works best — Mod List and System Details make attribution much stronger.)" spellcheck="false"></textarea>
+  <div class="row">
+    <button id="go" disabled>Diagnose</button>
+    <button class="ghost" id="sample" disabled>Try a sample</button>
+    <span id="status">loading Python engine… (first visit ≈10 s, cached after)</span>
+  </div>
+
+  <div id="out"></div>
+
+  <footer>
+    <a href="https://github.com/pop1022/mc-crash-doctor">github.com/pop1022/mc-crash-doctor</a>
+    · same engine as the CLI · rules are YAML, PRs welcome
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

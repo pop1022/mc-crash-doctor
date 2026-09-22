@@ -29,7 +29,18 @@ _GH = ROOT / "corpus" / "github"
 
 
 def _find(issue: str) -> str | None:
-    hits = glob.glob(str(_GH / "**" / f"{issue}.crash.txt"), recursive=True)
+    """Resolve a pin key to a corpus path.
+
+    Keys are either a bare issue number ("8631" -- unambiguous while the
+    corpus was one repo) or a repo-qualified "repo/number" ("sodium/3711").
+    14 issue numbers now collide across the 12-repo corpus, so qualified
+    keys match the directory name's suffix after "__".
+    """
+    if "/" in issue:
+        repo, num = issue.split("/", 1)
+        hits = glob.glob(str(_GH / f"*__{repo}" / f"{num}.crash.txt"))
+    else:
+        hits = glob.glob(str(_GH / "**" / f"{issue}.crash.txt"), recursive=True)
     return hits[0] if hits else None
 
 
@@ -61,6 +72,28 @@ PINS: dict[str, tuple[str, str | None]] = {
     #   empty jar ("zip file is empty", "zip END header not found")
     "685": ("mod.corrupt-jar", None),
     "4907": ("mod.corrupt-jar", None),
+    # 2026-09 second wave (quilt-loader/fabric-loader/sodium blind spots).
+    # Repo-qualified keys: issue numbers collide across the 12-repo corpus.
+    #   fabric-loader #611: the FATAL NoSuchFieldError (VoxelMap vs new MC
+    #   biome registry) -- also exercises the log-FATAL root-cause fix:
+    #   an earlier WARN NumberFormatException must NOT win
+    "fabric-loader/611": ("mod.binary-incompat", None),
+    #   sodium #3711: NoSuchMethodError against a moved MC method
+    "sodium/3711": ("mod.binary-incompat", None),
+    #   quilt-loader #232: loader constraint violation (duplicate class)
+    "quilt-loader/232": ("mod.linkage-duplicate", None),
+    #   quilt-loader #261: JSON5 strict-mode parse failure
+    "quilt-loader/261": ("quilt.config-broken", None),
+    #   quilt-loader #497: intermediary mappings not loaded
+    "quilt-loader/497": ("loader.namespace-missing", None),
+    #   fabric-api #5097: iris$makeColor @WrapOperation injection failure
+    "fabric-api/5097": ("mixin.injection-failed", None),
+    #   fabric-api #4862: "Failed to load registries due to above errors"
+    "fabric-api/4862": ("crash.registry-load-failed", None),
+    #   quilt-loader #344: UnknownHostException beacon.quiltmc.org
+    "quilt-loader/344": ("net.connectivity", None),
+    #   quilt-loader #398: libawt_xawt.so missing (headless JVM)
+    "quilt-loader/398": ("env.headless-jvm", None),
 }
 
 

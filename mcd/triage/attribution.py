@@ -7,6 +7,9 @@ confidence".
 
 Signals, strongest first:
 
+0. **The game's own verdict** -- the ``Suspected Mods:`` line that
+   vanilla/Fabric print into the crash report. The game computes it from the
+   crash-time classloader context, so when present it outranks inference.
 1. **Mixin ownership** -- ``pl:mixin:APP:create.mixins.json:Class from mod
    (create)`` names the mod that applied the patch *at the failing frame*.
    A mixin crash is nearly always the mixin owner's fault.
@@ -30,6 +33,7 @@ from dataclasses import dataclass, field
 from ..model import CrashReport, Mod, StackFrame
 
 # Weights tuned by hand against real reports; see score() for rationale.
+W_GAME_SUSPECTED = 12.0  # the game's own `Suspected Mods:` line -- strongest
 W_MIXIN = 10.0          # explicit ownership at the failing frame
 W_MIXIN_CFG = 7.0       # mixin config prefix, ownership not printed
 W_FRAME_TOP = 5.0       # mod-owned frame in the top 3 of the root cause
@@ -284,6 +288,15 @@ def triage(rep: CrashReport, *, top_n: int = 5) -> TriageResult:
         scores[mid] += weight
         if reason not in reasons[mid]:
             reasons[mid].append(reason)
+
+    # 0. the game's OWN `Suspected Mods:` line -- vanilla/Fabric compute this
+    #    from the crash-time classloader context, which is stronger evidence
+    #    than anything we can infer from text. Present in ~12% of harvested
+    #    reports; when it names a mod we trust it over our own scoring.
+    for i, mid in enumerate(rep.suspected_mods[:3]):
+        add(mid, W_GAME_SUSPECTED if i == 0 else W_GAME_SUSPECTED * 0.7,
+            f"the report's own 'Suspected Mods' line names '{mid}'"
+            + (" (first listed)" if i == 0 else ""))
 
     # 1. mixin ownership -- the strongest signal
     seen_cfgs: set[str] = set()

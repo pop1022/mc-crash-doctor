@@ -135,3 +135,101 @@ rules:
       - "If it is a custom datapack in world/datapacks, validate its JSON -- a single bad file fails the whole load."
       - "Removing the datapack folder lets the world load without it."
     suspects_from: ["frame_mods"]
+
+  - id: mixin.injection-failed
+    title: "Mixin injection failed: {{cap:exception_msg:1}}"
+    severity: fatal
+    priority: 15
+    confidence: 0.9
+    tags: [mixin, load-time, conflict]
+    when:
+      exception:
+        - "org\\.spongepowered\\.asm\\.mixin\\.injection\\.[\\w.]+(?:Error|Exception)"
+      exception_msg:
+        # harvested 2026-09 (fabric-api#5097 iris$makeColor @WrapOperation,
+        # fabric-api#5279 "LVT ... has incompatible changes"):
+        - "(Critical injection failure[^\n]{0,80}|LVT in [^\n]{0,60}has incompatible changes|@\\w+ annotation on [\\w$]+ could not[^\n]{0,60})"
+    explanation: >-
+      A mixin's injector could not patch its target -- usually because two
+      mods patch the same method with incompatible signatures (an older mod's
+      @WrapOperation/@Redirect colliding with a newer one's changes), or the
+      target method changed shape in an MC update. The message names the mixin
+      method (`<modid>$<method>`), which names the mod that owns it.
+    fixes:
+      - "The failing injector is named '<modid>$<method>' in the error -- that mod owns the broken mixin."
+      - "Update it; if it targets a method another mod also patches, update BOTH (the pair must be built against the same MC version)."
+      - "If a fresh MC version dropped: wait for the mod's update -- injection failures like this cannot be configured around."
+    suspects_from: ["mixin", "frame_mods", "jar"]
+
+  - id: crash.registry-load-failed
+    title: "Registry loading failed -- a mod registered invalid entries"
+    severity: fatal
+    priority: 47
+    confidence: 0.8
+    tags: [registry, load-time, world-load]
+    when:
+      exception_msg:
+        # harvested 2026-09: 12x fabric-api issues, all with this exact wording
+        # and 'fabric-registry-sync-v0' on the game's Suspected Mods line
+        - "Failed to load registries due to above errors"
+    explanation: >-
+      Dynamic registry loading aborted while entering/loading a world: a mod
+      registered an entry that fails validation (bad id, missing required
+      field, duplicate key). The REAL cause is logged ABOVE this exception --
+      this line is only the summary.
+    fixes:
+      - "Scroll up to the first ERROR line above this crash -- it names the registry key and the mod that owns it."
+      - "Usually a datapack-driven registry entry (worldgen/biome/dimension mods) referencing something a newer MC version renamed -- update that mod."
+      - "If the world loads fine without the suspected mod, its datapack entries are the culprit."
+    suspects_from: ["frame_mods", "mod_from_triage"]
+
+  - id: net.connectivity
+    title: "Network failure reaching a remote host: {{cap:exception_msg:1}}"
+    severity: error
+    priority: 44
+    confidence: 0.85
+    tags: [network, load-time, environment]
+    when:
+      exception:
+        - "java\\.net\\.UnknownHostException"
+        - "java\\.security\\.cert\\.CertificateException"
+        - "javax\\.net\\.ssl\\.SSLHandshakeException"
+      exception_msg:
+        # harvested 2026-09 (quilt-loader#344 beacon.quiltmc.org,
+        # fabric-api#4707 "No subject alternative DNS name matching
+        # meta.fabricmc.net found")
+        - "([\\w.\\-]+\\.[a-z]{2,})"
+    explanation: >-
+      The game (or a mod) could not reach a remote host, or the TLS certificate
+      did not match -- DNS blocking, a filtering proxy/firewall, an expired
+      cert in the JVM truststore, or a corporate MITM proxy. This is an
+      environment problem, not a mod bug.
+    fixes:
+      - "Check DNS and firewall rules for the named host; some networks (schools, ISPs, GFW-style filters) block or MITM these endpoints."
+      - "If behind a corporate proxy with TLS interception, import its root CA into the JVM's cacerts (or disable interception for these hosts)."
+      - "An outdated Java build can also fail on modern certs -- update Java (17/21 for current MC)."
+    suspects_from: []
+
+  - id: env.headless-jvm
+    title: "JVM cannot load GUI libraries (headless environment)"
+    severity: fatal
+    priority: 44
+    confidence: 0.9
+    tags: [environment, jvm, client]
+    when:
+      exception:
+        - "java\\.lang\\.UnsatisfiedLinkError"
+        - "java\\.awt\\.HeadlessException"
+      text:
+        # harvested 2026-09 (quilt-loader#398): "Can't load library:
+        # /usr/lib/jvm/java-17-openjdk/lib/libawt_xawt.so"
+        - "libawt|Can't load library|HeadlessException|no display"
+    explanation: >-
+      Something tried to open a window/GUI (a config dialog, an error popup,
+      the client itself) but the JVM has no graphics support -- typical on
+      minimal Linux/JRE installs, Docker, or headless servers.
+    fixes:
+      - "On Linux, install the full JDK's GUI libs: `apt install openjdk-17-jdk` (not just -jre-headless), or the `libawt_xawt` package for your distro."
+      - "If this is a SERVER, the offending code should never open a GUI -- find the mod in the stack and update it; server-safe mods check `FMLEnvironment.dist` first."
+      - "In Docker, use a JDK image that includes AWT, or set `-Djava.awt.headless=true` so callers fail fast with a clear error instead of crashing the loader."
+    suspects_from: ["frame_mods", "jar"]

@@ -130,7 +130,7 @@ for f in findings:
 
 ## Covered failure modes
 
-33 rules across three packs. Rules are YAML — adding one needs no Python.
+41 rules across three packs. Rules are YAML — adding one needs no Python.
 
 | Pack | Rules |
 |---|---|

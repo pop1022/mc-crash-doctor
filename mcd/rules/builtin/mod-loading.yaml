@@ -236,3 +236,99 @@ rules:
       - "If it is a library under `libraries/` (e.g. icu4j), delete that file too -- the launcher re-fetches it."
       - "Check disk health if several jars are corrupt at once."
     suspects_from: ["jar"]
+
+  - id: mod.binary-incompat
+    title: "Binary incompatibility: a mod calls a field/method that no longer exists"
+    severity: fatal
+    priority: 17
+    confidence: 0.85
+    tags: [version-mismatch, runtime, library]
+    when:
+      exception:
+        - "java\\.lang\\.NoSuchFieldError"
+        - "java\\.lang\\.NoSuchMethodError"
+      text:
+        # harvested 2026-09 (sodium#3711, fabric-api#5363, fabric-loader#611):
+        #   "Class net.fabricmc.fabric.api.resource.ResourceReloadListenerKeys
+        #    does not have member field '...'"
+        - "does not have (?:member field|method)|NoSuchFieldError|NoSuchMethodError"
+    explanation: >-
+      A mod was compiled against a different version of Minecraft or a library
+      (Fabric API / Forge / another mod's API) than the one running: the field
+      or method it calls is gone. Classic symptom of updating one half of a
+      mod pair without the other.
+    fixes:
+      - "The message names the class whose member is missing -- that class belongs to the API the mod was built against."
+      - "Update BOTH sides: the mod and the library/API it needs, to versions released for {{mc_version}}."
+      - "If you just updated Fabric API / Forge, the mod itself is now too old -- update or remove it."
+    suspects_from: ["frame_mods", "jar", "mixin"]
+
+  - id: mod.linkage-duplicate
+    title: "Class linkage conflict: two mods ship the same class"
+    severity: fatal
+    priority: 17
+    confidence: 0.85
+    tags: [conflict, load-time, classpath]
+    when:
+      exception:
+        - "java\\.lang\\.LinkageError"
+        - "LinkageError"
+      text:
+        # harvested 2026-09 (fabric-loader#1132/#622/#627, quilt-loader#232):
+        #   "loader constraint violation", "attempted duplicate class definition"
+        - "loader constraint violation|attempted duplicate class definition|LinkageError"
+    explanation: >-
+      Two jars on the classpath define the same class (a mod bundling a
+      library another mod also bundles, or a leftover copy of a mod). The
+      classloader refuses to pick one and aborts.
+    fixes:
+      - "The 'loader constraint violation' line names the duplicated class and both classloaders -- search your mods folder for jars containing that package."
+      - "Delete duplicate copies of the same mod (old version left beside the new one is the usual cause)."
+      - "If two different mods bundle the same library, update both -- newer builds shade or drop the duplicate."
+    suspects_from: ["frame_mods", "jar"]
+
+  - id: quilt.config-broken
+    title: "Quilt config/JSON5 file is malformed"
+    severity: fatal
+    priority: 19
+    confidence: 0.8
+    tags: [config, load-time, quilt]
+    when:
+      exception:
+        - "MalformedSyntaxException"
+        - "ParsingException"
+      text:
+        # harvested 2026-09 (quilt-loader#244 "Not enough data available",
+        # quilt-loader#261 "Found potentially valid JSON5, but invalid JSON
+        # while in strict mode $.version")
+        - "invalid JSON5?|Not enough data available|MalformedSyntaxException"
+    explanation: >-
+      A quilt.mod.json / config file is not valid JSON(5) -- the message names
+      the field path (e.g. `$.version`). Usually a hand edit or a partially
+      written file.
+    fixes:
+      - "The message names the file and JSON path -- open that file and fix the syntax at that field."
+      - "JSON5 allows comments and trailing commas, but strict-mode files do not -- check which the loader asked for."
+      - "Deleting the file usually regenerates a default on next start."
+    suspects_from: ["jar"]
+
+  - id: loader.namespace-missing
+    title: "Requested mapping namespace is not loaded"
+    severity: fatal
+    priority: 18
+    confidence: 0.8
+    tags: [mappings, load-time, quilt, fabric]
+    when:
+      text:
+        # harvested 2026-09 (quilt-loader#497): "Requested target namespace
+        # intermediary not loaded. To continue without mappings..."
+        - "Requested target namespace ([\\w]+) not loaded"
+    explanation: >-
+      The loader could not load the mapping namespace a mod asked for --
+      mapping jars are missing or corrupt in the instance, or the launcher
+      failed to download them.
+    fixes:
+      - "Reinstall/repair the instance in your launcher -- this re-downloads the mapping (intermediary/yarn) jars."
+      - "If offline-mode or a custom launcher is involved, check it can reach the mapping download server."
+      - "As a test, a fresh instance of the same loader version isolates whether the instance or a mod is broken."
+    suspects_from: []

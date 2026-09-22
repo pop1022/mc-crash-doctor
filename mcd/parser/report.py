@@ -50,6 +50,9 @@ EXC_RE = re.compile(
 CAUSED_BY_RE = re.compile(r"^\s*Caused by:\s*(.+?)\s*$")
 FRAME_RE = re.compile(r"^\s*at\s+(.+?)\s*$")
 MORE_RE = re.compile(r"^\s*\.\.\.\s*(\d+)\s+(?:more|common frames omitted)", re.I)
+# Log-file FATAL marker: "[17:43:53] [Render thread/FATAL]: Unreported
+# exception thrown!" -- the exception header on the NEXT line is the crash.
+LOG_FATAL_RE = re.compile(r"^\[[\d:.]+\]\s*\[[^\]]*/FATAL\]", re.I)
 
 # frame internals
 JAR_RE = re.compile(r"~\[([^\]]+?)\]")
@@ -255,14 +258,24 @@ def _split_exception_header(line: str) -> tuple[str, str]:
 
 
 def _parse_exceptions(text: str) -> list[ExceptionBlock]:
-    """Extract the exception chain from the head of the report body."""
+    """Extract exception chains from the report/log body.
+
+    Crash reports carry ONE chain (before `-- System Details --`). Log files
+    carry a whole TIMELINE of exceptions at different levels; the one that
+    matters is introduced by a `/FATAL]` line ("Unreported exception
+    thrown!"). Both shapes are parsed here: every top-level exception header
+    starts a new depth-0 block, `Caused by:` nests under it, and FATAL-
+    introduced blocks are flagged so `root_cause` can prefer them.
+    """
     blocks: list[ExceptionBlock] = []
     current: ExceptionBlock | None = None
     depth = 0
     frame_idx = 0
+    fatal_pending = False
 
-    # Only scan the region before "-- Head --"/"-- System Details --" plus the
-    # Head stacktrace, because later sections repeat the same trace.
+    # For crash reports only scan the region before "-- System Details --" /
+    # "-- Crash Report --" (later sections repeat the same trace). Log files
+    # have no such markers, so cut stays len(text).
     cut = len(text)
     for marker in ("-- System Details --", "-- Crash Report --"):
         i = text.find(marker)
@@ -273,6 +286,10 @@ def _parse_exceptions(text: str) -> list[ExceptionBlock]:
     for raw_line in region.splitlines():
         line = raw_line.rstrip()
         if not line.strip():
+            continue
+        # log-level FATAL marker -> the NEXT exception header is the crash
+        if LOG_FATAL_RE.match(line):
+            fatal_pending = True
             continue
         cb = CAUSED_BY_RE.match(line)
         if cb:
@@ -285,10 +302,17 @@ def _parse_exceptions(text: str) -> list[ExceptionBlock]:
                                      is_caused_by=True, depth=depth)
             continue
         em = EXC_RE.match(line.strip())
-        if em and current is None and frame_idx == 0:
+        if em and (current is None or current.frames):
+            # start of a (new) top-level exception: close the previous block
+            if current is not None:
+                blocks.append(current)
             kind, msg = em.group(1).strip(), (em.group(2) or "").strip()
             current = ExceptionBlock(kind=kind, message=msg,
-                                     is_caused_by=False, depth=0)
+                                     is_caused_by=False, depth=0,
+                                     fatal=fatal_pending)
+            fatal_pending = False
+            depth = 0
+            frame_idx = 0
             continue
         fm = FRAME_RE.match(line)
         if fm and current is not None:
@@ -444,6 +468,40 @@ def _parse_system(text: str, sections: list[Section], mods: list[Mod]) -> System
 
 
 # --- entry point ------------------------------------------------------------
+# `Suspected Mods:` -- the game's own attribution line. Two shapes seen in the
+# wild (harvested 2026-09):
+#   Forge/Fabric crash reports, System Details section:
+#     "\tSuspected Mods: Fabric Registry Sync (v0) (fabric-registry-sync-v0), ..."
+#   bare server logs:
+#     "[12:34:56] [Server thread/ERROR]: Suspected Mods: NONE"
+# The mod id is the last parenthesised token of each comma-separated entry.
+SUSPECTED_MODS_RE = re.compile(r"Suspected Mods:\s*(.+)")
+
+
+def _parse_suspected_mods(text: str) -> list[str]:
+    """Extract mod ids from the game's `Suspected Mods:` line."""
+    m = SUSPECTED_MODS_RE.search(text)
+    if not m:
+        return []
+    raw = m.group(1).strip()
+    if not raw or raw.upper() == "NONE":
+        return []
+    out: list[str] = []
+    for entry in raw.split(","):
+        entry = entry.strip()
+        if not entry:
+            continue
+        # "Fabric Registry Sync (v0) (fabric-registry-sync-v0)" -> id in the
+        # LAST parens; a plain "mekanism" entry has no parens at all.
+        pm = re.findall(r"\(([^()]+)\)", entry)
+        mid = pm[-1].strip() if pm else entry
+        mid = mid.strip().lower()
+        # skip display-name leftovers that are not mod ids
+        if mid and mid not in out and re.fullmatch(r"[\w\-]+", mid):
+            out.append(mid)
+    return out
+
+
 def parse_text(text: str, *, source_path: str = "") -> CrashReport:
     """Parse crash-report or log text."""
     text = text.replace("\r\n", "\n").replace("\r", "\n")
@@ -487,6 +545,7 @@ def parse_text(text: str, *, source_path: str = "") -> CrashReport:
         if fb:
             mods, _ = _parse_fabric_modlist(text, fb.start())
     rep.mods = mods
+    rep.suspected_mods = _parse_suspected_mods(text)
 
     rep.system = _parse_system(text, rep.sections, mods)
 

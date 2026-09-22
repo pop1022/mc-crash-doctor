@@ -7,6 +7,40 @@ versions follow [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Web app** (`web/`, work in progress): a Pyodide (WASM Python) static site
+  that runs the *same* `diagnose()` pipeline as the CLI, entirely client-side
+  — the pasted log never leaves the browser. Built by `tools/build_web.py`
+  (wheel + manifest); deployable to GitHub Pages. **Status: assets written and
+  the wheel verified to contain the rule YAMLs, but the in-browser end-to-end
+  check did NOT run** — the local browser harness failed to start
+  (`daemon didn't come up`), so boot + sample-diagnosis is still unverified.
+  Do not advertise the web app until that passes.
+- **`Suspected Mods:` attribution** — vanilla/Fabric print their own verdict
+  into the crash report; we now parse it (`rep.suspected_mods`) and feed it as
+  the highest-weight triage signal (`W_GAME_SUSPECTED=12`, above mixin's 10).
+  On the 42 harvested reports that carry the line, our top-1 suspect matches
+  the game's first-listed mod 90% of the time.
+- 8 rules from the 12-repo corpus expansion (33 → 41), every one pinned to
+  the real report that motivated it: `mod.binary-incompat` (NoSuchField/
+  MethodError), `mod.linkage-duplicate` (LinkageError / loader constraint),
+  `quilt.config-broken` (JSON5 strict-mode), `loader.namespace-missing`
+  (mappings not loaded), `mixin.injection-failed` (@WrapOperation / LVT),
+  `crash.registry-load-failed`, `net.connectivity` (UnknownHost / cert),
+  `env.headless-jvm` (libawt missing).
+- `tests/verify_new_rules.py`: corpus hit-check + evidence-backed firing
+  guard (a rule may only fire where its own evidence line is present).
+
+### Fixed
+- **Log-file FATAL root-cause selection** — `_parse_exceptions` only captured
+  the FIRST top-level exception, so on log files it latched onto early
+  WARN/INFO noise (e.g. fabric-loader#611: a config-read
+  `NumberFormatException`) and missed the real `/FATAL] Unreported
+  exception thrown!` crash below it. Now every top-level header starts a new
+  block, FATAL-introduced blocks are flagged (`ExceptionBlock.fatal`), and
+  `root_cause` prefers the last FATAL chain. This was silently misdiagnosing
+  every multi-exception log.
+
+### Added (earlier this cycle)
 - `runtime-crashes.yaml` rule pack (7 rules), derived from 20 real harvested
   reports that the first two packs left undiagnosed: NeoForge/Fabric
   load-failure wordings, client-only class on dedicated server, threading
