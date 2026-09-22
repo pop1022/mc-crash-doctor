@@ -26,7 +26,15 @@ echo "── [3/4] end-to-end + ground truth ──"
 if ! "$PY" tests/test_e2e.py; then fail=1; fi
 
 echo
-echo "── [4/4] import + CLI smoke ──"
+echo "── [4/5] pytest suite (per-file corpus cases) ──"
+if "$PY" -m pytest --version >/dev/null 2>&1; then
+  if ! "$PY" -m pytest tests/test_corpus.py -q; then fail=1; fi
+else
+  echo "  (pytest not installed -- skipping; pip install pytest)"
+fi
+
+echo
+echo "── [5/5] import + CLI smoke ──"
 if ! "$PY" -c "import mcd; assert mcd.__version__; mcd.RuleSet.load()"; then fail=1; fi
 if ! "$PY" -m mcd --rules >/dev/null 2>&1; then fail=1; fi
 echo "  ✓ import mcd + rule load + CLI --rules"
