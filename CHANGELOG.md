@@ -20,16 +20,29 @@ versions follow [SemVer](https://semver.org/).
   NPE/CCE messages quote fully-qualified class names, which resolves the
   owning mod even for issue-tracker fragments with no Mod List. Added
   `mekanism.api` package override.
-- `tests/test_gaps.py`: 11 harvested reports pinned to the rules that must
-  fire (and the suspects that must be attributed); blind-spot bound (≤3);
-  catch-all honesty check on the full vendored corpus.
+- `tests/test_gaps.py`: 15 harvested reports pinned to the rules that must
+  fire (and the suspects that must be attributed); corpus-wide diagnosis
+  rate floor (≥50%) with a tight absolute bound on the original Mekanism
+  subset; catch-all honesty check on the full vendored corpus.
 
 ### Changed
-- Harvested-corpus coverage: diagnosed 14/34 → 31/34; attributed 15/34 →
-  19/34 (56%). The 3 remaining blind spots are generic exceptions with pure
-  vanilla stacks — deliberately not guessed at.
+- Corpus expansion: 34 → 454 crash fragments from 12 mod repositories
+  (fabric-loader, fabric-api, Mekanism, Jade, RFTools, Curios,
+  twilightforest, sodium, quilt-loader, ModernFix, Placebo,
+  TinkersConstruct), 125 with weak-supervision maintainer labels.
+- `mod.incompatible-set` rewritten against real Fabric resolver wordings
+  ("Some of your mods are incompatible with the game or each other",
+  "mod 'X' requires any 0.8.x version ... but only the wrong version is
+  present"): blind FormattedException fragments 11 → 0.
+- Harvested-corpus diagnosis rate: 55.7% overall (Mekanism subset 91%,
+  RFTools 88%, Curios 81%); the old 34-fragment numbers (31/34) predate
+  the expansion and are not comparable.
+- `test_blind_spots_stay_bounded` is now scale-free: an absolute `blind ≤ 3`
+  assertion was written for the 34-fragment corpus and became meaningless at
+  454 fragments (more issues ⇒ more blind spots even with better rules).
+  Replaced with a rate floor + per-subset bound.
 - `run_tests.sh` / CI now run the whole `tests/` directory (corpus + gaps).
-- Rule count 25 → 32.
+- Rule count 25 → 33.
 
 ## [0.1.0] - 2026-09-22
 

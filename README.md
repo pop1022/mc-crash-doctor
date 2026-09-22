@@ -130,12 +130,12 @@ for f in findings:
 
 ## Covered failure modes
 
-32 rules across three packs. Rules are YAML — adding one needs no Python.
+33 rules across three packs. Rules are YAML — adding one needs no Python.
 
 | Pack | Rules |
 |---|---|
 | [`memory-performance.yaml`](mcd/rules/builtin/memory-performance.yaml) | heap OOM · save-time OOM · Metaspace OOM · GC overhead · ServerHangWatchdog · tick timeout · Java class version · mixin apply failure · mixin target missing · ticking entity/block entity · rendering · OpenGL/driver · disk full · corrupt region |
-| [`mod-loading.yaml`](mcd/rules/builtin/mod-loading.yaml) | missing dependency (Forge 1.13+/1.12 and older, Fabric/Quilt) · incompatible mod set · wrong MC version · duplicate mods · fatal load error · config parse error · missing coremod/library |
+| [`mod-loading.yaml`](mcd/rules/builtin/mod-loading.yaml) | missing dependency (Forge 1.13+/1.12 and older, Fabric/Quilt) · incompatible mod set · wrong MC version · duplicate mods · fatal load error · config parse error · missing coremod/library · corrupt/empty jar |
 | [`runtime-crashes.yaml`](mcd/rules/builtin/runtime-crashes.yaml) | NeoForge/Fabric load-failed wording · client-only class on dedicated server · threading violations · block-entity rendering · datapack/book failures · attributed runtime catch-all (fires only when the triage layer names a mod) |
 
 Platform detection covers Forge, NeoForge, Fabric, Quilt, Paper, Purpur, Folia, Spigot, CraftBukkit, Glowstone, Magma, Mohist, Arclight, CatServer, Velocity, Waterfall, BungeeCord, Bedrock, PocketMine, Geyser, and the major launchers — **100% on the 201-file regression corpus**.

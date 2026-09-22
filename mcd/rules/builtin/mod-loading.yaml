@@ -74,7 +74,7 @@ rules:
       - "https://docs.modrinth.com/docs/mods/dependencies/"
 
   - id: mod.incompatible-set
-    title: "Incompatible mod set"
+    title: "Incompatible mod set: {{cap:text:1}}"
     severity: fatal
     priority: 12
     confidence: 0.9
@@ -84,14 +84,26 @@ rules:
         - "FormattedException"
         - "ModResolutionException"
       text:
+        # Fabric resolver phrasings (real reports, harvested 2026-09):
+        #   "Some of your mods are incompatible with the game or each other!"
+        #   "Incompatible mods found!"
+        #   "mod 'Sodium' (sodium) requires any 0.8.x version ..., but only the
+        #    wrong version is present: 0.9.1+mc26.1.2!"
+        #   "mod 'Iris' (iris) ... incompatible with version 1.11.1 or earlier
+        #    ... yet a conflicting version is present"
+        - "mod '([^']+)' \\(([\\w\\-]+)\\)[^.\\n]*(?:requires|incompatible with|conflicts? with|but only the wrong version)"
+        - "Some of your mods are incompatible with the game or each other"
+        - "Incompatible mods found"
         - "incompatible mod set|is incompatible with any version of mod '([\\w\\- ]+)'"
     explanation: >-
-      Two mods declare they cannot coexist, or one needs a version the other
-      forbids. The resolver lists the exact pair.
+      Two mods cannot run together -- one declares a version range the other
+      violates, or they explicitly conflict. The resolver line names the exact
+      pair and the version it wanted vs what is installed.
     fixes:
-      - "Read the `Mod 'A' is incompatible with 'B'` line -- remove one of the two."
-      - "If both are wanted, check whether a newer build of either drops the conflict."
-      - "Common cause: two mods providing the same library (e.g. two different config libs)."
+      - "Read the resolver line: it says which mod needs which version range and what you actually have."
+      - "Update the lagging mod, or pin the pair to versions that overlap."
+      - "If the conflict is unresolvable (one mod forbids the other), remove one."
+      - "Common cause: a mod pinned to an old Sodium/Fabric-API range after you updated the other."
     suspects_from: []
 
   - id: mod.wrong-mc-version
@@ -196,3 +208,31 @@ rules:
       - "Install that library mod for {{mc_version}}."
       - "If the class is `net/minecraft/client/...` on a *server*, a client-only mod is installed on the server -- remove it."
     suspects_from: ["frame_mods", "jar"]
+
+  - id: mod.corrupt-jar
+    title: "A mod jar is corrupt or empty: {{cap:text:1}}"
+    severity: fatal
+    priority: 18
+    confidence: 0.95
+    tags: [corrupt, load-time, jar]
+    when:
+      exception:
+        - "java\\.util\\.zip\\.ZipException"
+        - "ZipException"
+      text:
+        # Real messages (harvested 2026-09): "zip file is empty",
+        # "zip END header not found", "invalid CEN header", "invalid LOC header".
+        # The path just before "]:" is the offending jar.
+        - "([^\\\\/\\[\\]]+\\.jar)\\]:\\s*java\\.util\\.zip\\.ZipException"
+        - "zip file is empty|zip END header not found|invalid (?:CEN|LOC) header|Not in GZIP format|error in opening zip file"
+    explanation: >-
+      A jar in the mods folder (or a library on the classpath) is not a valid
+      zip -- the download was truncated, interrupted, or the file got zeroed.
+      The named file cannot be read at all, so the loader aborts before the
+      game starts. This is never a config or compatibility problem.
+    fixes:
+      - "Delete the named jar and re-download it (the file is corrupt, not just outdated)."
+      - "Re-download from the official source (Modrinth/CurseForge); a partial download is the usual cause."
+      - "If it is a library under `libraries/` (e.g. icu4j), delete that file too -- the launcher re-fetches it."
+      - "Check disk health if several jars are corrupt at once."
+    suspects_from: ["jar"]

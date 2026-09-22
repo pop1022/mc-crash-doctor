@@ -128,12 +128,12 @@ for f in findings:
 
 ## 已覆盖的故障类型
 
-三个规则包共 32 条规则。规则是 YAML——加一条不用写 Python。
+三个规则包共 33 条规则。规则是 YAML——加一条不用写 Python。
 
 | 规则包 | 规则 |
 |---|---|
 | [`memory-performance.yaml`](mcd/rules/builtin/memory-performance.yaml) | 堆 OOM · 保存时 OOM · Metaspace OOM · GC overhead · ServerHangWatchdog · tick 超时 · Java 类版本 · mixin 应用失败 · mixin 目标缺失 · ticking entity/block entity · 渲染崩溃 · OpenGL/驱动 · 磁盘满 · 区块文件损坏 |
-| [`mod-loading.yaml`](mcd/rules/builtin/mod-loading.yaml) | 缺依赖（Forge 1.13+/1.12 及更早、Fabric/Quilt）· 模组集不兼容 · MC 版本不符 · 重复模组 · 加载期致命错误 · 配置解析失败 · 缺 coremod/前置库 |
+| [`mod-loading.yaml`](mcd/rules/builtin/mod-loading.yaml) | 缺依赖（Forge 1.13+/1.12 及更早、Fabric/Quilt）· 模组集不兼容 · MC 版本不符 · 重复模组 · 加载期致命错误 · 配置解析失败 · 缺 coremod/前置库 · jar 损坏/为空 |
 | [`runtime-crashes.yaml`](mcd/rules/builtin/runtime-crashes.yaml) | NeoForge/Fabric 加载失败措辞 · 服务端加载客户端类 · 线程违规 · 方块实体渲染 · 数据包/书籍加载失败 · 归因兜底规则（仅在定位到具体模组时触发） |
 
 平台识别覆盖 Forge、NeoForge、Fabric、Quilt、Paper、Purpur、Folia、Spigot、CraftBukkit、Glowstone、Magma、Mohist、Arclight、CatServer、Velocity、Waterfall、BungeeCord、Bedrock、PocketMine、Geyser 及主流启动器——在 201 份回归语料上 **100% 准确**。
