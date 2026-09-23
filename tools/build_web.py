@@ -40,6 +40,12 @@ def main() -> int:
         return 1
     wheel = wheels[0]
 
+    # regenerate the demo report (redacted real fixture) so the committed
+    # web/sample.js never drifts from the engine that diagnoses it
+    print("building web/sample.js ...")
+    subprocess.run([sys.executable, str(ROOT / "tools" / "make_web_sample.py")],
+                   cwd=ROOT, check=True)
+
     manifest = {"file": wheel.name}
     (WEB / "wheel-manifest.json").write_text(
         json.dumps(manifest, indent=2) + "\n", encoding="utf-8")

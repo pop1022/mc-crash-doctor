@@ -7,14 +7,20 @@ versions follow [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
-- **Web app** (`web/`, work in progress): a Pyodide (WASM Python) static site
-  that runs the *same* `diagnose()` pipeline as the CLI, entirely client-side
-  — the pasted log never leaves the browser. Built by `tools/build_web.py`
-  (wheel + manifest); deployable to GitHub Pages. **Status: assets written and
-  the wheel verified to contain the rule YAMLs, but the in-browser end-to-end
-  check did NOT run** — the local browser harness failed to start
-  (`daemon didn't come up`), so boot + sample-diagnosis is still unverified.
-  Do not advertise the web app until that passes.
+- **Web app** (`web/`): a Pyodide (WASM Python) static site that runs the
+  *same* `diagnose()` pipeline as the CLI, entirely client-side — the pasted
+  log never leaves the browser. Built by `tools/build_web.py` (wheel +
+  manifest + demo sample). **Verified end-to-end in a real browser**
+  (headless Edge over CDP, `tools/verify_web_e2e.py`): engine boots, the
+  75 KB redacted demo report diagnoses to `hang.watchdog` with **lithium**
+  attributed, and the suspect chip / severity badge / fix steps / evidence
+  lines all render. 6/6 acceptance checks pass.
+- `web/sample.js` + `tools/make_web_sample.py`: the demo report is a real
+  ground-truth fixture (the 22.42.32 watchdog hang), reduced to
+  header+stacktrace+System Details and passed through the corpus `redact()`
+  plus a path scrub, with a leak guard that refuses to write if any username /
+  IPv4 / drive path survives. Regenerated on every `build_web.py` run so it
+  can't drift from the engine.
 - **`Suspected Mods:` attribution** — vanilla/Fabric print their own verdict
   into the crash report; we now parse it (`rep.suspected_mods`) and feed it as
   the highest-weight triage signal (`W_GAME_SUSPECTED=12`, above mixin's 10).

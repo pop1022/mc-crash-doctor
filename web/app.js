@@ -205,7 +205,9 @@ function diagnose() {
 
 $("go").addEventListener("click", diagnose);
 $("sample").addEventListener("click", () => {
-  $("log").value = SAMPLE;
+  // sample.js (generated from a redacted real report by
+  // tools/make_web_sample.py) when present; tiny built-in fallback otherwise.
+  $("log").value = window.MCD_SAMPLE || SAMPLE;
   diagnose();
 });
 // Ctrl/Cmd+Enter in the textarea also diagnoses

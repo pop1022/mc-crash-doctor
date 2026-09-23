@@ -15,18 +15,20 @@
 
 ## 阶段 0：收尾现有半成品（本周，最高优先）
 
-> 理由：网页版骨架已提交但**未验证**，这是"说了没做"的债务，先清掉。
-> 半成品挂着比没做更糟——它让 README/CHANGELOG 处于"标注未验证"的尴尬态。
+> 理由：网页版骨架曾以"未验证"状态提交，这是"说了没做"的债务，先清掉。
+> 0.1 已于 2026-09-23 完成真实浏览器验证；剩 0.2 部署、0.3 死规则清理。
 
-- [!] **0.1 网页版端到端验证**
-  - 做：`cd web && python -m http.server 8765` → 浏览器开 `index.html` →
-    等 `engine ready` → 点 `Try a sample` → 确认渲染出 OOM 诊断卡 + suspect。
-    再贴一份真实 `tests/fixtures/ground-truth/` 报告确认。
-  - 阻塞原因：上次 `browser_exec` 的 harness daemon 启动失败。重试；若仍失败，
-    退而求其次用 Pyodide 官方 CDN 在 Node 里跑 `mcd_diagnose(sample)` 做
-    无头验证（证明 Python 逻辑在 WASM 下可运行），UI 渲染单独人工确认。
-  - 验收：样本报告在浏览器里产出 ≥1 个 finding + 正确的 suspect（mekanism）。
-    截图或 DOM 文本读回为证。**通过前 CHANGELOG 的"未验证"标注不许删。**
+- [x] **0.1 网页版端到端验证**（2026-09-23 完成）
+  - 做法：本地 `python -m http.server 8765` 起服务 + headless Edge
+    `--remote-debugging-port=9222` 起浏览器，`tools/verify_web_e2e.py` 通过
+    CDP 驱动真实页面：等引擎 ready → 点 "Try a sample" → 读回渲染后的 DOM。
+    （desktop_preview 面板与 browser_exec harness 在本机都不可用，CDP 直驱
+    是可靠通道；Edge 需 `suppress_origin` 否则 WS 握手 403。）
+  - 结果：**6/6 验收通过**。样本是脱敏后的真实 watchdog 报告（75 KB，
+    `web/sample.js`），浏览器里渲染出 suspect 芯片 `lithium`、FATAL/ERROR
+    徽章、6 条修复、4 条证据行。非逻辑模拟——是真实浏览器 DOM 读回。
+  - 产物：`tools/verify_web_e2e.py`（可复跑）、`tools/make_web_sample.py`
+    （生成脱敏样本，带泄漏守卫，已并入 `build_web.py`）。
 - [ ] **0.2 网页版部署 GitHub Pages**（依赖 0.1）
   - 做：`.github/workflows/pages.yml`：`python tools/build_web.py` →
     `actions/upload-pages-artifact web/` → `actions/deploy-pages`。
@@ -141,8 +143,8 @@
 
 > **就看这里。** 上面是全景，但你现在只需要做：
 
-1. **阶段 0.1**：网页版端到端验证（半成品债务，最优先）
-2. 然后 **0.2** Pages 部署、**0.3** 零触发规则清理
+1. **阶段 0.2**：网页版部署 GitHub Pages（0.1 已验证通过，可以部署了）
+2. 然后 **0.3** 零触发规则清理
 3. 阶段 0 清空后，进 **1A.1**（Incident Schema）——这是兼容图的地基
 
 每完成一步，把对应 `[ ]` 改 `[x]`，并在 CHANGELOG 记一笔。

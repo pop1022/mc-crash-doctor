@@ -55,7 +55,8 @@
 - **形态**：Python 库 · CLI · Web · GitHub Action · API · Discord/Matrix/QQ Bot。
 - **现状**（2026-09-23）：库 + CLI 完成；41 条规则；445 测试绿；
   平台识别 201/201；归因接入游戏官方 `Suspected Mods`（top-1 一致率 90%）；
-  Web 骨架已写但**端到端未验证**；Action / Bot 未做。
+  Web 版已在真实浏览器端到端验证通过（headless Edge/CDP，脱敏真实报告 →
+  watchdog+lithium 归因正确渲染）；Action / Bot 未做。
 
 ### 2. Pack Doctor — 整合包健康检查 【第一个"做大"的方向】
 
