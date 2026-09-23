@@ -1,0 +1,87 @@
+name: pages
+
+# Deploy the browser web app to GitHub Pages.
+# The site is fully static: web/index.html loads Pyodide from CDN, micropip-
+# installs the project wheel, and runs diagnosis client-side. No backend.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# One deploy at a time; a newer push cancels an in-flight one.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write   # required by actions/deploy-pages for OIDC
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install build pyyaml
+
+      - name: Build web assets (wheel + manifest + demo sample)
+        run: python tools/build_web.py
+
+      - name: Sanity-check the built site
+        run: |
+          test -f web/index.html || { echo "missing index.html"; exit 1; }
+          test -f web/app.js || { echo "missing app.js"; exit 1; }
+          test -f web/sample.js || { echo "missing sample.js"; exit 1; }
+          test -f web/wheel-manifest.json || { echo "missing manifest"; exit 1; }
+          ls web/*.whl >/dev/null 2>&1 || { echo "missing wheel"; exit 1; }
+          # the demo sample must carry no obvious PII before it goes public
+          python - <<'PY'
+          import re, sys
+          s = open("web/sample.js", encoding="utf-8").read()
+          bad = []
+          if "Administrator" in s:
+              bad.append("windows username")
+          # a real drive path (C:\ or /home/user) must not survive; the
+          # "s:\"-style grep hits are JSON ": " sequences, not paths
+          if re.search(r"[A-Za-z]:\\\\", s) or re.search(r"/home/[a-z]", s):
+              bad.append("absolute path")
+          if bad:
+              print("PII leak in sample.js:", bad)
+              sys.exit(1)
+          print(f"sample.js clean ({len(s)} bytes)")
+          PY
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          # The job's GITHUB_TOKEN has pages:write (see permissions: above),
+          # so this enables Pages on first run even if the repo never had it
+          # turned on -- no manual Settings click, no PAT pages scope needed.
+          enablement: true
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
