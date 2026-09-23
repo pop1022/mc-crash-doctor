@@ -78,12 +78,10 @@ from mcd.cli import diagnose as _diagnose
 
 def mcd_diagnose(text):
     rep, findings, t = _diagnose(None, text, source="<browser>")
-    from mcd.report.render import build_summary
-    doc = {
-        "summary": build_summary(rep),
-        "findings": [f.to_dict() for f in findings],
-        "triage": t.to_dict() if t else None,
-    }
+    # Single source of truth -- same builder the CLI uses, so the browser
+    # document carries schema_version and can't drift from render_json.
+    from mcd.report.render import build_incident
+    doc = build_incident(rep, findings, t)
     return json.dumps(doc, ensure_ascii=False)
 `);
     ready = true;

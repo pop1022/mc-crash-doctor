@@ -36,6 +36,9 @@ dependencies = [
 [project.optional-dependencies]
 # Pretty terminal output. The CLI falls back to plain text without it.
 pretty = ["rich>=13.0"]
+# Schema-conformance tests (tests/test_schema.py). Core diagnosis never
+# imports jsonschema; only the test suite does.
+test = ["pytest>=7", "jsonschema>=4.18"]
 
 [project.urls]
 Homepage = "https://github.com/pop1022/mc-crash-doctor"

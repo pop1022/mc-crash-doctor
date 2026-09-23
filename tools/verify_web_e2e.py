@@ -18,13 +18,15 @@ Exit 0 = verified, 1 = failed. Temporary tool, kept out of the pytest suite
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 import urllib.request
 
 import websocket  # websocket-client
 
-CDP_HTTP = "http://127.0.0.1:9222"
+CDP_PORT = int(os.environ.get("MCD_CDP_PORT", "9222"))
+CDP_HTTP = f"http://127.0.0.1:{CDP_PORT}"
 PAGE = "http://127.0.0.1:8765/index.html"
 READY_TIMEOUT = 120      # pyodide CDN boot + micropip install
 DIAGNOSE_TIMEOUT = 120   # 75 KB sample through the WASM engine
@@ -164,6 +166,21 @@ def main() -> int:
     print("\nrendered DOM:")
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
+    # 4b. the in-browser engine must emit the canonical Incident doc.
+    # app.js renders the full doc into <details class="raw"><pre>, so read it
+    # back from the DOM -- this is exactly what the browser produced (calling
+    # the Python global from page scope doesn't work: it lives in Pyodide's
+    # namespace, not window). schema_version present proves app.js uses
+    # build_incident, not an inline copy that drifts from the CLI.
+    raw = cdp.js("(document.querySelector('.raw pre')||{}).textContent")
+    sv = None
+    if raw:
+        try:
+            sv = json.loads(raw).get("schema_version")
+        except (ValueError, AttributeError):
+            sv = None
+    print(f"\nin-browser Incident schema_version (from rendered raw JSON): {sv!r}")
+
     # 5. acceptance assertions
     checks = [
         ("suspect chip 'lithium' rendered",
@@ -175,6 +192,7 @@ def main() -> int:
         ("fix steps rendered", result["fixes"] >= 1),
         ("evidence lines rendered", result["evidence"] >= 1),
         ("status line reports findings", "finding" in result["status"].lower()),
+        ("in-browser doc carries schema_version", sv == "1.0"),
     ]
     print("\nacceptance:")
     ok = True

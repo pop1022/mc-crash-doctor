@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pop1022/mc-crash-doctor/schemas/incident.v1.json",
+  "title": "Incident",
+  "description": "The canonical mc-crash-doctor diagnosis document. Emitted identically by the CLI (--json), the browser web app, and any future API. Built by mcd.report.render.build_incident(); do not assemble this shape inline elsewhere. See docs/VISION.md §4.1 (Incident) for the roadmap this anchors.",
+  "type": "object",
+  "required": ["schema_version", "summary", "findings", "triage"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Document contract version. Consumers pin to the major.",
+      "pattern": "^\\d+\\.\\d+$"
+    },
+    "source": {
+      "type": "string",
+      "description": "Origin path or marker (e.g. '<browser>', a filename). May be empty."
+    },
+    "summary": { "$ref": "#/$defs/summary" },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" }
+    },
+    "triage": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/triage" }
+      ]
+    }
+  },
+  "$defs": {
+    "summary": {
+      "type": "object",
+      "required": ["kind", "loader", "minecraft_version", "root_cause",
+                    "exception_chain", "mods_parsed"],
+      "additionalProperties": true,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["crash-report", "log", "unknown", ""]
+        },
+        "time": { "type": ["string", "null"] },
+        "description": { "type": ["string", "null"] },
+        "loader": { "type": "string" },
+        "loader_version": { "type": ["string", "null"] },
+        "launcher": { "type": ["string", "null"] },
+        "minecraft_version": { "type": ["string", "null"] },
+        "java_version": { "type": ["string", "null"] },
+        "java_major": { "type": ["integer", "null"] },
+        "os": { "type": ["string", "null"] },
+        "cpus": { "type": ["integer", "null"] },
+        "heap_used_mib": { "type": ["integer", "null"] },
+        "heap_current_mib": { "type": ["integer", "null"] },
+        "heap_max_mib": { "type": ["integer", "null"] },
+        "xms_mib": { "type": ["integer", "null"] },
+        "xmx_mib": { "type": ["integer", "null"] },
+        "max_metaspace_mib": { "type": ["integer", "null"] },
+        "mod_count": { "type": ["integer", "null"] },
+        "mods_parsed": { "type": "integer", "minimum": 0 },
+        "coremods": { "type": "integer", "minimum": 0 },
+        "root_cause": { "type": ["string", "null"] },
+        "exception_chain": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "is_server": { "type": ["boolean", "null"] },
+        "is_client": { "type": ["boolean", "null"] }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "required": ["rule_id", "title", "severity", "confidence"],
+      "additionalProperties": true,
+      "properties": {
+        "rule_id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string" },
+        "severity": {
+          "type": "string",
+          "enum": ["fatal", "error", "warning", "hint", "info"]
+        },
+        "summary": { "type": "string" },
+        "explanation": { "type": "string" },
+        "evidence": { "type": "array", "items": { "type": "string" } },
+        "fixes": { "type": "array", "items": { "type": "string" } },
+        "suspects": { "type": "array", "items": { "type": "string" } },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "refs": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "triage": {
+      "type": "object",
+      "required": ["suspects"],
+      "additionalProperties": true,
+      "properties": {
+        "suspects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/suspect" }
+        },
+        "unresolved_modids": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "notes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "suspect": {
+      "type": "object",
+      "required": ["modid", "score", "confidence"],
+      "additionalProperties": true,
+      "properties": {
+        "modid": { "type": "string" },
+        "name": { "type": ["string", "null"] },
+        "file": { "type": ["string", "null"] },
+        "version": { "type": ["string", "null"] },
+        "score": { "type": "number" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "reasons": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

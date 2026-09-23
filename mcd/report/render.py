@@ -80,15 +80,34 @@ def _fmt_heap(s: dict) -> str:
 # --------------------------------------------------------------------------
 # JSON
 # --------------------------------------------------------------------------
-def render_json(rep: CrashReport, findings: list[Finding], triage,
-                out: IO[str]) -> None:
-    doc = {
+# Bump when the Incident document shape changes in a way consumers must know
+# about. Additive optional fields = minor (no bump needed for the const here
+# unless we want to advertise it); removed/renamed/retyped fields = major.
+SCHEMA_VERSION = "1.0"
+
+
+def build_incident(rep: CrashReport, findings: list[Finding], triage) -> dict:
+    """The canonical Incident document.
+
+    Single source of truth for the JSON shape: the CLI (`render_json`), the
+    browser app (`web/app.js` warm-up), and any future API all emit exactly
+    this. Validated by `tests/test_schema.py` against
+    `data/schemas/incident.v1.json`. Do not build the doc inline elsewhere --
+    that is how the CLI and web app silently drift apart.
+    """
+    return {
+        "schema_version": SCHEMA_VERSION,
         "source": rep.source_path,
         "summary": build_summary(rep),
         "findings": [f.to_dict() for f in findings],
         "triage": triage.to_dict() if triage else None,
     }
-    json.dump(doc, out, ensure_ascii=False, indent=2)
+
+
+def render_json(rep: CrashReport, findings: list[Finding], triage,
+                out: IO[str]) -> None:
+    json.dump(build_incident(rep, findings, triage), out,
+              ensure_ascii=False, indent=2)
     out.write("\n")
 
 

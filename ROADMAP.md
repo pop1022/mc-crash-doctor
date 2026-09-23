@@ -61,12 +61,16 @@
 
 ### 1A. 数据模型固化（最优先，因为兼容图依赖它）
 
-- [ ] **1A.1 Incident JSON Schema 定版**
-  - 做：把 `CrashReport + Finding + TriageResult` 的 `to_dict()` 输出固化为
-    带 `schema_version` 的 JSON Schema，写 `data/schemas/incident.v1.json`。
-    `mcd --json` 输出必须 conform。
-  - 验收：加 `tests/test_schema.py`，用 jsonschema 校验全部语料的输出；
-    schema 文件入仓。
+- [x] **1A.1 Incident JSON Schema 定版**（2026-09-23 完成）
+  - 做：`mcd/report/render.py` 抽出 `build_incident()` 单一事实来源 +
+    `SCHEMA_VERSION="1.0"`；schema 写 `data/schemas/incident.v1.json`
+    （draft 2020-12，严格模式 `additionalProperties:false` 顶层）。
+    **顺手消灭了一个真 drift**：web/app.js 曾内联拼 doc（已缺
+    `schema_version`），现改为共用 `build_incident`，浏览器输出与 CLI
+    逐字节同源，并重跑浏览器 e2e 验证（7/7 过，含 schema_version 检查）。
+  - 验收：`tests/test_schema.py`（78 测试：地面真值+合成 fixture 全量、
+    aternos 抽样 25、harvested 抽样 40、空输入边界）全过；
+    jsonschema 进 `[test]` extra + CI。门禁 530 passed。
 - [ ] **1A.2 兼容边落盘（为产品线 5 埋管道，现在不建图）**
   - 做：每次诊断把 `(loader, mc_version, modid, mod_version, suspect, relation)`
     以可追加 JSONL 写入 `corpus/compat-edges.jsonl`（脱敏后）。relation ∈
@@ -157,9 +161,11 @@
 1. **阶段 0.2**：网页版部署 GitHub Pages——workflow 已就绪，**卡在需用户
    一次性手动启用**（Settings → Pages → Source 选 "GitHub Actions"）。启用后
    下次 push 自动部署。这是当前唯一的阶段 0 阻塞。
-2. 阶段 0 清空后，进 **1A.1**（Incident Schema）——这是兼容图的地基。
-3. 已完成：0.1 网页版端到端验证 ✓、0.3 零触发规则清理 ✓（4 条合成 fixture
-   覆盖 + 修了 native.gl 的 mixin 误判 bug）。
+2. 下一步：**1A.2 兼容边落盘**（每次诊断把 suspect 边追加到
+   `corpus/compat-edges.jsonl`，为兼容图埋管道）。
+3. 已完成：0.1 网页版端到端验证 ✓ · 0.3 零触发规则清理 ✓ ·
+   1A.1 Incident Schema v1.0 ✓（build_incident 单一来源，CLI/web 同源，
+   78 条 schema 测试，门禁 530 绿）。
 
 每完成一步，把对应 `[ ]` 改 `[x]`，并在 CHANGELOG 记一笔。
 

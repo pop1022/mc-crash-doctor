@@ -7,6 +7,15 @@ versions follow [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Incident schema v1.0** (ROADMAP 1A.1): `data/schemas/incident.v1.json`
+  (JSON Schema draft 2020-12) pins the diagnosis document contract.
+  `build_incident()` in `mcd/report/render.py` is now the single source of
+  truth — the CLI `--json`, the browser app, and any future API all emit
+  exactly this shape, stamped with `schema_version`. The web app had already
+  drifted (inline doc, missing the version field); fixed by sharing the
+  builder and re-verifying end-to-end in the browser (7/7 acceptance).
+  `tests/test_schema.py`: 78 conformance tests (fixtures + corpus samples +
+  empty-input edge case); `jsonschema` added to the `[test]` extra and CI.
 - **Web app** (`web/`): a Pyodide (WASM Python) static site that runs the
   *same* `diagnose()` pipeline as the CLI, entirely client-side — the pasted
   log never leaves the browser. Built by `tools/build_web.py` (wheel +
