@@ -153,5 +153,5 @@ Initial release.
   deep inside large reports (>40 KB) are found.
 - `java.lang.Error` exception-header regex (ServerHangWatchdog reports).
 
-[Unreleased]: https://github.com/YOURNAME/mc-crash-doctor/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/YOURNAME/mc-crash-doctor/releases/tag/v0.1.0
+[Unreleased]: https://github.com/pop1022/mc-crash-doctor/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/pop1022/mc-crash-doctor/releases/tag/v0.1.0

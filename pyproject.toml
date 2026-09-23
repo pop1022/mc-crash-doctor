@@ -38,8 +38,8 @@ dependencies = [
 pretty = ["rich>=13.0"]
 
 [project.urls]
-Homepage = "https://github.com/YOURNAME/mc-crash-doctor"
-Issues = "https://github.com/YOURNAME/mc-crash-doctor/issues"
+Homepage = "https://github.com/pop1022/mc-crash-doctor"
+Issues = "https://github.com/pop1022/mc-crash-doctor/issues"
 
 [project.scripts]
 mc-crash-doctor = "mcd.cli:main"

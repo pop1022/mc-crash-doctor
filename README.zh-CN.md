@@ -79,7 +79,7 @@ Python 3.9+。唯一的硬依赖是 PyYAML。
 源码安装：
 
 ```bash
-git clone https://github.com/YOURNAME/mc-crash-doctor
+git clone https://github.com/pop1022/mc-crash-doctor
 cd mc-crash-doctor
 pip install -e ".[pretty]"
 ```

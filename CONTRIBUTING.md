@@ -6,7 +6,7 @@ rule set is YAML; no Python needed.
 ## Quick start
 
 ```bash
-git clone https://github.com/YOURNAME/mc-crash-doctor
+git clone https://github.com/pop1022/mc-crash-doctor
 cd mc-crash-doctor
 pip install -e ".[pretty]"
 bash run_tests.sh          # all gates

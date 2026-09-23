@@ -89,7 +89,7 @@ Python 3.9+. Only hard dependency is PyYAML.
 From source:
 
 ```bash
-git clone https://github.com/YOURNAME/mc-crash-doctor
+git clone https://github.com/pop1022/mc-crash-doctor
 cd mc-crash-doctor
 pip install -e ".[pretty]"
 ```
