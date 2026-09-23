@@ -26,6 +26,14 @@ Paste a crash report from your 200-mod server and get back *"lithium, 97% confid
 
 [中文说明](README.zh-CN.md) · [Why this exists](#why-this-exists) · [Install](#install) · [Usage](#usage) · [Add a rule](#add-a-rule)
 
+> **Project scope.** `mc-crash-doctor` is the diagnosis engine — the first
+> layer (L0) of a larger goal: a *Minecraft mod-ecosystem reliability
+> platform* (crash doctoring today; pack health checks, mod-quality tooling,
+> and a compatibility graph later). See [`docs/VISION.md`](docs/VISION.md)
+> for the north star and [`ROADMAP.md`](ROADMAP.md) for what's actually being
+> built next. Everything shipped so far is the CLI + Python engine below;
+> the rest is design, not vaporware we claim as done.
+
 ---
 
 ## Why this exists
