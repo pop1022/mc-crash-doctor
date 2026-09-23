@@ -33,5 +33,9 @@ tmp/
 corpus/github/
 corpus/harvest_summary.json
 
+# AI handoff doc: contains local-environment details (token path, proxy port)
+# and user working preferences -- deliberately never published.
+HANDOFF.md
+
 # The aternos corpus IS committed (MIT, with attribution in NOTICE.md).
 !corpus/aternos/
