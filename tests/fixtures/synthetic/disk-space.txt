@@ -1,0 +1,37 @@
+---- Minecraft Crash Report ----
+// SYNTHETIC FIXTURE -- not a real report. Exercises disk.space.
+// IOException "No space left on device" during a world write.
+// See tests/test_rule_fixtures.py.
+
+Time: 2026-09-20 06:41:12
+Description: Exception in server tick loop
+
+java.io.IOException: No space left on device
+	at java.base/java.io.FileOutputStream.writeBytes(Native Method) ~[?:?]
+	at java.base/java.io.FileOutputStream.write(FileOutputStream.java:349) ~[?:?]
+	at java.base/java.io.BufferedOutputStream.flushBuffer(BufferedOutputStream.java:110) ~[?:?]
+	at java.base/java.io.BufferedOutputStream.flush(BufferedOutputStream.java:168) ~[?:?]
+	at net.minecraft.nbt.NbtIo.m_128939_(NbtIo.java:37) ~[server-1.20.1-20230612.114412-srg.jar%23589!/:?]
+	at net.minecraft.world.level.chunk.storage.RegionFile.m_63706_(RegionFile.java:140) ~[server-1.20.1-20230612.114412-srg.jar%23589!/:?]
+	at net.minecraft.server.MinecraftServer.m_5703_(MinecraftServer.java:914) ~[server-1.20.1-20230612.114412-srg.jar%23589!/:?]
+	at net.minecraft.server.dedicated.DedicatedServer.m_5703_(DedicatedServer.java:294) ~[server-1.20.1-20230612.114412-srg.jar%23589!/:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[?:?]
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- System Details --
+Details:
+	Minecraft Version: 1.20.1
+	Java Version: 17.0.10, Debian
+	Java VM Version: OpenJDK 64-Bit Server VM (mixed mode, sharing), Debian
+	Memory: 2100 MiB / 6144 MiB
+	JVM Flags: 2 total; -Xms2G -Xmx6G
+	Operating System: Linux (amd64) version 6.1.0
+	CPU: 4x Intel(R) Core(TM) i5-9400F
+	Server Running: true
+	Player Count: 3 / 20
+	Mod Count: 90
+	Mods: 
+		Iron Chests|ironchest|1.20.1-14.4.3|DONE|NOSIGNATURE|ironchest-1.20.1-14.4.3.jar

@@ -1,0 +1,36 @@
+---- Minecraft Crash Report ----
+// SYNTHETIC FIXTURE -- not a real report. Exercises oom.gc-overhead.
+// GC overhead limit exceeded = >98% of time in GC reclaiming <2% of heap.
+// See tests/test_rule_fixtures.py.
+
+Time: 2026-09-20 12:02:55
+Description: Exception in server tick loop
+
+java.lang.OutOfMemoryError: GC overhead limit exceeded
+	at java.base/java.util.HashMap.resize(HashMap.java:762) ~[?:?]
+	at net.minecraft.world.level.entity.PersistentEntitySectionManager.m_142646_(PersistentEntitySectionManager.java:201) ~[server-1.20.1-20230612.114412-srg.jar%23589!/:?]
+	at net.minecraft.server.MinecraftServer.m_5703_(MinecraftServer.java:914) ~[server-1.20.1-20230612.114412-srg.jar%23589!/:?]
+	at net.minecraft.server.dedicated.DedicatedServer.m_5703_(DedicatedServer.java:294) ~[server-1.20.1-20230612.114412-srg.jar%23589!/:?]
+	at net.minecraft.server.MinecraftServer.m_5705_(MinecraftServer.java:808) ~[server-1.20.1-20230612.114412-srg.jar%23589!/:?]
+	at net.minecraft.server.MinecraftServer.m_130011_(MinecraftServer.java:657) ~[server-1.20.1-20230612.114412-srg.jar%23589!/:?]
+	at net.minecraft.server.MinecraftServer.m_206580_(MinecraftServer.java:251) ~[server-1.20.1-20230612.114412-srg.jar%23589!/:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[?:?]
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- System Details --
+Details:
+	Minecraft Version: 1.20.1
+	Java Version: 21.0.12, Eclipse Adoptium
+	Memory: 3990 MiB / 4096 MiB
+	JVM Flags: 2 total; -Xms4G -Xmx4G
+	Operating System: Linux (amd64) version 5.15.0
+	CPU: 8x AMD Ryzen 7 5800X
+	Server Running: true
+	Player Count: 6 / 50
+	Mod Count: 180
+	Mods: 
+		Create|create|0.5.1.f|DONE|NOSIGNATURE|create-1.20.1-0.5.1.f.jar
+		Flywheel|flywheel|0.6.10|DONE|NOSIGNATURE|flywheel-forge-1.20.1-0.6.10.jar

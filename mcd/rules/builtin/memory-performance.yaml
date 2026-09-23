@@ -322,7 +322,9 @@ rules:
   - client
   when:
     exception:
-    - org\.lwjgl\.LWJGLException|org\.spongepowered\.asm\.mixin\.InjectionError
+    - org\.lwjgl\.LWJGLException
+    - org\.lwjgl\.opengl\.OpenGLException
+    - org\.lwjgl\.glfw\.[\w.]*Exception
     exception_msg:
     - Pixel format not accelerated|OpenGL|GLFW
     text:

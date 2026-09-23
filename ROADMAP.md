@@ -29,17 +29,28 @@
     徽章、6 条修复、4 条证据行。非逻辑模拟——是真实浏览器 DOM 读回。
   - 产物：`tools/verify_web_e2e.py`（可复跑）、`tools/make_web_sample.py`
     （生成脱敏样本，带泄漏守卫，已并入 `build_web.py`）。
-- [ ] **0.2 网页版部署 GitHub Pages**（依赖 0.1）
-  - 做：`.github/workflows/pages.yml`：`python tools/build_web.py` →
-    `actions/upload-pages-artifact web/` → `actions/deploy-pages`。
+- [!] **0.2 网页版部署 GitHub Pages**（workflow 已就绪，等一次性手动启用）
+  - 做：`.github/workflows/pages.yml` 已提交（`build_web.py` → PII 守卫 →
+    `configure-pages(enablement:true)` → `upload-pages-artifact` → `deploy-pages`）。
+  - **阻塞**：workflow 首跑在 `Configure Pages` 步骤失败——
+    `Create Pages site failed: Resource not accessible by integration`。
+    这是 GitHub 硬限制：GITHUB_TOKEN 即使有 `pages:write`（已确认日志里授予了），
+    也**无法首次创建** Pages 站点；owner 的 fine-grained PAT 缺 Pages scope，
+    `POST /pages` 也 403。两者都绕不过首次创建。
+  - **解法（需用户一次性操作，30 秒）**：仓库 Settings → Pages →
+    Build and deployment → Source 选 **"GitHub Actions"**。启用后，下次 push
+    （或 Actions 里 re-run pages workflow）即自动部署成功，无需再手动。
   - 验收：`https://pop1022.github.io/mc-crash-doctor/` 可访问，贴样本出诊断。
-    （部署 workflow 需要推送方对仓库有 Workflows 写权限。）
-- [ ] **0.3 零触发规则清理**
-  - 做：41 条里约 11 条在现有语料没响过。每条二选一：
-    (a) 补合成 fixture 单测证明规则正确（推荐，tests/ 已有先例）；
-    (b) 确认是死规则则删。
-  - 验收：`verify_new_rules.py` 风格的脚本报告"0 条无证据规则"；每条规则
-    要么有语料命中、要么有 fixture 单测。
+- [x] **0.3 零触发规则清理**（2026-09-23 完成）
+  - 取证：审计 41 条规则 × 661 文件语料，零触发实为 **4 条**（非旧记的 11）：
+    `oom.save-time`、`oom.gc-overhead`、`disk.space`、`native.gl`——全是合法
+    失败模式，只是语料恰好无样本（情况 b，非死规则）。
+  - 做：4 份合成 fixture（`tests/fixtures/synthetic/`，明确标 SYNTHETIC，
+    仿真实报告格式）+ `tests/test_rule_fixtures.py`（7 测试）逐条证明触发。
+  - **顺带修真 bug**：`native.gl` 的 `exception` 误含 `mixin.InjectionError`
+    （复制粘贴），会把 mixin 注入失败误判成显卡驱动问题。已删，并加反向断言
+    `test_native_gl_does_not_fire_on_mixin_injection` 钉死。
+  - 验收：7/7 测试过；零触发规则数 4 → 0（每条要么语料命中、要么 fixture 证明）。
 
 ---
 
@@ -143,9 +154,12 @@
 
 > **就看这里。** 上面是全景，但你现在只需要做：
 
-1. **阶段 0.2**：网页版部署 GitHub Pages（0.1 已验证通过，可以部署了）
-2. 然后 **0.3** 零触发规则清理
-3. 阶段 0 清空后，进 **1A.1**（Incident Schema）——这是兼容图的地基
+1. **阶段 0.2**：网页版部署 GitHub Pages——workflow 已就绪，**卡在需用户
+   一次性手动启用**（Settings → Pages → Source 选 "GitHub Actions"）。启用后
+   下次 push 自动部署。这是当前唯一的阶段 0 阻塞。
+2. 阶段 0 清空后，进 **1A.1**（Incident Schema）——这是兼容图的地基。
+3. 已完成：0.1 网页版端到端验证 ✓、0.3 零触发规则清理 ✓（4 条合成 fixture
+   覆盖 + 修了 native.gl 的 mixin 误判 bug）。
 
 每完成一步，把对应 `[ ]` 改 `[x]`，并在 CHANGELOG 记一笔。
 

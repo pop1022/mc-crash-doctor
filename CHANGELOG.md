@@ -35,8 +35,25 @@ versions follow [SemVer](https://semver.org/).
   `env.headless-jvm` (libawt missing).
 - `tests/verify_new_rules.py`: corpus hit-check + evidence-backed firing
   guard (a rule may only fire where its own evidence line is present).
+- Synthetic fixtures for the 4 rules that never fire on the real corpora
+  (`oom.save-time`, `oom.gc-overhead`, `disk.space`, `native.gl`) — each
+  proves its rule on a clearly-marked SYNTHETIC report shaped like a real
+  one, plus `tests/test_rule_fixtures.py` (7 tests) with negative guards
+  (save-time must not fire without a chunk-save path; native.gl must not
+  fire on mixin errors).
+- `.github/workflows/pages.yml`: build + deploy the web app to GitHub Pages
+  with a PII guard on `sample.js` before upload. First-run deployment needs
+  a one-time manual enable (Settings → Pages → Source: GitHub Actions) —
+  GITHUB_TOKEN cannot create the Pages site even with `pages: write`
+  (GitHub limitation); tracked in ROADMAP 0.2.
 
 ### Fixed
+- **`native.gl` misdiagnosed mixin failures as graphics problems** — its
+  `exception` alternation wrongly included
+  `org.spongepowered.asm.mixin.InjectionError` (copy-paste), so any mixin
+  injection failure with an "OpenGL"-ish word nearby could render as a
+  driver issue. Now LWJGL/OpenGL/GLFW exceptions only; pinned by
+  `test_native_gl_does_not_fire_on_mixin_injection`.
 - **Log-file FATAL root-cause selection** — `_parse_exceptions` only captured
   the FIRST top-level exception, so on log files it latched onto early
   WARN/INFO noise (e.g. fabric-loader#611: a config-read

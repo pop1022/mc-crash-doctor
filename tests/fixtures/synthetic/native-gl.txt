@@ -1,0 +1,41 @@
+---- Minecraft Crash Report ----
+// SYNTHETIC FIXTURE -- not a real report. Exercises native.gl.
+// LWJGLException "Pixel format not accelerated" -- classic remote-desktop /
+// outdated-driver client crash. See tests/test_rule_fixtures.py.
+
+Time: 2026-09-20 20:15:33
+Description: Initializing game
+
+org.lwjgl.LWJGLException: Pixel format not accelerated
+	at org.lwjgl.opengl.WindowsPeerInfo.nChoosePixelFormat(Native Method) ~[lwjgl-2.9.4-nightly-20150209.jar%23200!/:?]
+	at org.lwjgl.opengl.WindowsPeerInfo.choosePixelFormat(WindowsPeerInfo.java:52) ~[lwjgl-2.9.4-nightly-20150209.jar%23200!/:?]
+	at org.lwjgl.opengl.WindowsDisplay.createWindow(WindowsDisplay.java:247) ~[lwjgl-2.9.4-nightly-20150209.jar%23200!/:?]
+	at org.lwjgl.opengl.Display.createWindow(Display.java:306) ~[lwjgl-2.9.4-nightly-20150209.jar%23200!/:?]
+	at org.lwjgl.opengl.Display.create(Display.java:848) ~[lwjgl-2.9.4-nightly-20150209.jar%23200!/:?]
+	at org.lwjgl.opengl.Display.create(Display.java:757) ~[lwjgl-2.9.4-nightly-20150209.jar%23200!/:?]
+	at net.minecraft.client.main.Main.main(Main.java:96) ~[client-intermediary.jar?:?]
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: Render thread
+Stacktrace:
+	at org.lwjgl.opengl.WindowsPeerInfo.nChoosePixelFormat(Native Method) ~[lwjgl-2.9.4-nightly-20150209.jar%23200!/:?]
+	at org.lwjgl.opengl.Display.create(Display.java:848) ~[lwjgl-2.9.4-nightly-20150209.jar%23200!/:?]
+
+-- System Details --
+Details:
+	Minecraft Version: 1.20.1
+	Java Version: 17.0.10, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode, sharing), Oracle Corporation
+	Memory: 512 MiB / 2048 MiB
+	Operating System: Windows 10 (amd64) version 10.0
+	Graphics card #0 name: Microsoft Basic Render Driver
+	Graphics card #0 vendor: Microsoft Corporation
+	CPU: 8x Intel(R) Core(TM) i7-9700K
+	Launched Version: forge-47.2.20
+	Backend library: LWJGL version 3.3.1 build 7
+	Is Modded: Definitely; Client brand changed to 'forge'
+	Mod Count: 12
