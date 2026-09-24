@@ -7,6 +7,20 @@ versions follow [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Blind evaluation + misattribution rate** (ROADMAP 1B.1/1B.2):
+  `tools/blind_eval.py` splits the harvested corpus into dev/blind sets
+  deterministically (rule-provenance pins forced to dev -- a rule is never
+  blind-tested on its motivating report; the rest hash-split). On the 218
+  blind reports: 65% diagnosed, 100% root-cause extraction, 0 parse errors;
+  dev 69% -- no meaningful overfitting. Attribution scored DIRECTION-AWARE
+  against maintainer verdicts (bug_in_this_mod -> top-1 must be the repo's
+  mod; root_cause_elsewhere -> top-1 must be external; ambiguous verdicts
+  reported not scored): blame-error rate 1/7 (14%). The single error
+  (Mekanism/8455, Sinytra Connector interaction invisible to stack-frame
+  attribution) is investigated, documented in corpus/BLIND_EVAL.md as a
+  known method limit, and pinned by
+  tests/test_blind_eval.py::test_direction_aware_scoring_on_known_samples.
+  Machine-readable result: corpus/blind-eval.json (redaction-checked).
 - **Rule provenance + lifecycle metadata** (ROADMAP 1A.3): every rule's YAML
   now carries `provenance.fixtures` (the real reports and/or synthetic
   fixtures that prove it, plus optional `expect_suspects`) and

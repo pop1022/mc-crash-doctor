@@ -1,0 +1,103 @@
+{
+  "generated_by": "tools/blind_eval.py",
+  "scoring": {
+    "bug_in_this_mod": "top-1 should equal repo mod",
+    "root_cause_elsewhere": "top-1 should be a different mod",
+    "known_issue/outdated_version": "ambiguous, reported not scored"
+  },
+  "split": {
+    "dev": 236,
+    "blind": 218
+  },
+  "blind": {
+    "n": 218,
+    "parse_errors": 0,
+    "diagnosed": 141,
+    "root_cause": 217,
+    "by_verdict": {
+      "(none)": [
+        159,
+        100
+      ],
+      "bug_in_this_mod": [
+        4,
+        2
+      ],
+      "known_issue": [
+        5,
+        5
+      ],
+      "meta": [
+        2,
+        2
+      ],
+      "not_a_bug": [
+        1,
+        1
+      ],
+      "outdated_version": [
+        2,
+        2
+      ],
+      "root_cause_elsewhere": [
+        3,
+        3
+      ],
+      "user_error_or_config": [
+        42,
+        26
+      ]
+    },
+    "mod_repo": {
+      "n": 143,
+      "diag": 102,
+      "bug_n": 4,
+      "bug_hit": 1,
+      "bug_miss": 0,
+      "bug_nopick": 3,
+      "else_n": 3,
+      "else_correct": 2,
+      "else_wrongrepo": 1,
+      "else_nopick": 0,
+      "ambig_n": 6,
+      "ambig_repo": 2
+    },
+    "loader_repo": {
+      "n": 75,
+      "diag": 39
+    }
+  },
+  "misattribution_samples": [
+    {
+      "report": "Mekanism/8455",
+      "verdict": "root_cause_elsewhere",
+      "top_suspect": "mekanism",
+      "repo_mod": "mekanism",
+      "url": "https://github.com/mekanism/Mekanism/issues/8455"
+    }
+  ],
+  "good_external_samples": [
+    {
+      "report": "TinkersConstruct/5379",
+      "verdict": "root_cause_elsewhere",
+      "top_suspect": "mantle",
+      "repo_mod": "tconstruct",
+      "url": "https://github.com/SlimeKnights/TinkersConstruct/issues/5379"
+    },
+    {
+      "report": "TinkersConstruct/5590",
+      "verdict": "root_cause_elsewhere",
+      "top_suspect": "mekanismtools",
+      "repo_mod": "tconstruct",
+      "url": "https://github.com/SlimeKnights/TinkersConstruct/issues/5590"
+    }
+  ],
+  "dev": {
+    "n": 236,
+    "diagnosed": 164,
+    "bug_hit": 0,
+    "bug_n": 4,
+    "blame_errors": 1,
+    "scored": 6
+  }
+}

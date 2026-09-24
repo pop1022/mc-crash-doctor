@@ -97,13 +97,27 @@
 
 ### 1B. 诊断可信度
 
-- [ ] **1B.1 盲测系统**
-  - 做：留出一批语料**不参与**规则编写，作为盲测集；`tools/blind_eval.py`
-    报告 precision/recall（用弱监督标注当 ground truth）。
-  - 验收：能输出"规则集在未见语料上的归因准确率"，作为回归基线。
-- [ ] **1B.2 错误甩锅率指标**
-  - 做：定义并测量"归因到错误模组"的比例（用维护者 `Not <Mod>` 标签反验）。
-  - 验收：北极星指标之一有了可跑的测量脚本。
+- [x] **1B.1 盲测系统**（2026-09-24 完成）
+  - 做：`tools/blind_eval.py`——确定性 dev/blind 划分（规则 provenance 钉桩
+    强制进 dev 集，"规则不能在自己催生它的报告上算盲测"；其余按
+    sha256(repo/issue) 哈希对半分）。盲集 218 份：**诊断率 65%**、
+    root cause 提取 100%、零解析错误；dev 集 69%——两者在噪声范围内，
+    **无显著过拟合**。结果报告 `corpus/BLIND_EVAL.md` + 机读
+    `corpus/blind-eval.json`（脱敏检查过，可提交）。
+  - 验收：`tests/test_blind_eval.py` 4 测试（划分确定性/无重叠/无丢失、
+    钉桩不漏进盲集、verdict 方向常量自洽、真实样本方向感知评分）。
+- [x] **1B.2 错误甩锅率**（2026-09-24 完成，与 1B.1 同工具）
+  - 做：**方向感知评分**（第一版单桶评分把 root_cause_elsewhere 的正确
+    外部归因误判为甩锅——已修正）：`bug_in_this_mod` 应命中仓库模组、
+    `root_cause_elsewhere` 应命中**其他**模组、known_issue/outdated 方向
+    不明只报告不计分。结果：**甩锅率 1/7 = 14%**。
+  - 唯一甩锅案例 Mekanism/8455 已手工取证并写成文档化边界：栈帧全是
+    mekanism.api（归因无过错），但维护者标签 `Not Mekanism`+`interaction`
+    ——真因是 Sinytra Connector 兼容层。**栈帧归因看不见字节码级模组交互**，
+    这是方法固有极限，如实记录于 BLIND_EVAL.md，并钉进测试
+    （未来若学会识别 Connector，改动必须是显式的）。
+  - 诚实标注：可计分样本仅 7 份，14% 置信区间很宽——是"找到并记录了
+    恰好一种失败模式"，不是稳定统计量。
 
 ### 1C. 分发形态
 
@@ -172,12 +186,13 @@
 1. **阶段 0.2**：网页版部署 GitHub Pages——workflow 已就绪，**卡在需用户
    一次性手动启用**（Settings → Pages → Source 选 "GitHub Actions"）。启用后
    下次 push 自动部署。这是当前唯一的阶段 0 阻塞。
-2. 下一步：**1B.1 盲测系统**（留出语料不参与规则编写，报告 precision/recall）
-   → **1B.2 错误甩锅率**（用维护者 `Not <Mod>` 标签反验归因错误率）。
-   1A 数据模型固化三步（Schema/兼容边/provenance 钉桩）已全部完成。
+2. 下一步：**1C.1 GitHub Action**（issue 自动诊断，dogfood 到本仓库）→
+   **1C.2 PyPI 发布**。1A 数据模型 + 1B 可信度已全部完成。
 3. 已完成：0.1 网页版验证 ✓ · 0.3 零触发规则清理 ✓ · 1A.1 Incident
-   Schema v1.0 ✓ · 1A.2 兼容边落盘 ✓（9895 条聚合声明）· 1A.3 规则
-   provenance 内联钉桩 ✓（41 条全带证据，37 verified + 4 experimental）。
+   Schema v1.0 ✓ · 1A.2 兼容边落盘 ✓ · 1A.3 provenance 钉桩 ✓ ·
+   1B.1 盲测系统 ✓（盲集诊断率 65% vs dev 69%，无过拟合）·
+   1B.2 甩锅率 ✓（1/7=14%，唯一案例 Mekanism/8455 为栈帧归因固有极限，
+   已文档化+钉测试）。
 
 每完成一步，把对应 `[ ]` 改 `[x]`，并在 CHANGELOG 记一笔。
 
