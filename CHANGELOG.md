@@ -7,6 +7,17 @@ versions follow [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Compatibility edges** (ROADMAP 1A.2): `tools/build_compat_edges.py`
+  mines the 454-fragment harvested corpus into 9,895 aggregated
+  CompatibilityClaims (`corpus/compat-edges.jsonl`, format documented in
+  `corpus/COMPAT_EDGES.md`) — deduped by (subject, object, relation, loader,
+  mc_version), joined to maintainer verdicts from the redacted index
+  (3,531 claims carry weak supervision). Relations: `caused` (82) /
+  `suspected` (92) / `co_occurred` (9,721, explicitly presence-not-guilt).
+  This is the seed pipeline for the Compatibility Graph (VISION line 5),
+  built years early because graphs eat structured data. Record-only —
+  nothing queries it yet. Diagnosis stays a pure function; edges are built
+  offline and reproducibly.
 - **Incident schema v1.0** (ROADMAP 1A.1): `data/schemas/incident.v1.json`
   (JSON Schema draft 2020-12) pins the diagnosis document contract.
   `build_incident()` in `mcd/report/render.py` is now the single source of

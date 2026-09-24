@@ -71,12 +71,16 @@
   - 验收：`tests/test_schema.py`（78 测试：地面真值+合成 fixture 全量、
     aternos 抽样 25、harvested 抽样 40、空输入边界）全过；
     jsonschema 进 `[test]` extra + CI。门禁 530 passed。
-- [ ] **1A.2 兼容边落盘（为产品线 5 埋管道，现在不建图）**
-  - 做：每次诊断把 `(loader, mc_version, modid, mod_version, suspect, relation)`
-    以可追加 JSONL 写入 `corpus/compat-edges.jsonl`（脱敏后）。relation ∈
-    {caused, suspected, co-occurred}。
-  - 验收：跑一遍 harvested 语料，产出 N 条边；文件格式有 README 说明。
-    **这是 VISION §四 CompatibilityClaim 的最小起点——只记录，不查询。**
+- [x] **1A.2 兼容边落盘**（2026-09-23 完成，方案 A：离线批量）
+  - 做：`tools/build_compat_edges.py` 扫 454 份 harvested 语料，聚合为
+    VISION §4.3 CompatibilityClaim 形状（按 subject/object/relation/loader/
+    mc_version 去重），写 `corpus/compat-edges.jsonl` + 格式文档
+    `corpus/COMPAT_EDGES.md`。**没有**照搬"每模组每报告一行"的天真方案
+    （那会产生 1.1 万行低信号原始边且无聚合）——聚合后 9895 条声明：
+    caused 82 / suspected 92 / co_occurred 9721，3531 条带维护者 verdict
+    （弱监督标注 join 自 index.jsonl）。诊断保持纯函数，边由离线工具生成。
+  - 验收：键唯一性校验过；caused 样例可解释（fabric-registry-sync-v0 x9、
+    curios x7、jade x5）；co_occurred 明确标注为 presence≠guilt 弱信号。
 - [ ] **1A.3 规则元数据内联钉桩**
   - 做：把 test_gaps.py 的"规则↔真实报告"绑定**搬进规则 YAML**
     （`provenance: {fixture: "sodium/3711", issue: ...}`），加 `lifecycle_status`
@@ -161,11 +165,11 @@
 1. **阶段 0.2**：网页版部署 GitHub Pages——workflow 已就绪，**卡在需用户
    一次性手动启用**（Settings → Pages → Source 选 "GitHub Actions"）。启用后
    下次 push 自动部署。这是当前唯一的阶段 0 阻塞。
-2. 下一步：**1A.2 兼容边落盘**（每次诊断把 suspect 边追加到
-   `corpus/compat-edges.jsonl`，为兼容图埋管道）。
-3. 已完成：0.1 网页版端到端验证 ✓ · 0.3 零触发规则清理 ✓ ·
-   1A.1 Incident Schema v1.0 ✓（build_incident 单一来源，CLI/web 同源，
-   78 条 schema 测试，门禁 530 绿）。
+2. 下一步：**1A.3 规则元数据内联钉桩**（provenance + lifecycle_status
+   进规则 YAML，test_gaps 改从元数据读）。
+3. 已完成：0.1 网页版验证 ✓ · 0.3 零触发规则清理 ✓ · 1A.1 Incident
+   Schema v1.0 ✓ · 1A.2 兼容边落盘 ✓（9895 条聚合声明，3531 条带维护者
+   verdict）。
 
 每完成一步，把对应 `[ ]` 改 `[x]`，并在 CHANGELOG 记一笔。
 
