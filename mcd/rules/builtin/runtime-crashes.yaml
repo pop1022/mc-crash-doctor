@@ -24,6 +24,13 @@ rules:
       - "Update or remove the mod named there; if it was just added/updated, revert that change first."
       - "If the cause is a missing dependency, install the library mod it names for {{mc_version}}."
     suspects_from: ["frame_mods", "jar", "mixin"]
+    provenance:
+      fixtures:
+      - mekanism/8631
+      - mekanism/8633
+      - harvested:Jade/584
+      - harvested:Mekanism/8483
+    lifecycle_status: verified
 
   - id: mod.load-failed.fabric-entry
     title: "Mod loading failed: {{cap:text:1}}"
@@ -42,6 +49,14 @@ rules:
       - "Check its dependencies are present at the versions it requires."
       - "If the mod was recently updated, try the previous version."
     suspects_from: ["frame_mods", "jar"]
+    provenance:
+      fixtures:
+      - mekanism/8391
+      - mekanism/8479
+      - mekanism/8539
+      - harvested:Placebo/36
+      - harvested:Curios/278
+    lifecycle_status: verified
 
   - id: mod.client-class-on-server
     title: "A client-only class was loaded on the dedicated server"
@@ -61,6 +76,12 @@ rules:
       - "If it appeared after updating one mod, roll that mod back."
       - "This is always the mod's bug, never your server config -- report it upstream with this crash report."
     suspects_from: ["frame_mods", "jar", "mixin"]
+    provenance:
+      fixtures:
+      - mekanism/8354
+      - harvested:twilightforest/2564
+      - harvested:twilightforest/2686
+    lifecycle_status: verified
 
   - id: crash.runtime-mod
     title: "{{suspect_top}} crashed at runtime"
@@ -81,6 +102,16 @@ rules:
       - "If it is already up to date, report this crash report to the mod's issue tracker."
       - "As a workaround, remove {{suspect_top}} and anything that depends on it."
     suspects_from: ["frame_mods", "mixin", "jar"]
+    provenance:
+      fixtures:
+      - mekanism/8590
+      - mekanism/8483
+      - gt:crash-2026-09-08_18.39.21-server.txt
+      - harvested:sodium/3511
+      expect_suspects:
+        "mekanism/8590": mekanism
+        "mekanism/8483": create
+    lifecycle_status: verified
 
   - id: crash.rendering-blockentity
     title: "Crash while rendering a block entity"
@@ -98,6 +129,12 @@ rules:
       - "Update that mod; rendering crashes usually follow a model/registry change after an update."
       - "Removing the block (via MCA Selector or a world edit) stops the crash loop if it re-triggers on chunk load."
     suspects_from: ["frame_mods", "jar"]
+    provenance:
+      fixtures:
+      - mekanism/8518
+      - harvested:sodium/3725
+      - harvested:RFTools/2101
+    lifecycle_status: verified
 
   - id: crash.threading-race
     title: "Threading violation: world data touched off-thread"
@@ -117,6 +154,11 @@ rules:
       - "If a parallel-loading mod is installed (modernfix, starlight-style chunk threading), try updating it or disabling its threading option first."
       - "Update the offending mod; this is a mod bug, not a config problem."
     suspects_from: ["frame_mods", "mixin"]
+    provenance:
+      fixtures:
+      - mekanism/8531
+      - harvested:Mekanism/8531
+    lifecycle_status: verified
 
   - id: crash.datapack-book
     title: "A datapack/resourcepack entry failed to load"
@@ -135,6 +177,12 @@ rules:
       - "If it is a custom datapack in world/datapacks, validate its JSON -- a single bad file fails the whole load."
       - "Removing the datapack folder lets the world load without it."
     suspects_from: ["frame_mods"]
+    provenance:
+      fixtures:
+      - mekanism/8423
+      - harvested:Jade/483
+      - harvested:twilightforest/2533
+    lifecycle_status: verified
 
   - id: mixin.injection-failed
     title: "Mixin injection failed: {{cap:exception_msg:1}}"
@@ -160,6 +208,12 @@ rules:
       - "Update it; if it targets a method another mod also patches, update BOTH (the pair must be built against the same MC version)."
       - "If a fresh MC version dropped: wait for the mod's update -- injection failures like this cannot be configured around."
     suspects_from: ["mixin", "frame_mods", "jar"]
+    provenance:
+      fixtures:
+      - fabric-api/5097
+      - harvested:fabric-api/4486
+      - harvested:fabric-api/4922
+    lifecycle_status: verified
 
   - id: crash.registry-load-failed
     title: "Registry loading failed -- a mod registered invalid entries"
@@ -182,6 +236,12 @@ rules:
       - "Usually a datapack-driven registry entry (worldgen/biome/dimension mods) referencing something a newer MC version renamed -- update that mod."
       - "If the world loads fine without the suspected mod, its datapack entries are the culprit."
     suspects_from: ["frame_mods", "mod_from_triage"]
+    provenance:
+      fixtures:
+      - fabric-api/4862
+      - harvested:fabric-api/4862
+      - harvested:fabric-api/4909
+    lifecycle_status: verified
 
   - id: net.connectivity
     title: "Network failure reaching a remote host: {{cap:exception_msg:1}}"
@@ -209,6 +269,12 @@ rules:
       - "If behind a corporate proxy with TLS interception, import its root CA into the JVM's cacerts (or disable interception for these hosts)."
       - "An outdated Java build can also fail on modern certs -- update Java (17/21 for current MC)."
     suspects_from: []
+    provenance:
+      fixtures:
+      - quilt-loader/344
+      - harvested:fabric-api/4707
+      - harvested:fabric-loader/639
+    lifecycle_status: verified
 
   - id: env.headless-jvm
     title: "JVM cannot load GUI libraries (headless environment)"
@@ -233,3 +299,8 @@ rules:
       - "If this is a SERVER, the offending code should never open a GUI -- find the mod in the stack and update it; server-safe mods check `FMLEnvironment.dist` first."
       - "In Docker, use a JDK image that includes AWT, or set `-Djava.awt.headless=true` so callers fail fast with a clear error instead of crashing the loader."
     suspects_from: ["frame_mods", "jar"]
+    provenance:
+      fixtures:
+      - quilt-loader/398
+      - harvested:quilt-loader/398
+    lifecycle_status: verified

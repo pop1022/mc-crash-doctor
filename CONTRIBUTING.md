@@ -40,10 +40,26 @@ Python 3.9+. The suite runs offline (corpus is vendored).
    mc-crash-doctor my-crash.txt
    ```
 
-4. **Pin it with a test.** Rules without a fixture regress silently. Either:
-   - add a small redacted fixture + expectation to `tests/fixtures/`, or
-   - if an existing corpus file already matches, extend the ground-truth
-     tables in `tests/test_e2e.py` (`GROUND_TRUTH` / `MUST_NOT_FIRE`).
+4. **Pin it — give the rule provenance.** Rules without a fixture regress
+   silently. Add a `provenance` block to the rule's YAML:
+
+   ```yaml
+     provenance:
+       fixtures:
+       - mekanism/8590          # harvested corpus pin: "<repo>/<issue>"
+       - synthetic/my-case.txt  # or a committed fixture under tests/fixtures/synthetic/
+       expect_suspects:          # optional: attribution the pin must produce
+         "mekanism/8590": mekanism
+     lifecycle_status: verified  # draft|experimental|verified|stable|deprecated|retired
+   ```
+
+   `tests/test_gaps.py` reads these pins from the YAML (no hardcoded list)
+   and `tests/test_rule_metadata.py` enforces the contract: every rule has
+   fixtures, and `verified` requires at least one **real** (non-synthetic)
+   fixture. If your rule is proven only by a synthetic fixture, set
+   `lifecycle_status: experimental` — it gets upgraded when a real report
+   fires it (re-run `python tools/stamp_provenance.py` to refresh
+   provenance from the corpora; it is idempotent).
 
    Negative assertions matter as much as positive ones: a rule that fires on
    the wrong report actively misleads users (see the `oom.save-time` note in

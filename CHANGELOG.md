@@ -7,6 +7,19 @@ versions follow [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Rule provenance + lifecycle metadata** (ROADMAP 1A.3): every rule's YAML
+  now carries `provenance.fixtures` (the real reports and/or synthetic
+  fixtures that prove it, plus optional `expect_suspects`) and
+  `lifecycle_status` (`draft → experimental → verified → stable →
+  deprecated → retired`; `Rule.from_dict` rejects invalid values at load).
+  `tools/stamp_provenance.py` scans all corpora and stamps evidence into the
+  YAMLs (text-level insert preserving every comment; idempotent). Result:
+  41/41 rules have fixtures — **37 verified** (real-corpus evidence),
+  **4 experimental** (synthetic-only; auto-upgradable when a real report
+  fires them). `tests/test_gaps.py` now reads its 24 pins from rule metadata
+  instead of a hardcoded dict (single source of truth, with an empty-pins
+  false-green guard); `tests/test_rule_metadata.py` (9 tests) enforces the
+  contract. CONTRIBUTING's rule-authoring flow updated to match.
 - **Compatibility edges** (ROADMAP 1A.2): `tools/build_compat_edges.py`
   mines the 454-fragment harvested corpus into 9,895 aggregated
   CompatibilityClaims (`corpus/compat-edges.jsonl`, format documented in

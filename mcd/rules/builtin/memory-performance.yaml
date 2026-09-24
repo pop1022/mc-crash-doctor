@@ -48,6 +48,11 @@ rules:
   suspects_from: []
   refs:
   - https://docs.minecraftforge.net/en/latest/gettingstarted/installation/#installing-the-server
+  provenance:
+    fixtures:
+    - synthetic/oom-save-time.txt
+    notes: synthetic-fixture proof only -- upgrade to verified when a real report fires this rule
+  lifecycle_status: experimental
 - id: oom.heap
   title: 'Java heap exhausted (OutOfMemoryError: Java heap space)'
   severity: fatal
@@ -73,6 +78,10 @@ rules:
   - frame_mods
   - jar
   refs: []
+  provenance:
+    fixtures:
+    - gt:crash-2026-09-08_18.01.19-server.txt
+  lifecycle_status: verified
 - id: oom.metaspace
   title: Metaspace exhausted (too many loaded classes)
   severity: fatal
@@ -95,6 +104,10 @@ rules:
   - Remove `-XX:MaxMetaspaceSize` entirely to let it grow, if host RAM allows.
   suspects_from:
   - mixin
+  provenance:
+    fixtures:
+    - aternos:paper-metaspace.log
+  lifecycle_status: verified
 - id: oom.gc-overhead
   title: GC overhead limit exceeded -- heap is thrashing
   severity: fatal
@@ -111,6 +124,11 @@ rules:
   fixes:
   - Raise `-Xmx` as for a heap OOM.
   - Do NOT paper over it with `-XX:-UseGCOverheadLimit` -- that only hides the real problem.
+  provenance:
+    fixtures:
+    - synthetic/oom-gc-overhead.txt
+    notes: synthetic-fixture proof only -- upgrade to verified when a real report fires this rule
+  lifecycle_status: experimental
 - id: hang.watchdog
   title: Server hung for {{cap:text:1}}s and was killed by the watchdog
   severity: fatal
@@ -138,6 +156,11 @@ rules:
   - frame_mods
   - mixin
   - jar
+  provenance:
+    fixtures:
+    - gt:crash-2026-09-08_22.31.14-server.txt
+    - harvested:RFTools/2152
+  lifecycle_status: verified
 - id: perf.tick-timeout
   title: A single tick ran long (server can't keep up)
   severity: warning
@@ -155,6 +178,11 @@ rules:
   - 'Install a profiler (Spark: `spark sampler --timeout 60`) and read the flamegraph.'
   - Reduce simulation distance before view distance -- it cuts entity/chunk ticks.
   - Pre-generate the world (Chunky) so exploration does not generate on the fly.
+  provenance:
+    fixtures:
+    - harvested:fabric-loader/668
+    - harvested:RFTools/2066
+  lifecycle_status: verified
 - id: java.class-version
   title: Java {{java_major}} is too old for this mod / Minecraft version
   severity: fatal
@@ -177,6 +205,11 @@ rules:
   - On Forge, edit `run.bat` / `user_jvm_args.txt` or set JAVA_HOME so the *server* uses the right JVM.
   suspects_from:
   - jar
+  provenance:
+    fixtures:
+    - harvested:fabric-loader/641
+    - harvested:fabric-loader/736
+  lifecycle_status: verified
 - id: mixin.apply-failed
   title: Mixin transformation failed ({{cap:text:1}})
   severity: fatal
@@ -206,6 +239,11 @@ rules:
   suspects_from:
   - mixin
   - frame_mods
+  provenance:
+    fixtures:
+    - harvested:sodium/3503
+    - harvested:sodium/3919
+  lifecycle_status: verified
 - id: mixin.target-missing
   title: Mixin target method/field no longer exists
   severity: error
@@ -233,6 +271,11 @@ rules:
   suspects_from:
   - mixin
   - frame_mods
+  provenance:
+    fixtures:
+    - harvested:fabric-api/4922
+    - harvested:fabric-loader/706
+  lifecycle_status: verified
 - id: crash.ticking-entity
   title: Crash while ticking an entity
   severity: error
@@ -254,6 +297,11 @@ rules:
   suspects_from:
   - frame_mods
   - jar
+  provenance:
+    fixtures:
+    - gt:crash-2026-09-08_18.47.46-server.txt
+    - harvested:TinkersConstruct/5641
+  lifecycle_status: verified
 - id: crash.ticking-blockentity
   title: Crash while ticking a block entity
   severity: error
@@ -273,6 +321,11 @@ rules:
   suspects_from:
   - frame_mods
   - jar
+  provenance:
+    fixtures:
+    - harvested:RFTools/1909
+    - harvested:RFTools/1920
+  lifecycle_status: verified
 - id: crash.rendering
   title: Crash while rendering (client)
   severity: error
@@ -292,6 +345,11 @@ rules:
   suspects_from:
   - frame_mods
   - jar
+  provenance:
+    fixtures:
+    - harvested:sodium/3771
+    - harvested:sodium/3859
+  lifecycle_status: verified
 - id: crash.rendering-entity
   title: Crash while rendering an entity
   severity: error
@@ -311,6 +369,11 @@ rules:
   - Update or remove that mod; also update the renderer mods (e.g. entity-model/animation libraries).
   suspects_from:
   - frame_mods
+  provenance:
+    fixtures:
+    - harvested:fabric-api/4641
+    - harvested:fabric-loader/859
+  lifecycle_status: verified
 - id: native.gl
   title: Graphics driver / OpenGL failure
   severity: error
@@ -335,6 +398,11 @@ rules:
   - Update the GPU driver from the vendor (not Windows Update).
   - Never launch over RDP/remote desktop -- it has no GL acceleration.
   - Try `-Dorg.lwjgl.opengl.Display.allowSoftwareOpenGL=true` as a diagnostic only.
+  provenance:
+    fixtures:
+    - synthetic/native-gl.txt
+    notes: synthetic-fixture proof only -- upgrade to verified when a real report fires this rule
+  lifecycle_status: experimental
 - id: disk.space
   title: Disk full or filesystem not writable
   severity: fatal
@@ -354,6 +422,11 @@ rules:
   - Check free space on the drive holding `world/` and the logs.
   - On Windows, do not run the server from `C:\Program Files\` (needs admin) -- use a normal user folder.
   - Old gzipped logs and crash-reports accumulate; prune them.
+  provenance:
+    fixtures:
+    - synthetic/disk-space.txt
+    notes: synthetic-fixture proof only -- upgrade to verified when a real report fires this rule
+  lifecycle_status: experimental
 - id: world.corrupt-region
   title: A region/chunk file is corrupt
   severity: fatal
@@ -373,3 +446,8 @@ rules:
   - Back up `world/` before touching anything.
   - Delete only the named region file (`world/region/r.X.Y.mca`) to lose that 512x512 area, not the world.
   - Run Minecraft Region Fixer to repair or delete damaged chunks surgically.
+  provenance:
+    fixtures:
+    - harvested:Jade/487
+    - harvested:Jade/610
+  lifecycle_status: verified

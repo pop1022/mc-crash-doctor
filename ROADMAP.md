@@ -81,12 +81,19 @@
     （弱监督标注 join 自 index.jsonl）。诊断保持纯函数，边由离线工具生成。
   - 验收：键唯一性校验过；caused 样例可解释（fabric-registry-sync-v0 x9、
     curios x7、jade x5）；co_occurred 明确标注为 presence≠guilt 弱信号。
-- [ ] **1A.3 规则元数据内联钉桩**
-  - 做：把 test_gaps.py 的"规则↔真实报告"绑定**搬进规则 YAML**
-    （`provenance: {fixture: "sodium/3711", issue: ...}`），加 `lifecycle_status`
-    字段（默认 `verified`）。引擎加载时校验。
-  - 验收：每条规则自带 provenance；test_gaps 改为从规则元数据读钉桩，
-    单一事实来源。
+- [x] **1A.3 规则元数据内联钉桩**（2026-09-23 完成）
+  - 做：`Rule` 加 `provenance`（fixtures + expect_suspects + notes）和
+    `lifecycle_status`（draft→experimental→verified→stable→deprecated→retired，
+    `from_dict` 拒非法值）。`tools/stamp_provenance.py` 扫全语料（67s）把
+    每条规则的真实触发证据 + 手写钉桩盖进 YAML（文本级插入，保留全部注释；
+    幂等可重跑）。`test_gaps.py` 改为**从 YAML provenance 读钉桩**（删掉硬编码
+    PINS dict，24 条钉桩单一来源），加"空钉桩=假绿"守卫。
+  - 结果：41 条全部有 fixtures；**37 verified（真实语料证据）+ 4 experimental**
+    （oom.save-time/gc-overhead/disk.space/native.gl——仅合成 fixture 证明，
+    等真实报告触发自动升级）。
+  - 验收：新增 `tests/test_rule_metadata.py`（9 测试：每条有 fixtures、
+    lifecycle 合法、verified 必有真实证据、expect_suspects 键自洽、
+    from_dict 拒坏值）；CONTRIBUTING "Adding a rule" 更新为 provenance 流程。
 
 ### 1B. 诊断可信度
 
@@ -165,11 +172,12 @@
 1. **阶段 0.2**：网页版部署 GitHub Pages——workflow 已就绪，**卡在需用户
    一次性手动启用**（Settings → Pages → Source 选 "GitHub Actions"）。启用后
    下次 push 自动部署。这是当前唯一的阶段 0 阻塞。
-2. 下一步：**1A.3 规则元数据内联钉桩**（provenance + lifecycle_status
-   进规则 YAML，test_gaps 改从元数据读）。
+2. 下一步：**1B.1 盲测系统**（留出语料不参与规则编写，报告 precision/recall）
+   → **1B.2 错误甩锅率**（用维护者 `Not <Mod>` 标签反验归因错误率）。
+   1A 数据模型固化三步（Schema/兼容边/provenance 钉桩）已全部完成。
 3. 已完成：0.1 网页版验证 ✓ · 0.3 零触发规则清理 ✓ · 1A.1 Incident
-   Schema v1.0 ✓ · 1A.2 兼容边落盘 ✓（9895 条聚合声明，3531 条带维护者
-   verdict）。
+   Schema v1.0 ✓ · 1A.2 兼容边落盘 ✓（9895 条聚合声明）· 1A.3 规则
+   provenance 内联钉桩 ✓（41 条全带证据，37 verified + 4 experimental）。
 
 每完成一步，把对应 `[ ]` 改 `[x]`，并在 CHANGELOG 记一笔。
 

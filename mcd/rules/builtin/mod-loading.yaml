@@ -30,6 +30,10 @@ rules:
     suspects_from: []
     refs:
       - "https://docs.minecraftforge.net/en/latest/concepts/dependencies/"
+    provenance:
+      fixtures:
+      - aternos:magma-mod-dependency.log
+    lifecycle_status: verified
 
   - id: mod.dep-missing.forge-old
     title: "Missing required mod (Forge 1.12 and older)"
@@ -49,6 +53,10 @@ rules:
       - "Install every mod id listed in the log line."
       - "Match the Minecraft version exactly -- a 1.12.2 dependency will not satisfy 1.16.5."
     suspects_from: []
+    provenance:
+      fixtures:
+      - aternos:magma-mod-dependency.log
+    lifecycle_status: verified
 
   - id: mod.dep-missing.fabric
     title: "Missing required mod: {{cap:text:1}}"
@@ -72,6 +80,10 @@ rules:
     suspects_from: []
     refs:
       - "https://docs.modrinth.com/docs/mods/dependencies/"
+    provenance:
+      fixtures:
+      - aternos:fabric-missing-dependencies-1.log
+    lifecycle_status: verified
 
   - id: mod.incompatible-set
     title: "Incompatible mod set: {{cap:text:1}}"
@@ -105,6 +117,13 @@ rules:
       - "If the conflict is unresolvable (one mod forbids the other), remove one."
       - "Common cause: a mod pinned to an old Sodium/Fabric-API range after you updated the other."
     suspects_from: []
+    provenance:
+      fixtures:
+      - sodium/3524
+      - sodium/3813
+      - harvested:sodium/3524
+      - harvested:sodium/3813
+    lifecycle_status: verified
 
   - id: mod.wrong-mc-version
     title: "Mod {{cap:text:1}} does not support Minecraft {{mc_version}}"
@@ -126,6 +145,10 @@ rules:
       - "If no build exists for {{mc_version}}, look for a maintained fork."
       - "After updating a modpack, re-download the whole set -- partial updates cause exactly this."
     suspects_from: []
+    provenance:
+      fixtures:
+      - aternos:forge-mod-wrong-minecraft-version.log
+    lifecycle_status: verified
 
   - id: mod.duplicate
     title: "Duplicate mod files installed"
@@ -143,6 +166,10 @@ rules:
       - "Search the mods folder for the mod name and keep exactly ONE file -- the newest for {{mc_version}}."
       - "Sort the folder by name to spot `foo-1.0.jar` next to `foo-1.1.jar`."
     suspects_from: []
+    provenance:
+      fixtures:
+      - aternos:forge-1-20-1-duplicate-mods.log
+    lifecycle_status: verified
 
   - id: mod.load-fatal
     title: "A mod failed fatally during {{cap:text:1}}"
@@ -163,6 +190,11 @@ rules:
       - "Update that mod; if it is unmaintained for {{mc_version}}, remove it."
       - "On Fabric/Quilt the equivalent line names the failing entrypoint directly."
     suspects_from: ["frame_mods", "jar"]
+    provenance:
+      fixtures:
+      - harvested:fabric-loader/1026
+      - harvested:RFTools/1972
+    lifecycle_status: verified
 
   - id: mod.config-invalid
     title: "A config file failed to parse"
@@ -186,6 +218,11 @@ rules:
       - "Deleting the file makes the mod regenerate a default -- the server starts, you lose your edits."
       - "Diff against the same file from a fresh instance to find the broken line."
     suspects_from: ["jar"]
+    provenance:
+      fixtures:
+      - harvested:fabric-loader/997
+      - harvested:RFTools/1991
+    lifecycle_status: verified
 
   - id: mod.coremod-missing
     title: "A coremod / library jar is missing from the classpath"
@@ -208,6 +245,11 @@ rules:
       - "Install that library mod for {{mc_version}}."
       - "If the class is `net/minecraft/client/...` on a *server*, a client-only mod is installed on the server -- remove it."
     suspects_from: ["frame_mods", "jar"]
+    provenance:
+      fixtures:
+      - harvested:fabric-api/4491
+      - harvested:fabric-api/4704
+    lifecycle_status: verified
 
   - id: mod.corrupt-jar
     title: "A mod jar is corrupt or empty: {{cap:text:1}}"
@@ -236,6 +278,13 @@ rules:
       - "If it is a library under `libraries/` (e.g. icu4j), delete that file too -- the launcher re-fetches it."
       - "Check disk health if several jars are corrupt at once."
     suspects_from: ["jar"]
+    provenance:
+      fixtures:
+      - fabric-loader/685
+      - fabric-api/4907
+      - harvested:fabric-api/4907
+      - harvested:fabric-api/5179
+    lifecycle_status: verified
 
   - id: mod.binary-incompat
     title: "Binary incompatibility: a mod calls a field/method that no longer exists"
@@ -262,6 +311,13 @@ rules:
       - "Update BOTH sides: the mod and the library/API it needs, to versions released for {{mc_version}}."
       - "If you just updated Fabric API / Forge, the mod itself is now too old -- update or remove it."
     suspects_from: ["frame_mods", "jar", "mixin"]
+    provenance:
+      fixtures:
+      - fabric-loader/611
+      - sodium/3711
+      - harvested:sodium/3711
+      - harvested:sodium/3869
+    lifecycle_status: verified
 
   - id: mod.linkage-duplicate
     title: "Class linkage conflict: two mods ship the same class"
@@ -286,6 +342,12 @@ rules:
       - "Delete duplicate copies of the same mod (old version left beside the new one is the usual cause)."
       - "If two different mods bundle the same library, update both -- newer builds shade or drop the duplicate."
     suspects_from: ["frame_mods", "jar"]
+    provenance:
+      fixtures:
+      - quilt-loader/232
+      - harvested:fabric-loader/1132
+      - harvested:fabric-loader/622
+    lifecycle_status: verified
 
   - id: quilt.config-broken
     title: "Quilt config/JSON5 file is malformed"
@@ -311,6 +373,12 @@ rules:
       - "JSON5 allows comments and trailing commas, but strict-mode files do not -- check which the loader asked for."
       - "Deleting the file usually regenerates a default on next start."
     suspects_from: ["jar"]
+    provenance:
+      fixtures:
+      - quilt-loader/261
+      - harvested:quilt-loader/244
+      - harvested:quilt-loader/261
+    lifecycle_status: verified
 
   - id: loader.namespace-missing
     title: "Requested mapping namespace is not loaded"
@@ -332,3 +400,8 @@ rules:
       - "If offline-mode or a custom launcher is involved, check it can reach the mapping download server."
       - "As a test, a fresh instance of the same loader version isolates whether the instance or a mod is broken."
     suspects_from: []
+    provenance:
+      fixtures:
+      - quilt-loader/497
+      - harvested:quilt-loader/497
+    lifecycle_status: verified

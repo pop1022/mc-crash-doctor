@@ -46,6 +46,12 @@ from ..model import CrashReport, Finding, Severity
 
 BUILTIN_DIR = Path(__file__).parent / "builtin"
 
+# Rule lifecycle states (VISION §4.4). from_dict rejects anything else, so a
+# typo'd status fails at load time instead of silently meaning "unmanaged".
+LIFECYCLE_STATES = frozenset({
+    "draft", "experimental", "verified", "stable", "deprecated", "retired",
+})
+
 _COMPARATORS = {
     "lt": lambda a, b: a < b,
     "le": lambda a, b: a <= b,
@@ -71,10 +77,29 @@ class Rule:
     refs: list[str] = field(default_factory=list)
     source: str = ""             # yaml file it came from
     once: bool = True            # emit at most one finding
+    # Rule lifecycle: draft -> experimental -> verified -> stable ->
+    # deprecated -> retired (VISION §4.4). Only verified/stable rules count
+    # toward the published diagnosis-rate numbers.
+    lifecycle_status: str = "verified"
+    # Where this rule came from -- the real report(s) that motivated it and/or
+    # the synthetic fixture that proves it. This is the in-YAML single source
+    # of truth for what tests/test_gaps.py used to hardcode; see ROADMAP 1A.3.
+    # Shape: {"fixtures": ["sodium/3711", ...], "notes": "..."} where a
+    # fixture key is either "repo/issue" (harvested corpus, gitignored) or a
+    # bare filename under tests/fixtures/synthetic/.
+    provenance: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, d: dict[str, Any], source: str = "") -> "Rule":
         sev = d.get("severity", "error")
+        status = str(d.get("lifecycle_status", "verified"))
+        if status not in LIFECYCLE_STATES:
+            raise ValueError(
+                f"lifecycle_status {status!r} not one of "
+                f"{sorted(LIFECYCLE_STATES)}")
+        prov = d.get("provenance", {})
+        if not isinstance(prov, dict):
+            raise ValueError("provenance must be a mapping")
         return cls(
             id=d["id"],
             title=d["title"],
@@ -89,6 +114,8 @@ class Rule:
             refs=list(d.get("refs", [])),
             source=source,
             once=bool(d.get("once", True)),
+            lifecycle_status=status,
+            provenance=prov,
         )
 
 
