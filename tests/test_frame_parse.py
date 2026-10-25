@@ -2,20 +2,33 @@
 
 WHY THIS FILE EXISTS
   `_parse_frame` is the only place where the class/method split happens, and for
-  a long time it silently produced garbage on four families of real input. None
-  of them raised, none of them showed up in the rendered output -- the frames
-  just stopped matching anything, which quietly subtracted evidence from every
-  consumer (rules, attribution, coverage buckets).
+  a long time it silently produced garbage on real input. None of the cases
+  raised, none showed up in the rendered output -- the frames just stopped
+  matching anything, which quietly subtracted evidence from every consumer
+  (rules, attribution, coverage buckets).
 
-  Measured on the 454-report corpus, before the repair:
+  Measured on the 454-report corpus, before the first repair:
 
     defect                                    frames  reports
     trailing `[jar]` not stripped (no `~`)     5432      148
     JPMS / TRANSFORMER layer prefix in cls    16286       --
     `-` in a Fabric method name -> glued          79       43
 
-  After: 57,158 of 57,282 frames parse into cls + method (+ line where the
+  After that: 57,158 of 57,282 frames parse into cls + method (+ line where the
   report carries one), and `cls` never contains `)` or `]`.
+
+  `tools/parser_snapshot.py` then reported `frame_defects: 8` still -- three
+  more families, all of which also failed *silently*:
+
+    defect                                     frames  reports
+    several frames glued onto one line              4        1
+    trailing markdown backtick                      1        1
+    truncated `~[jar]` (never closed)                1        1
+
+  Fixing them recovered 26 frames (57,282 -> 57,308) and left `frame_defects`
+  and `frames_glued` at 0. The other 451 reports are byte-identical, and the
+  rule engine's output over the whole corpus did not move (524 findings, same
+  per-rule counts) -- so the repair is free at the diagnostic level.
 
   Every case below is a real line from the corpus, not an invented one. The
   reports are cited so the next person can open them.
@@ -216,3 +229,79 @@ def test_frames_survive_the_full_parse_path():
     ]
     assert frames[0].is_minecraft is True
     assert [f.line_no for f in frames] == [455, 412]
+
+
+# --- 7. truncated / glued lines ---------------------------------------------
+# The last three defect families found by `tools/parser_snapshot.py`, one per
+# report. All three used to end up as a single frame whose `cls` was the whole
+# line -- plausible enough that no consumer complained, and invisible to
+# `frames_sig` because the *number of lines* never changed.
+def test_two_frames_glued_on_one_line_are_split():
+    """FabricMC/fabric-api#5287: the archive flattened newlines, so one line
+    holds several frames. The old code kept ONE frame -- with the last frame's
+    method and everything before it crammed into `cls`."""
+    rep = parse_file(str(_corpus_report("FabricMC__fabric-api", 5287)))
+    frames = [f for e in rep.exceptions for f in e.frames]
+    assert len(frames) == 60, f"expected 60 frames, got {len(frames)}"
+    assert not [f for f in frames if ")" in f.cls or "]" in f.cls]
+    # no `cls` may still carry a second frame (the old failure mode)
+    assert not [f.cls for f in frames if " at " in f.cls]
+    # the seam that used to swallow the most: eleven frames on one line
+    pairs = {(f.cls, f.method) for f in frames}
+    assert ("org.spongepowered.asm.mixin.transformer.MixinProcessor",
+            "handleMixinError") in pairs
+    assert ("org.spongepowered.asm.mixin.transformer.MixinTransformer",
+            "transformClassBytes") in pairs
+
+
+def test_glued_line_does_not_invent_the_omitted_frames():
+    """`... 17 more` is the JVM ellipsis, not a frame. `MORE_RE` drops it on a
+    line of its own; on a glued line it must not become a 12th frame."""
+    glued = (
+        "a.B.c(B.java:1) at d.E.f(E.java:2) at g.H.i(H.java:3) ... 17 more"
+    )
+    rep = parse_text(_report("\tat " + glued))
+    frames = [f for e in rep.exceptions for f in e.frames]
+    assert [f.cls for f in frames] == ["a.B", "d.E", "g.H"]
+    assert [f.line_no for f in frames] == [1, 2, 3]
+
+
+def test_debug_block_containing_at_is_not_a_seam():
+    """Negative control for the splitter: a `{}` block with " at " in it must
+    not be cut in half -- both halves would look like frames to a naive split."""
+    rep = parse_text(_report(
+        "\tat com.example.Mod.onTick(Mod.java:42) {registry at boot}"
+    ))
+    frames = [f for e in rep.exceptions for f in e.frames]
+    assert [(f.cls, f.method, f.line_no) for f in frames] == [
+        ("com.example.Mod", "onTick", 42),
+    ]
+
+
+def test_trailing_markdown_backtick_is_stripped():
+    """McJtyMods/RFTools#1898: the frame ends with a stray backtick from the
+    issue body, which defeated the ``(...)$`` anchor and lost cls+line."""
+    rep = parse_file(str(_corpus_report("McJtyMods__RFTools", 1898)))
+    frames = [f for e in rep.exceptions for f in e.frames]
+    assert not [f for f in frames if ")" in f.cls or "`" in f.cls]
+    assert ("java.lang.Thread", "run") in {(f.cls, f.method) for f in frames}
+    assert 745 in [f.line_no for f in frames]
+
+
+def test_truncated_artifact_bracket_is_cut_not_kept():
+    """TeamTwilight/twilightforest#2455: the log was truncated mid-`~[jar]`, so
+    the trailer never closed. Cutting at the `~[` is safe -- a class name
+    cannot contain `[`."""
+    rep = parse_file(str(_corpus_report("TeamTwilight__twilightforest", 2455)))
+    frames = [f for e in rep.exceptions for f in e.frames]
+    assert not [f for f in frames if ")" in f.cls or "]" in f.cls]
+    hits = [(f.cls, f.method, f.line_no) for f in frames
+            if f.cls == "net.minecraft.client.model.SheepModel"]
+    assert ("net.minecraft.client.model.SheepModel", "setupAnim", 14) in hits
+
+
+def test_a_closed_trailer_is_still_removed_entirely():
+    """Guard against the unclosed-bracket pattern eating real trailers: on a
+    well-formed `~[jar]` the frame must be identical to the no-trailer form."""
+    assert (_parse_frame("a.B.c(C.java:1) ~[x.jar:1.0]", 0).line_no
+            == _parse_frame("a.B.c(C.java:1)", 0).line_no == 1)

@@ -24,6 +24,59 @@ WEB = ROOT / "web"
 #: Files that end up inside the wheel.
 _SHIPPED_SUFFIXES = (".py", ".yaml", ".yml")
 
+#: What a visitor actually downloads when the page opens, measured on
+#: 2026-10-25. This is a *structural* budget, not a byte-perfect one: ~30% of
+#: headroom over the measured size, so ordinary edits pass and the failure modes
+#: that matter do not --
+#:
+#:   * a new runtime dependency landing inside the wheel (the wheel is the only
+#:     artifact that can grow by hundreds of KB overnight),
+#:   * corpus data or a redacted report leaking into web/ (sample.js is
+#:     generated from a 277 KB report; inlining the wrong one triples it),
+#:   * a build that stops pruning ``__pycache__``/``.pyc``.
+#:
+#: Growth that is genuinely wanted is fine -- raise the number **here**, in the
+#: same commit, and say why. The number is the record of a decision, not a
+#: ceiling to route around. Measured then: app.js 35,376; index.html 13,841;
+#: sample.js 78,366; wheel 92,551; manifest 146; total 220,280.
+SIZE_BUDGET = {
+    "app.js": 60_000,
+    "index.html": 30_000,
+    "sample.js": 105_000,
+    "wheel": 125_000,
+    "wheel-manifest.json": 1_000,
+}
+TOTAL_BUDGET = 330_000
+
+
+def payload_sizes() -> dict[str, int]:
+    """Size of every file web/ ships, with the wheel keyed as ``wheel``.
+
+    Keyed by name rather than by path so the check survives the version bump in
+    the wheel filename. Only files, no directories: browsers download files.
+    """
+    out: dict[str, int] = {}
+    for p in sorted(WEB.iterdir()):
+        if not p.is_file():
+            continue
+        out["wheel" if p.suffix == ".whl" else p.name] = p.stat().st_size
+    return out
+
+
+def budget_report(sizes: dict[str, int]) -> list[str]:
+    """Return one line per violation; empty list means inside budget."""
+    bad = []
+    for name, limit in SIZE_BUDGET.items():
+        got = sizes.get(name)
+        if got is None:
+            bad.append(f"{name}: missing from web/ (budget expects it)")
+        elif got > limit:
+            bad.append(f"{name}: {got:,} B > {limit:,} B budget")
+    total = sum(sizes.values())
+    if total > TOTAL_BUDGET:
+        bad.append(f"web/ total: {total:,} B > {TOTAL_BUDGET:,} B budget")
+    return bad
+
 
 def source_digest() -> str:
     """sha256 over every shipped file under ``mcd/`` (path + bytes).
@@ -74,10 +127,22 @@ def main() -> int:
                    cwd=ROOT, check=True)
 
     manifest = {"file": wheel.name, "source_digest": source_digest()}
-    (WEB / "wheel-manifest.json").write_text(
-        json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    # newline="\n" on purpose: this is a committed artifact, and letting Python
+    # translate to CRLF on Windows turns every rebuild on a Windows machine into
+    # a whole-file diff on a repo that stores LF.
+    with open(WEB / "wheel-manifest.json", "w", encoding="utf-8",
+              newline="\n") as fh:
+        fh.write(json.dumps(manifest, indent=2) + "\n")
     print(f"web/{wheel.name}")
     print("web/wheel-manifest.json ->", json.dumps(manifest))
+
+    sizes = payload_sizes()
+    print("web/ payload: " + ", ".join(f"{k} {v:,}" for k, v in sizes.items())
+          + f" (total {sum(sizes.values()):,} B)")
+    # Warn here, fail in tests/test_web_bundle.py: a build that cannot produce
+    # an artifact is worse than a build that says it is over budget.
+    for line in budget_report(sizes):
+        print(f"OVER BUDGET: {line}", file=sys.stderr)
     return 0
 
 

@@ -1,0 +1,601 @@
+{
+ "adjacent_pairs": [
+  {
+   "a": "1.16",
+   "b": "1.19",
+   "gap_pp": 17.5,
+   "intervals_disjoint": false,
+   "verdict": "no signal: intervals overlap"
+  },
+  {
+   "a": "1.19",
+   "b": "1.20",
+   "gap_pp": 5.1,
+   "intervals_disjoint": false,
+   "verdict": "no signal: intervals overlap"
+  },
+  {
+   "a": "1.20",
+   "b": "1.21",
+   "gap_pp": 5.7,
+   "intervals_disjoint": false,
+   "verdict": "no signal: intervals overlap"
+  }
+ ],
+ "failures": [],
+ "files": 661,
+ "gap_threshold_pp": 20.0,
+ "min_n_for_quoting": 30,
+ "shape_bias": [
+  {
+   "dominant_shape": "unknown/craftbukkit",
+   "dominant_shape_share": 0.667,
+   "n": 3,
+   "version": "1.1"
+  },
+  {
+   "dominant_shape": "unknown/vanilla",
+   "dominant_shape_share": 1.0,
+   "n": 1,
+   "version": "1.5"
+  },
+  {
+   "dominant_shape": "log/forge",
+   "dominant_shape_share": 0.667,
+   "n": 9,
+   "version": "1.7"
+  },
+  {
+   "dominant_shape": "log/spigot",
+   "dominant_shape_share": 0.667,
+   "n": 9,
+   "version": "1.8"
+  },
+  {
+   "dominant_shape": "log/vanilla",
+   "dominant_shape_share": 0.333,
+   "n": 6,
+   "version": "1.10"
+  },
+  {
+   "dominant_shape": "log/forge",
+   "dominant_shape_share": 0.296,
+   "n": 27,
+   "version": "1.12"
+  },
+  {
+   "dominant_shape": "log/spigot",
+   "dominant_shape_share": 0.417,
+   "n": 12,
+   "version": "1.13"
+  },
+  {
+   "dominant_shape": "crash-report/forge",
+   "dominant_shape_share": 0.5,
+   "n": 4,
+   "version": "1.14"
+  },
+  {
+   "dominant_shape": "crash-report/forge",
+   "dominant_shape_share": 0.75,
+   "n": 4,
+   "version": "1.15"
+  },
+  {
+   "dominant_shape": "log/fabric",
+   "dominant_shape_share": 0.361,
+   "n": 36,
+   "version": "1.16"
+  },
+  {
+   "dominant_shape": "log/fabric",
+   "dominant_shape_share": 0.5,
+   "n": 4,
+   "version": "1.17"
+  },
+  {
+   "dominant_shape": "log/fabric",
+   "dominant_shape_share": 0.286,
+   "n": 28,
+   "version": "1.18"
+  },
+  {
+   "dominant_shape": "crash-report/fabric",
+   "dominant_shape_share": 0.2,
+   "n": 40,
+   "version": "1.19"
+  },
+  {
+   "dominant_shape": "crash-report/forge",
+   "dominant_shape_share": 0.298,
+   "n": 124,
+   "version": "1.20"
+  },
+  {
+   "dominant_shape": "crash-report/neoforge",
+   "dominant_shape_share": 0.241,
+   "n": 133,
+   "version": "1.21"
+  },
+  {
+   "dominant_shape": "unknown/neoforge",
+   "dominant_shape_share": 0.2,
+   "n": 15,
+   "version": "26.1"
+  },
+  {
+   "dominant_shape": "crash-report/fabric",
+   "dominant_shape_share": 0.5,
+   "n": 6,
+   "version": "26.2"
+  },
+  {
+   "dominant_shape": "crash-report/fabric",
+   "dominant_shape_share": 1.0,
+   "n": 1,
+   "version": "26.3"
+  },
+  {
+   "dominant_shape": "unknown/fabric",
+   "dominant_shape_share": 0.316,
+   "n": 196,
+   "version": "(no version line)"
+  },
+  {
+   "dominant_shape": "log/vanilla",
+   "dominant_shape_share": 1.0,
+   "n": 1,
+   "version": "(unparsed) 19w34a"
+  },
+  {
+   "dominant_shape": "log/vanilla",
+   "dominant_shape_share": 1.0,
+   "n": 1,
+   "version": "(unparsed) 21w05b"
+  },
+  {
+   "dominant_shape": "log/fabric",
+   "dominant_shape_share": 1.0,
+   "n": 1,
+   "version": "(unparsed) 22w16b"
+  }
+ ],
+ "skipped_for_low_n": [
+  {
+   "a": "1.1",
+   "b": "1.5",
+   "n": {
+    "1.1": 3,
+    "1.5": 1
+   },
+   "under_min_n": [
+    "1.1",
+    "1.5"
+   ]
+  },
+  {
+   "a": "1.5",
+   "b": "1.7",
+   "n": {
+    "1.5": 1,
+    "1.7": 9
+   },
+   "under_min_n": [
+    "1.5",
+    "1.7"
+   ]
+  },
+  {
+   "a": "1.7",
+   "b": "1.8",
+   "n": {
+    "1.7": 9,
+    "1.8": 9
+   },
+   "under_min_n": [
+    "1.7",
+    "1.8"
+   ]
+  },
+  {
+   "a": "1.8",
+   "b": "1.10",
+   "n": {
+    "1.10": 6,
+    "1.8": 9
+   },
+   "under_min_n": [
+    "1.8",
+    "1.10"
+   ]
+  },
+  {
+   "a": "1.10",
+   "b": "1.12",
+   "n": {
+    "1.10": 6,
+    "1.12": 27
+   },
+   "under_min_n": [
+    "1.10",
+    "1.12"
+   ]
+  },
+  {
+   "a": "1.12",
+   "b": "1.13",
+   "n": {
+    "1.12": 27,
+    "1.13": 12
+   },
+   "under_min_n": [
+    "1.12",
+    "1.13"
+   ]
+  },
+  {
+   "a": "1.13",
+   "b": "1.14",
+   "n": {
+    "1.13": 12,
+    "1.14": 4
+   },
+   "under_min_n": [
+    "1.13",
+    "1.14"
+   ]
+  },
+  {
+   "a": "1.14",
+   "b": "1.15",
+   "n": {
+    "1.14": 4,
+    "1.15": 4
+   },
+   "under_min_n": [
+    "1.14",
+    "1.15"
+   ]
+  },
+  {
+   "a": "1.15",
+   "b": "1.16",
+   "n": {
+    "1.15": 4,
+    "1.16": 36
+   },
+   "under_min_n": [
+    "1.15"
+   ]
+  },
+  {
+   "a": "1.16",
+   "b": "1.17",
+   "n": {
+    "1.16": 36,
+    "1.17": 4
+   },
+   "under_min_n": [
+    "1.17"
+   ]
+  },
+  {
+   "a": "1.17",
+   "b": "1.18",
+   "n": {
+    "1.17": 4,
+    "1.18": 28
+   },
+   "under_min_n": [
+    "1.17",
+    "1.18"
+   ]
+  },
+  {
+   "a": "1.18",
+   "b": "1.19",
+   "n": {
+    "1.18": 28,
+    "1.19": 40
+   },
+   "under_min_n": [
+    "1.18"
+   ]
+  },
+  {
+   "a": "26.1",
+   "b": "26.2",
+   "n": {
+    "26.1": 15,
+    "26.2": 6
+   },
+   "under_min_n": [
+    "26.1",
+    "26.2"
+   ]
+  },
+  {
+   "a": "26.2",
+   "b": "26.3",
+   "n": {
+    "26.2": 6,
+    "26.3": 1
+   },
+   "under_min_n": [
+    "26.2",
+    "26.3"
+   ]
+  }
+ ],
+ "strata": [
+  {
+   "diagnosed": 1,
+   "dominant_shape": "unknown/craftbukkit",
+   "dominant_shape_share": 0.667,
+   "hi": 0.7923,
+   "lo": 0.0615,
+   "n": 3,
+   "quotable_as_rate": false,
+   "rate": 0.3333,
+   "share": 0.0045,
+   "version": "1.1"
+  },
+  {
+   "diagnosed": 0,
+   "dominant_shape": "unknown/vanilla",
+   "dominant_shape_share": 1.0,
+   "hi": 0.7935,
+   "lo": 0.0,
+   "n": 1,
+   "quotable_as_rate": false,
+   "rate": 0.0,
+   "share": 0.0015,
+   "version": "1.5"
+  },
+  {
+   "diagnosed": 7,
+   "dominant_shape": "log/forge",
+   "dominant_shape_share": 0.667,
+   "hi": 0.9368,
+   "lo": 0.4526,
+   "n": 9,
+   "quotable_as_rate": false,
+   "rate": 0.7778,
+   "share": 0.0136,
+   "version": "1.7"
+  },
+  {
+   "diagnosed": 1,
+   "dominant_shape": "log/spigot",
+   "dominant_shape_share": 0.667,
+   "hi": 0.435,
+   "lo": 0.0199,
+   "n": 9,
+   "quotable_as_rate": false,
+   "rate": 0.1111,
+   "share": 0.0136,
+   "version": "1.8"
+  },
+  {
+   "diagnosed": 6,
+   "dominant_shape": "log/vanilla",
+   "dominant_shape_share": 0.333,
+   "hi": 1.0,
+   "lo": 0.6097,
+   "n": 6,
+   "quotable_as_rate": false,
+   "rate": 1.0,
+   "share": 0.0091,
+   "version": "1.10"
+  },
+  {
+   "diagnosed": 18,
+   "dominant_shape": "log/forge",
+   "dominant_shape_share": 0.296,
+   "hi": 0.8136,
+   "lo": 0.4782,
+   "n": 27,
+   "quotable_as_rate": false,
+   "rate": 0.6667,
+   "share": 0.0408,
+   "version": "1.12"
+  },
+  {
+   "diagnosed": 3,
+   "dominant_shape": "log/spigot",
+   "dominant_shape_share": 0.417,
+   "hi": 0.5323,
+   "lo": 0.0889,
+   "n": 12,
+   "quotable_as_rate": false,
+   "rate": 0.25,
+   "share": 0.0182,
+   "version": "1.13"
+  },
+  {
+   "diagnosed": 4,
+   "dominant_shape": "crash-report/forge",
+   "dominant_shape_share": 0.5,
+   "hi": 1.0,
+   "lo": 0.5101,
+   "n": 4,
+   "quotable_as_rate": false,
+   "rate": 1.0,
+   "share": 0.0061,
+   "version": "1.14"
+  },
+  {
+   "diagnosed": 4,
+   "dominant_shape": "crash-report/forge",
+   "dominant_shape_share": 0.75,
+   "hi": 1.0,
+   "lo": 0.5101,
+   "n": 4,
+   "quotable_as_rate": false,
+   "rate": 1.0,
+   "share": 0.0061,
+   "version": "1.15"
+  },
+  {
+   "diagnosed": 18,
+   "dominant_shape": "log/fabric",
+   "dominant_shape_share": 0.361,
+   "hi": 0.6553,
+   "lo": 0.3447,
+   "n": 36,
+   "quotable_as_rate": true,
+   "rate": 0.5,
+   "share": 0.0545,
+   "version": "1.16"
+  },
+  {
+   "diagnosed": 2,
+   "dominant_shape": "log/fabric",
+   "dominant_shape_share": 0.5,
+   "hi": 0.85,
+   "lo": 0.15,
+   "n": 4,
+   "quotable_as_rate": false,
+   "rate": 0.5,
+   "share": 0.0061,
+   "version": "1.17"
+  },
+  {
+   "diagnosed": 16,
+   "dominant_shape": "log/fabric",
+   "dominant_shape_share": 0.286,
+   "hi": 0.7349,
+   "lo": 0.3907,
+   "n": 28,
+   "quotable_as_rate": false,
+   "rate": 0.5714,
+   "share": 0.0424,
+   "version": "1.18"
+  },
+  {
+   "diagnosed": 27,
+   "dominant_shape": "crash-report/fabric",
+   "dominant_shape_share": 0.2,
+   "hi": 0.7992,
+   "lo": 0.5202,
+   "n": 40,
+   "quotable_as_rate": true,
+   "rate": 0.675,
+   "share": 0.0605,
+   "version": "1.19"
+  },
+  {
+   "diagnosed": 90,
+   "dominant_shape": "crash-report/forge",
+   "dominant_shape_share": 0.298,
+   "hi": 0.7966,
+   "lo": 0.6414,
+   "n": 124,
+   "quotable_as_rate": true,
+   "rate": 0.7258,
+   "share": 0.1876,
+   "version": "1.20"
+  },
+  {
+   "diagnosed": 89,
+   "dominant_shape": "crash-report/neoforge",
+   "dominant_shape_share": 0.241,
+   "hi": 0.7434,
+   "lo": 0.5854,
+   "n": 133,
+   "quotable_as_rate": true,
+   "rate": 0.6692,
+   "share": 0.2012,
+   "version": "1.21"
+  },
+  {
+   "diagnosed": 9,
+   "dominant_shape": "unknown/neoforge",
+   "dominant_shape_share": 0.2,
+   "hi": 0.8018,
+   "lo": 0.3575,
+   "n": 15,
+   "quotable_as_rate": false,
+   "rate": 0.6,
+   "share": 0.0227,
+   "version": "26.1"
+  },
+  {
+   "diagnosed": 3,
+   "dominant_shape": "crash-report/fabric",
+   "dominant_shape_share": 0.5,
+   "hi": 0.8124,
+   "lo": 0.1876,
+   "n": 6,
+   "quotable_as_rate": false,
+   "rate": 0.5,
+   "share": 0.0091,
+   "version": "26.2"
+  },
+  {
+   "diagnosed": 0,
+   "dominant_shape": "crash-report/fabric",
+   "dominant_shape_share": 1.0,
+   "hi": 0.7935,
+   "lo": 0.0,
+   "n": 1,
+   "quotable_as_rate": false,
+   "rate": 0.0,
+   "share": 0.0015,
+   "version": "26.3"
+  },
+  {
+   "diagnosed": 97,
+   "dominant_shape": "unknown/fabric",
+   "dominant_shape_share": 0.316,
+   "hi": 0.5643,
+   "lo": 0.4257,
+   "n": 196,
+   "quotable_as_rate": true,
+   "rate": 0.4949,
+   "share": 0.2965,
+   "version": "(no version line)"
+  },
+  {
+   "diagnosed": 0,
+   "dominant_shape": "log/vanilla",
+   "dominant_shape_share": 1.0,
+   "hi": 0.7935,
+   "lo": 0.0,
+   "n": 1,
+   "quotable_as_rate": false,
+   "rate": 0.0,
+   "share": 0.0015,
+   "version": "(unparsed) 19w34a"
+  },
+  {
+   "diagnosed": 0,
+   "dominant_shape": "log/vanilla",
+   "dominant_shape_share": 1.0,
+   "hi": 0.7935,
+   "lo": 0.0,
+   "n": 1,
+   "quotable_as_rate": false,
+   "rate": 0.0,
+   "share": 0.0015,
+   "version": "(unparsed) 21w05b"
+  },
+  {
+   "diagnosed": 1,
+   "dominant_shape": "log/fabric",
+   "dominant_shape_share": 1.0,
+   "hi": 1.0,
+   "lo": 0.2065,
+   "n": 1,
+   "quotable_as_rate": false,
+   "rate": 1.0,
+   "share": 0.0015,
+   "version": "(unparsed) 22w16b"
+  }
+ ],
+ "totals": {
+  "diagnosed": 396,
+  "n": 661,
+  "rate": 0.5991
+ }
+}

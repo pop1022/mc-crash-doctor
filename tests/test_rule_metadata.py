@@ -81,9 +81,18 @@ def test_verified_rules_cite_real_evidence():
 
 def test_experimental_rules_are_the_synthetic_only_four():
     """Pinned set: the four rules whose failure modes are absent from all
-    real corpora (see tests/test_rule_fixtures.py). If a real report starts
-    firing one, re-run tools/stamp_provenance.py to upgrade it -- and update
-    this test, deliberately."""
+    real corpora (see tests/test_rule_fixtures.py).
+
+    This is the *shrink* half of the guard: it fails if the experimental set
+    changes in either direction, so a rule cannot be quietly demoted to
+    experimental (making it someone else's problem) any more than it can be
+    quietly promoted.
+
+    The promote-when-earned half is `tests/test_rule_lifecycle.py`, which
+    derives the same fact from the corpus and fails when a rule has real
+    evidence but is still marked experimental. That one is the mechanism; this
+    one is the pin that says the current answer was a decision. If a promotion
+    is justified, both move in the same commit."""
     exp = {r.id for r in _rs.rules if r.lifecycle_status == "experimental"}
     assert exp == {"oom.save-time", "oom.gc-overhead", "disk.space",
                    "native.gl"}, f"experimental set changed: {sorted(exp)}"

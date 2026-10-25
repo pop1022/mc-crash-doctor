@@ -39,6 +39,54 @@ versions follow [SemVer](https://semver.org/).
 - **`tests/test_rule_drafts.py`** — 9 tests re-checking every draft on disk, plus
   `test_no_draft_rule_is_in_builtin` for the other direction. Cost: 0.25 s.
 
+- **`tests/test_rule_lifecycle.py` + `corpus/rule-lifecycle.json` — the loop that
+  keeps four rules `experimental` forever.** `tools/stamp_provenance.py` has
+  always known how to promote a rule ("a real report fired this"); nothing ever
+  asked it to. The status was a hand-maintained constant, so "upgrades happen
+  when somebody remembers" was the real mechanism, and for `oom.save-time` /
+  `oom.gc-overhead` / `disk.space` / `native.gl` it has never once run.
+
+  `tools/rule_lifecycle.py` derives every status from the corpus and writes a
+  snapshot that binds the answer to a corpus digest (661 reports, 56.5 MB,
+  hashed in 0.15 s). The default test suite then fails on either kind of
+  staleness: the corpus moved (cheap, digest only) or a rule earned promotion
+  (`PROMOTE oom.save-time (real evidence: harvested:.../1234)`). Re-deriving
+  costs ~40 s, so it stays a manual command -- the same split
+  `tests/test_rule_candidates.py` uses.
+
+  Measured today: 4 rules × 661 reports = **0 real hits**, so "nothing is
+  promotable" is now a measurement rather than a comment. The pin test in
+  `tests/test_rule_metadata.py` is kept for the opposite direction (a rule
+  cannot be quietly *demoted* to experimental either).
+
+- **`tools/version_strata.py` + `corpus/VERSION_STRATA.md` — the version-shaped
+  blind spot, measured for the first time.** Every published coverage number
+  was an average over 661 reports, which cannot answer "does this work on *my*
+  version?". Now each stratum carries a Wilson interval and a
+  `quotable_as_rate` flag at n >= 30, and the roadmap's 20pp criterion is judged
+  on **disjoint intervals**, not point estimates.
+
+  Verdict: the four quotable strata (1.16 50%, 1.19 68%, 1.20 73%, 1.21 67%)
+  differ by 5–18pp and every interval overlaps -- criterion not triggered. The
+  largest apparent gap in the data is not a version at all: 196 reports (30%)
+  carry no `Minecraft Version:` line (Bedrock logs, issue bodies that are not
+  crash reports) and diagnose at 49.5% [43–56%] against 73% for 1.20. Treating
+  that as "old version" is the confound the tool exists to avoid.
+
+  Two corpus facts fell out of it: 22 reports say `26.1`/`26.2`/`26.3` because
+  Minecraft moved off `1.x` numbering (`Minecraft Version: 26.1.2 (Tiny
+  Takeover)`), so any analysis filtering on a `1.` prefix silently drops them;
+  and the report lists the 14 neighbouring pairs that were **not** compared for
+  low n, so `1.16` vs `1.19` is not read as "adjacent".
+
+- **A payload budget for `web/`.** 229 KB across five files had no threshold
+  assertion anywhere, so anything could be added and nothing would notice. The
+  budget lives in `tools/build_web.py` (`SIZE_BUDGET`, ~30% headroom) and is
+  checked by `tests/test_web_bundle.py`, which also fails if the wheel starts
+  shipping `__pycache__`, `.pyc`, `tests/` or corpus data -- the likely way it
+  would grow. Verified by inflating `app.js` 30 KB: `app.js: 65,382 B > 60,000 B
+  budget`, restored, green.
+
 - **`tests/test_rule_candidates.py` — a drift guard for the candidate pack.**
   The pack's third line ("117 of 454 uncovered, 107 clusters, top-10 = 17%,
   therefore R4 fires") is the sentence every later decision quotes, and
@@ -379,6 +427,32 @@ versions follow [SemVer](https://semver.org/).
   and `test_every_when_key_is_honoured_by_the_engine` walks the shipped packs
   against it. User-supplied packs are deliberately not hard-failed at load:
   breaking a working rule directory to catch a typo is the wrong trade.
+- **The last 8 unparsed frames — 3 families, all silent.** `frame_defects` had
+  been sitting at 8 since the frame repair, across exactly three reports, and
+  each family failed in the same way: the frame became *one* `cls` holding the
+  whole line, which is plausible enough that no consumer complained, and
+  `frames` could not see it because the number of *lines* never changed.
+
+    | report | defect | before | after |
+    |---|---|---|---|
+    | FabricMC/fabric-api#5287 | 4 lines holding 2–11 frames each | 34 frames | 60 frames |
+    | McJtyMods/RFTools#1898 | stray markdown backtick after `)` | no cls/method | parsed |
+    | TeamTwilight/twilightforest#2455 | `~[jar]` truncated, never closed | no cls/method | parsed |
+
+  A glued line was the worst of the three: `FRAME_BODY_RE` anchors on `(...)$`,
+  so it matched the **last** frame's parens and attributed that method to a
+  `cls` containing every earlier frame. `_split_glued_frames` now splits on
+  `) at ` and only accepts the split when *every* part parses as a frame on its
+  own — which is what stops a `{}` debug block containing " at " from being cut
+  in half. A trailing `... N more` is peeled off rather than turned into a
+  frame, matching what `MORE_RE` already does for the standalone form.
+
+  Measured, `tools/parser_snapshot.py` before → after: frames 57,282 → 57,308,
+  `frame_defects` 8 → 0, new `frames_glued` counter 0; **3 of 454 reports
+  changed**, the other 451 byte-identical including `mods_sig`. Rule engine over
+  the whole corpus: 524 findings before and after, same per-rule counts, 0
+  reports with a different diagnosis. So the repair buys 26 frames and costs
+  nothing downstream.
 - **`tools/suggest_rules.py` did not run on Python 3.9.** It wrote the pack via
   `Path.write_text(..., newline="\n")`, a keyword that only exists from 3.10,
   while `pyproject.toml` declares `requires-python = ">=3.9"` — so the command

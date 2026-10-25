@@ -67,6 +67,19 @@ def _frame_defects(exceptions) -> int:
                if ")" in (f.cls or "") or "]" in (f.cls or ""))
 
 
+def _frames_glued(exceptions) -> int:
+    """Frames whose raw line still contains a second frame after the first `)`.
+
+    Separate from `_frame_defects` on purpose: that one spots the damage (a `)`
+    inside `cls`), this one spots the *cause* (two frames on one line) and stays
+    meaningful even if a future change stops copying the debris into `cls`.
+    Both should be 0 on the current corpus.
+    """
+    from mcd.parser.report import GLUED_FRAME_RE
+    return sum(1 for e in exceptions for f in e.frames
+               if GLUED_FRAME_RE.search(f.raw or ""))
+
+
 def snapshot() -> dict:
     from mcd.parser.report import parse_file
 
@@ -86,6 +99,7 @@ def snapshot() -> dict:
             "frames": sum(len(e.frames) for e in rep.exceptions),
             "frames_sig": _frames_sig(rep.exceptions),
             "frame_defects": _frame_defects(rep.exceptions),
+            "frames_glued": _frames_glued(rep.exceptions),
             "suspected": rep.suspected_mods,
             "loader": rep.system.loader,
             "kind": rep.kind,

@@ -95,3 +95,44 @@ def test_manifest_source_digest_matches_mcd():
     assert recorded == bw.source_digest(), (
         "mcd/ changed since the web wheel was built (contents, not module "
         "names) -- run python tools/build_web.py")
+
+
+# --- payload size -----------------------------------------------------------
+# The page loads Pyodide from a CDN, so web/ is only part of what a visitor
+# downloads -- but it is the part this repo controls, and the only part that can
+# grow without anyone noticing. Sizes are declared in tools/build_web.py so the
+# build and the gate cannot disagree about what the budget is.
+def _build_web():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "build_web", ROOT / "tools" / "build_web.py")
+    bw = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bw)
+    return bw
+
+
+def test_web_payload_stays_within_budget():
+    bw = _build_web()
+    sizes = bw.payload_sizes()
+    over = bw.budget_report(sizes)
+    measured = ", ".join(f"{k} {v:,} B" for k, v in sizes.items())
+    assert not over, (
+        "web/ grew past its declared budget:\n  " + "\n  ".join(over)
+        + f"\nmeasured: {measured}\n"
+        "If the growth is wanted, raise SIZE_BUDGET in tools/build_web.py in "
+        "this same commit and note why; if it is not, find what got in.")
+
+
+def test_wheel_carries_no_build_detritus():
+    """The likeliest way the wheel doubles is not a dependency -- it is a build
+    that stops pruning. `.pyc`/`__pycache__`, a test tree or corpus data would
+    all inflate the artifact and none of them can run in Pyodide."""
+    with zipfile.ZipFile(_wheel()) as z:
+        names = z.namelist()
+    bad = [n for n in names
+           if "__pycache__" in n or n.endswith((".pyc", ".pyo"))
+           or n.startswith(("tests/", "corpus/", ".git/"))]
+    assert not bad, (
+        f"the web wheel ships {len(bad)} non-runtime file(s), e.g. {bad[:5]} "
+        "-- run python tools/build_web.py")

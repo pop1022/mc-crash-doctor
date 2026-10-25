@@ -1,0 +1,367 @@
+{
+ "corpus": {
+  "aternos": 201,
+  "digest": "2e0abeea2474182b",
+  "files": 661,
+  "ground_truth": 6,
+  "harvested": 454
+ },
+ "generated_at": "2026-10-25T18:03:42+08:00",
+ "rules": {
+  "crash.datapack-book": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:Jade/483",
+    "harvested:twilightforest/2533"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "crash.registry-load-failed": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:fabric-api/4862",
+    "harvested:fabric-api/4909"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "crash.rendering": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:sodium/3771",
+    "harvested:sodium/3859"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "crash.rendering-blockentity": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:sodium/3725",
+    "harvested:RFTools/2101"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "crash.rendering-entity": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:fabric-api/4641",
+    "harvested:fabric-loader/859"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "crash.runtime-mod": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "gt:crash-2026-09-08_22.31.14-server.txt",
+    "harvested:sodium/3511"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "crash.threading-race": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:Mekanism/8531"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "crash.ticking-blockentity": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:RFTools/1909",
+    "harvested:RFTools/1920"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "crash.ticking-entity": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "gt:crash-2026-09-08_18.47.46-server.txt",
+    "harvested:TinkersConstruct/5641"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "disk.space": {
+   "lifecycle_status": "experimental",
+   "real_evidence": [],
+   "synthetic_fixtures": [
+    "synthetic/disk-space.txt"
+   ],
+   "verdict": "hold"
+  },
+  "env.headless-jvm": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:quilt-loader/398"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "hang.watchdog": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "gt:crash-2026-09-08_22.31.14-server.txt",
+    "harvested:RFTools/2152"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "java.class-version": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:fabric-loader/641",
+    "harvested:fabric-loader/736"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "loader.namespace-missing": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:quilt-loader/497"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "mixin.apply-failed": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:sodium/3503",
+    "harvested:sodium/3919"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "mixin.injection-failed": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:fabric-api/4486",
+    "harvested:fabric-api/4922"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "mixin.target-missing": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:fabric-api/4922",
+    "harvested:fabric-loader/706"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "mod.binary-incompat": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:sodium/3711",
+    "harvested:sodium/3869"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "mod.client-class-on-server": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:twilightforest/2564",
+    "harvested:twilightforest/2686"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "mod.config-invalid": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:fabric-loader/997",
+    "harvested:RFTools/1991"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "mod.coremod-missing": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:fabric-api/4491",
+    "harvested:fabric-api/4704"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "mod.corrupt-jar": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:fabric-api/4907",
+    "harvested:fabric-api/5179"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "mod.dep-missing.fabric": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "aternos:fabric-missing-dependencies-1.log"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "mod.dep-missing.forge": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "aternos:magma-mod-dependency.log"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "mod.dep-missing.forge-old": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "aternos:magma-mod-dependency.log"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "mod.duplicate": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "aternos:forge-1-20-1-duplicate-mods.log"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "mod.incompatible-set": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:sodium/3524",
+    "harvested:sodium/3813"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "mod.linkage-duplicate": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:fabric-loader/1132",
+    "harvested:fabric-loader/622"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "mod.load-failed.fabric-entry": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:Placebo/36",
+    "harvested:Curios/278"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "mod.load-failed.neoforge": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:Jade/584",
+    "harvested:Mekanism/8483"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "mod.load-fatal": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:fabric-loader/1026",
+    "harvested:RFTools/1972"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "mod.wrong-mc-version": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "aternos:forge-mod-wrong-minecraft-version.log"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "native.gl": {
+   "lifecycle_status": "experimental",
+   "real_evidence": [],
+   "synthetic_fixtures": [
+    "synthetic/native-gl.txt"
+   ],
+   "verdict": "hold"
+  },
+  "net.connectivity": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:fabric-api/4707",
+    "harvested:fabric-loader/639"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "oom.gc-overhead": {
+   "lifecycle_status": "experimental",
+   "real_evidence": [],
+   "synthetic_fixtures": [
+    "synthetic/oom-gc-overhead.txt"
+   ],
+   "verdict": "hold"
+  },
+  "oom.heap": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "gt:crash-2026-09-08_18.01.19-server.txt"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "oom.metaspace": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "aternos:paper-metaspace.log"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "oom.save-time": {
+   "lifecycle_status": "experimental",
+   "real_evidence": [],
+   "synthetic_fixtures": [
+    "synthetic/oom-save-time.txt"
+   ],
+   "verdict": "hold"
+  },
+  "perf.tick-timeout": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:fabric-loader/668",
+    "harvested:RFTools/2066"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "quilt.config-broken": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:quilt-loader/244",
+    "harvested:quilt-loader/261"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "world.corrupt-region": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:Jade/487",
+    "harvested:Jade/610"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  }
+ }
+}

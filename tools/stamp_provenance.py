@@ -74,7 +74,9 @@ def scan_corpus() -> dict[str, list[str]]:
     """rule_id -> up to 3 representative corpus files where it fires.
 
     Keys: 'gt:<name>' (ground truth), 'aternos:<name>', 'harvested:<repo>/<n>'.
-    Slow (~5 min: parses every corpus file once)."""
+    Slow: ~40 s measured over 661 reports (ground truth 1.0 s, harvested 35.3 s,
+    aternos 3.4 s). An earlier version of this docstring said "~5 min"; that was
+    never re-measured after the parser rewrite and is wrong by 7x."""
     from mcd.parser.report import parse_file
     from mcd.rules.engine import RuleSet, run_rules
     rs = RuleSet.load()

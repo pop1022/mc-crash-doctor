@@ -238,7 +238,23 @@ def _parse_coremods(text: str, start: int) -> tuple[list[str], int]:
 _FRAME_TRAILERS = (
     re.compile(r"\s*\{[^{}]*\}\s*$"),
     re.compile(r"\s*~?\[[^\[\]]*\]\s*$"),
+    # A trailer that never closed. Logs get truncated mid-line (the corpus has
+    # ``...SheepModel.setupAnim(SheepModel.java:14) ~[client-1.21.1-20240808.144430-``
+    # in TeamTwilight/twilightforest#2455) and the ``~[`` then sits in front of
+    # the ``)`` that `FRAME_BODY_RE` anchors on, so the whole frame is lost. The
+    # ``[`` cannot appear inside a class name, so cutting here cannot eat real
+    # frame content -- it can only remove the truncated artefact.
+    re.compile(r"\s*~?\[[^\[\]]*$"),
+    # Markdown residue: reports pasted into an issue body sometimes end the line
+    # with a stray backtick (McJtyMods/RFTools#1898), which also defeats the
+    # ``\s*$`` anchor. ``frame.raw`` keeps the original line either way.
+    re.compile(r"`+\s*$"),
 )
+
+#: ``...couldTransformClass(F.java:265) at org.spongepowered...`` -- two frames
+#: flattened onto one line when the log was archived. Kept as a separate pattern
+#: so the count of reports still carrying this defect is measurable.
+GLUED_FRAME_RE = re.compile(r"\)\s+at\s+\S")
 
 #: `pkg.Class.method(File.java:42)`. The method charset needs ``-``: Fabric
 #: generates names like ``wrapOperation$cdi000$fabric-registry-sync-v0$foo``.
@@ -287,6 +303,49 @@ def _frame_head(raw: str) -> str:
     if "/" in body:
         body = body.rsplit("/", 1)[-1]
     return (body + tail).strip()
+
+
+#: ``) at `` -- the seam between two frames that were flattened onto one line.
+_GLUED_SEAM_RE = re.compile(r"(?<=\))\s+at\s+(?=\S)")
+
+#: The JVM ellipsis as a *suffix* instead of a whole line: ``... 6 more``.
+#: `MORE_RE` only matches when the line starts with it; on a glued line it sits
+#: at the end and would fail validation for every part, so it is peeled first.
+_MORE_TAIL_RE = re.compile(r"\s*\.\.\.\s*\d+\s+(?:more|common frames omitted)\s*$",
+                           re.I)
+
+
+def _split_glued_frames(raw: str) -> list[str]:
+    """Split a line that holds two or more frames into its parts.
+
+    The corpus loses newlines on a handful of frames when a log is archived
+    (FabricMC/fabric-api#5287 carries four of them, one holding eleven frames).
+    The damage is silent and worse than a parse failure: `FRAME_BODY_RE` anchors
+    on ``(...)$``, so it matched the *last* frame's parens and copied everything
+    before them into ``cls`` -- one plausible-looking frame with the wrong
+    method, and every other frame gone. `frames_sig` could not see it either,
+    because the number of *lines* did not change.
+
+    A split is only taken when **every** part parses as a frame on its own. That
+    is what keeps a ``{}`` debug block containing " at " from being cut in half:
+    the left side would then end in ``}`` instead of ``)`` and the whole line is
+    returned untouched.
+
+    A trailing ``... N more`` is dropped, not counted: `MORE_RE` drops the
+    standalone form for the same reason -- the frames it stands for are not in
+    the file, and inventing them would inflate `frames_sig`.
+    """
+    parts = _GLUED_SEAM_RE.split(raw)
+    if len(parts) == 1:
+        return parts
+    parts[-1] = _MORE_TAIL_RE.sub("", parts[-1])
+    out = []
+    for part in parts:
+        part = part.strip()
+        if not FRAME_BODY_RE.match(_frame_head(part)):
+            return [raw]
+        out.append(part)
+    return out
 
 
 def _parse_frame(raw: str, index: int) -> StackFrame:
@@ -413,8 +472,9 @@ def _parse_exceptions(text: str) -> list[ExceptionBlock]:
             inner = fm.group(1)
             if MORE_RE.match(inner):
                 continue
-            current.frames.append(_parse_frame(inner, frame_idx))
-            frame_idx += 1
+            for piece in _split_glued_frames(inner):
+                current.frames.append(_parse_frame(piece, frame_idx))
+                frame_idx += 1
             continue
         if current is not None and current.frames:
             # end of the trace region
