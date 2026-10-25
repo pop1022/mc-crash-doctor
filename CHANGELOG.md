@@ -39,6 +39,34 @@ versions follow [SemVer](https://semver.org/).
 - **`tests/test_rule_drafts.py`** — 9 tests re-checking every draft on disk, plus
   `test_no_draft_rule_is_in_builtin` for the other direction. Cost: 0.25 s.
 
+- **`--pack` — Pack Doctor without waiting for a crash (ROADMAP 2.2, offline
+  half).** `mcd/pack/` compares what the installed jars *declare* against each
+  other: duplicate mods, missing dependencies, version mismatches, mixed
+  loaders, and declared negative edges (`breaks` = ERROR, `conflicts` =
+  WARNING). No network, because `metadata/manifest.py` (1D.1) already reads the
+  manifests and `compat-edges.jsonl` turned out to be 98% bare co-occurrence
+  (9,721 of 9,895 edges with `evidence_count=1`), so a `mcd compat` query would
+  have been confident nonsense -- 2.4 stays blocked on better edges, not on
+  effort.
+
+  The version module is the part that had to be right. ROADMAP 2.2 pins three
+  forms that people conflate: `[1.20,1.21)` is a half-open interval, `[1.20]`
+  is exactly 1.20, and **bare `1.20` is a minimum** -- treating it as exact
+  turns every newer install into a false mismatch, treating it as "anything"
+  makes mismatches vanish. 29 tests pin that table plus Fabric's `~`/`^`/`x`
+  forms and conjunctions.
+
+  The invariant is that not-knowing is printed:
+  `satisfies()` returns `None` rather than a guess, every `None` becomes an
+  `undecided` row carrying the verbatim range, and every jar with no readable
+  manifest becomes an `unreadable` row. A report that says "0 findings" also
+  says how many jars and how many undecided, so silence is never mistaken for
+  approval. Verified by mutating bare-version to exact: the dedicated test
+  fails.
+
+  Not done, and said so in the report: client-only-mod-on-server, because the
+  manifest reader does not capture Fabric's `environment` yet.
+
 - **`.github/workflows/publish.yml` — the half of PyPI publishing that does not
   need credentials.** Tag `v*` triggers it; PyPI is reached by Trusted
   Publishing (OIDC), so no token lives in this repo. Before anything is

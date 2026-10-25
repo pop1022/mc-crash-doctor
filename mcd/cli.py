@@ -5,6 +5,7 @@
     mc-crash-doctor --markdown <file>   # for pasting into an issue/PR
     mc-crash-doctor --stdin             # pipe a log in
     mc-crash-doctor --dir <path>        # batch every report in a directory
+    mc-crash-doctor --pack <dir>        # check a mods/ dir without a crash
     mc-crash-doctor --rules             # list the rule set
 """
 
@@ -76,6 +77,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--stdin", action="store_true", help="read the report from stdin")
     ap.add_argument("--url", help="fetch a mclo.gs paste (https://mclo.gs/xxxxx)")
     ap.add_argument("-d", "--dir", help="batch: diagnose every report under this dir")
+    ap.add_argument("--pack", metavar="DIR",
+                    help="Pack Doctor: check a mods/ directory against the "
+                         "dependencies its jars declare (no crash report needed)")
 
     fmt = ap.add_mutually_exclusive_group()
     fmt.add_argument("--json", action="store_true", help="JSON output")
@@ -102,6 +106,10 @@ def main(argv: list[str] | None = None) -> int:
     out = sys.stdout
     color = not (args.no_color or args.json or args.markdown or args.text
                  or not out.isatty())
+
+    # --- pack mode: a different question, so it returns before anything else
+    if args.pack:
+        return _pack(args.pack, _fmt(args), out, color, args.exit_code)
 
     # --- resolve input ---
     if args.stdin:
@@ -158,6 +166,26 @@ def _fmt(args) -> str:
     if args.text:
         return "text"
     return "terminal"
+
+
+def _pack(target: str, fmt: str, out, color: bool, exit_code: bool) -> int:
+    """Pack Doctor entry point; `--exit-code` maps to the worst finding."""
+    from .pack.doctor import analyse
+    from .pack.render import (render_pack_json, render_pack_markdown,
+                              render_pack_plain)
+
+    try:
+        rep = analyse(target)
+    except FileNotFoundError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    if fmt == "json":
+        render_pack_json(rep, out)
+    elif fmt == "markdown":
+        render_pack_markdown(rep, out)
+    else:
+        render_pack_plain(rep, out, color=color)
+    return _exit(rep.worst, exit_code)
 
 
 def _worst(findings: list[Finding]) -> Severity:

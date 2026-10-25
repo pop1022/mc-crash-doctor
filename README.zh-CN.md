@@ -105,6 +105,9 @@ mc-crash-doctor report.txt --markdown
 # 机器可读
 mc-crash-doctor report.txt --json
 
+# 还没崩？直接检查 mods/ 与各 jar 自己声明的依赖是否自相矛盾
+mc-crash-doctor --pack /path/to/server
+
 # CI 门禁：出现 ERROR/FATAL 时退出码为 1
 mc-crash-doctor --dir ./server --exit-code
 ```
