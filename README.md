@@ -136,6 +136,38 @@ for f in findings:
         print("  →", fix)
 ```
 
+### As a GitHub Action
+
+Auto-diagnose crash reports posted to a repo's issues. The action pulls the
+report out of the issue body — a fenced block, an inline paste, or an
+mclo.gs / gist / pastebin link — and **edits its own comment** on re-runs
+(issue `edited` events) instead of stacking up stale diagnoses:
+
+```yaml
+permissions:
+  issues: write        # contents: read is enough for the rest
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pop1022/mc-crash-doctor@main
+        with:
+          comment: "true"
+          fail-on: never     # or "fatal" to fail the step on a server kill
+```
+
+Outputs: `found`, `findings`, `worst_severity`, `suspect`,
+`suspect_confidence`, `commented`. Use `path:` instead of an issue to gate a
+committed report in CI, or `url:` for a paste link. Chatter that merely
+triggers the workflow is ignored (`found=false`, no comment). This repo runs
+it on its own issues — see [`.github/workflows/diagnose-issue.yml`](.github/workflows/diagnose-issue.yml).
+
 ## Covered failure modes
 
 41 rules across three packs. Rules are YAML — adding one needs no Python.
@@ -215,8 +247,8 @@ python tests/debug_platform.py --file <log>   # why did it detect X?
 
 ## Roadmap
 
-- [ ] Web UI — paste and diagnose in the browser, no install
-- [ ] GitHub Action — auto-diagnose crash reports posted to issues
+- [~] Web UI — paste, pick a file or drop one, and get a verdict in the browser, no install. Chinese by default with an EN toggle (the diagnosis text itself comes from the YAML rules). Runs client-side under Pyodide and is verified end-to-end against a real browser; the public URL is pending one-time Pages enablement (see ROADMAP 0.2).
+- [~] GitHub Action — auto-diagnose crash reports posted to issues (`action.yml` + `diagnose-issue.yml` are in place; awaiting a live-issue dogfood run, ROADMAP 1C.1)
 - [ ] Mod graph from the Modrinth API (75k mods) — known-conflict and version-compat lookup
 - [ ] Weak-supervised classifier trained on maintainer labels, to rank suspects when rules are inconclusive
 - [ ] Client-side log tailing (watch `latest.log` live)

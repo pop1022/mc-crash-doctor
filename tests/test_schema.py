@@ -28,7 +28,6 @@ from mcd.cli import diagnose                       # noqa: E402
 from mcd.report.render import SCHEMA_VERSION, build_incident  # noqa: E402
 
 try:
-    import jsonschema
     from jsonschema import Draft202012Validator
     HAS_JSONSCHEMA = True
 except ImportError:            # pragma: no cover

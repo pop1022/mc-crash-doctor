@@ -1,0 +1,112 @@
+name: mc-crash-doctor
+description: >-
+  Diagnose a Minecraft crash report and post the root cause, the suspect mod
+  and the fix as a comment on the issue. Deterministic rules, no API calls,
+  the log never leaves the runner.
+author: mc-crash-doctor contributors
+
+branding:
+  icon: activity
+  color: red
+
+inputs:
+  issue:
+    description: >-
+      Issue number to read the report from. Defaults to the issue in the
+      triggering event.
+    required: false
+    default: ""
+  path:
+    description: Path to a crash report / log file in the workspace.
+    required: false
+    default: ""
+  url:
+    description: mclo.gs share link or raw log URL to diagnose instead.
+    required: false
+    default: ""
+  comment:
+    description: >-
+      Post the diagnosis as an issue comment (updates the previous
+      mc-crash-doctor comment instead of adding another one).
+    required: false
+    default: "true"
+  follow-links:
+    description: >-
+      Dereference mclo.gs / gist / pastebin links found in the issue body.
+      Set false to keep the action fully offline.
+    required: false
+    default: "true"
+  fail-on:
+    description: >-
+      Fail the step when a finding reaches this severity
+      (never | error | fatal). Default never -- an issue comment should not
+      turn the run red.
+    required: false
+    default: "never"
+  token:
+    description: Token used to comment. Needs issues:write on the target repo.
+    required: false
+    default: ${{ github.token }}
+  python-version:
+    description: Python version for the runner.
+    required: false
+    default: "3.12"
+
+outputs:
+  found:
+    description: '"true" when a crash report was found in the input.'
+    value: ${{ steps.diagnose.outputs.found }}
+  findings:
+    description: Number of findings produced.
+    value: ${{ steps.diagnose.outputs.findings }}
+  worst_severity:
+    description: fatal | error | warning | hint | info | none.
+    value: ${{ steps.diagnose.outputs.worst_severity }}
+  suspect:
+    description: Top suspect mod id (empty when attribution resolved nothing).
+    value: ${{ steps.diagnose.outputs.suspect }}
+  suspect_confidence:
+    description: Confidence for the top suspect, e.g. "97%".
+    value: ${{ steps.diagnose.outputs.suspect_confidence }}
+  commented:
+    description: '"true" when the issue comment was created or updated.'
+    value: ${{ steps.diagnose.outputs.commented }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install mc-crash-doctor
+      shell: bash
+      # Installed from the action checkout, not from PyPI: the action must run
+      # the engine at the ref the caller pinned. `rich` is not needed -- the
+      # action renders Markdown, not the terminal view.
+      run: python -m pip install --disable-pip-version-check --quiet "$GITHUB_ACTION_PATH"
+
+    - name: Diagnose
+      id: diagnose
+      shell: bash
+      env:
+        INPUT_ISSUE: ${{ inputs.issue }}
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_URL: ${{ inputs.url }}
+        INPUT_COMMENT: ${{ inputs.comment }}
+        INPUT_FOLLOW_LINKS: ${{ inputs.follow-links }}
+        INPUT_FAIL_ON: ${{ inputs.fail-on }}
+        GITHUB_TOKEN: ${{ inputs.token }}
+      # Values arrive through env, never spliced into the script: a path or a
+      # URL containing quotes must not become shell syntax.
+      run: |
+        set -uo pipefail
+        args=()
+        if [ -n "$INPUT_PATH" ]; then args+=(--path "$INPUT_PATH"); fi
+        if [ -n "$INPUT_URL" ]; then args+=(--url "$INPUT_URL"); fi
+        if [ -n "$INPUT_ISSUE" ]; then args+=(--issue "$INPUT_ISSUE"); fi
+        if [ "$INPUT_COMMENT" = "true" ]; then args+=(--comment); fi
+        if [ "$INPUT_FOLLOW_LINKS" != "true" ]; then args+=(--no-follow-links); fi
+        args+=(--fail-on "$INPUT_FAIL_ON")
+        python -m mcd.action "${args[@]}"

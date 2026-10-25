@@ -1,0 +1,67 @@
+# CANDIDATE -- not a shipped rule. Admitted through `tools/suggest_rules.py --ingest`.
+#
+# Cluster: `java.lang.Throwable: Manually triggered debug crash` (4 reports) plus
+#          `net.minecraft.ReportedException: Manually triggered debug crash` (1).
+#          The pack lists them as separate signatures because the wrapper class
+#          differs; the sentence that identifies them is the same, so this rule
+#          keys on it and merges the two clusters. That is the one piece of
+#          judgement applied on top of the generated skeleton -- the `exception:`
+#          condition the tool proposed would have excluded sodium#3627.
+#
+# WHY THIS ONE AND NOT THE OTHER 105 CLUSTERS
+#   `corpus/RULE_CANDIDATES.md` measures the tail before proposing anything:
+#   117 uncovered reports spread over 107 signatures, 100 of them singletons,
+#   i.e. 1.09 reports per rule. ROADMAP risk R4 fixed the stopping rule in
+#   advance -- top-10 < 30% means the tail is exhausted -- and it fires at 17%.
+#   This cluster is the exception, not the rule: 5 reports, one stable sentence,
+#   and no report-specific content to overfit to.
+#
+# WHY THE ANSWER IS "NOTHING IS WRONG"
+#   Minecraft writes this trace when the crash was requested by hand (F3+C in
+#   single-player, `/debug crash` on a server). All five pinned reports are from
+#   people attaching that dummy crash to a *different* complaint -- screen
+#   flickering, texture bleed, an FPS drop, a freeze, and "video settings won't
+#   open". The report genuinely contains no trace of any of those. Today the tool
+#   says nothing at all on these, which reads as "we could not figure it out"
+#   when the honest answer is "there is nothing here to figure out".
+#
+# EXPECTED EFFECT: 117 -> 112 uncovered. Diagnosis rate 74.2% -> 75.3%, and that
+#   +1.1pp is not progress on hard reports -- it is five easy ones, deliberately.
+#   Anyone quoting the rate should say so.
+generated_by:
+  model: deepseek-v4.1-flash
+  via: workbuddy agent
+  date: 2026-10-25
+  tool: tools/suggest_rules.py --report corpus/RULE_CANDIDATES.md
+  reviewed_by: pending
+
+rules:
+  - id: candidate.debug-crash.manual
+    title: "This crash was triggered on purpose (debug crash)"
+    severity: info
+    priority: 6
+    confidence: 0.95
+    tags: [not-a-bug, user-action]
+    when:
+      description: ['Manually triggered debug crash']
+    explanation: >-
+      Minecraft writes this report when the crash was requested by hand: F3+C in
+      single-player, or `/debug crash` on a server. The exception is a dummy the
+      game throws on purpose, so the trace shows no fault -- it is evidence that
+      a report was produced, not evidence that anything broke.
+    fixes:
+      - "If you pressed F3+C to generate this file, that is the whole story: nothing in it needs fixing."
+      - "If you are attaching this to a report about a different symptom (flickering, stutter, a freeze, a menu that will not open), describe that symptom in words -- this crash report does not contain it."
+      - "For a performance or rendering complaint, attach `.minecraft/logs/latest.log` and, if it is a visual bug, a screenshot instead."
+    suspects_from: []
+    provenance:
+      fixtures:
+        - sodium/3473
+        - sodium/3505
+        - sodium/3627
+        - sodium/3873
+        - sodium/3915
+      notes: >-
+        Five real reports, five different unrelated complaints, one shared
+        `Description:` line. See the pinned issues' titles in corpus/index.jsonl.
+    lifecycle_status: draft

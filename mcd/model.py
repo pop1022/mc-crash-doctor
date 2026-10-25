@@ -1,12 +1,13 @@
 """Structured model of a Minecraft crash report / log.
 
 Everything downstream (rules, triage, rendering) consumes these dataclasses,
-never raw text. Keep them JSON-serialisable so `--json` output is free.
+never raw text. Each piece knows how to become a dict; the *document* shape is
+owned by :func:`mcd.report.render.build_incident`, not by the model, so there is
+exactly one JSON schema to keep in sync.
 """
 
 from __future__ import annotations
 
-import json
 from dataclasses import asdict, dataclass, field
 from enum import IntEnum
 
@@ -109,16 +110,6 @@ class MemoryInfo:
     used_mib: int | None = None
     current_mib: int | None = None
     max_mib: int | None = None
-
-    @property
-    def is_complete(self) -> bool:
-        return self.max_mib is not None and self.used_mib is not None
-
-    def utilisation(self) -> float | None:
-        """used / max as a 0..1 ratio, or None."""
-        if self.used_mib and self.max_mib:
-            return self.used_mib / self.max_mib
-        return None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -226,42 +217,12 @@ class CrashReport:
                 return s
         return None
 
-    def find_section(self, *names: str) -> Section | None:
-        for n in names:
-            s = self.section(n)
-            if s:
-                return s
-        return None
-
     def mod_by_id(self, modid: str) -> Mod | None:
         modid_l = modid.strip().lower()
         for m in self.mods:
             if m.modid.lower() == modid_l:
                 return m
         return None
-
-    def to_dict(self, *, include_text: bool = False) -> dict:
-        d = {
-            "source_path": self.source_path,
-            "kind": self.kind,
-            "banner": self.banner,
-            "time": self.time,
-            "description": self.description,
-            "exceptions": [e.to_dict() for e in self.exceptions],
-            "sections": [s.to_dict() for s in self.sections],
-            "system": self.system.to_dict(),
-            "mods": [m.to_dict() for m in self.mods],
-            "coremods": self.coremods,
-            "suspected_mods": self.suspected_mods,
-            "mod_count_parsed": len(self.mods),
-            "root_cause": (self.root_cause or ExceptionBlock()).to_dict(),
-        }
-        if include_text:
-            d["full_text"] = self.full_text
-        return d
-
-    def to_json(self, **kw) -> str:
-        return json.dumps(self.to_dict(**kw), ensure_ascii=False, indent=2)
 
 
 @dataclass

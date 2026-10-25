@@ -1,0 +1,784 @@
+{
+  "generated_at": "2026-10-21T22:51:51+0800",
+  "gate": {
+    "threshold": 0.4,
+    "passed": true,
+    "verdict": "匹配率达标，1D.2（Modrinth 元数据抓取）可以做；优先级取决于第七节的 `incompatible` 密度——若该密度过低，声明式边的价值主要来自 jar 清单（1D.1），而非 API。"
+  },
+  "http": {
+    "lookups": 0,
+    "cache_hits": 433,
+    "errors": {},
+    "budget_exhausted": false
+  },
+  "metrics": {
+    "reports": 454,
+    "candidates_total": 751,
+    "runtime_lib_candidates": 25,
+    "loader_artifact_candidates": 12,
+    "mod_candidates": 714,
+    "sample_size": 120,
+    "candidates": 120,
+    "measured": 120,
+    "skipped": 0,
+    "resolved": 61,
+    "match_rate": 0.5083,
+    "by_origin": {
+      "mixin": {
+        "total": 82,
+        "resolved": 39
+      },
+      "jar": {
+        "total": 30,
+        "resolved": 17
+      },
+      "both": {
+        "total": 8,
+        "resolved": 5
+      }
+    },
+    "resolved_via": {
+      "search": 2,
+      "slug": 53,
+      "variant": 6
+    },
+    "reasons": {
+      "not_on_modrinth": 45,
+      "name_collision_or_alias": 14
+    },
+    "mod_ids_populated": 106,
+    "causal_subjects": 87,
+    "causal_measured": 60,
+    "causal_resolved": 28,
+    "causal_rate": 0.4667
+  },
+  "resolved_sample": [
+    {
+      "name": "AirHop",
+      "slug": "air-hop",
+      "via": "variant"
+    },
+    {
+      "name": "Apotheosis",
+      "slug": "apotheosis",
+      "via": "slug"
+    },
+    {
+      "name": "ContingameIME",
+      "slug": "contingameime",
+      "via": "slug"
+    },
+    {
+      "name": "CustomMachinery",
+      "slug": "custom-machinery",
+      "via": "variant"
+    },
+    {
+      "name": "EvilCraft",
+      "slug": "evilcraft",
+      "via": "slug"
+    },
+    {
+      "name": "GlitchCore",
+      "slug": "glitchcore",
+      "via": "slug"
+    },
+    {
+      "name": "HostileNeuralNetworks",
+      "slug": "hostile-neural-networks",
+      "via": "variant"
+    },
+    {
+      "name": "MekanismAdditions",
+      "slug": "mekanism-additions",
+      "via": "variant"
+    },
+    {
+      "name": "MekanismGenerators",
+      "slug": "mekanism-generators",
+      "via": "variant"
+    },
+    {
+      "name": "XaerosWorldMap",
+      "slug": "xaeros-world-map",
+      "via": "variant"
+    },
+    {
+      "name": "ae2",
+      "slug": "ae2",
+      "via": "slug"
+    },
+    {
+      "name": "aether",
+      "slug": "aether",
+      "via": "slug"
+    },
+    {
+      "name": "amethyst_core",
+      "slug": "amethyst-core",
+      "via": "slug"
+    },
+    {
+      "name": "ars-unification",
+      "slug": "ars-unification",
+      "via": "slug"
+    },
+    {
+      "name": "axiom",
+      "slug": "axiom",
+      "via": "slug"
+    },
+    {
+      "name": "bagus_lib",
+      "slug": "bagus-lib",
+      "via": "slug"
+    },
+    {
+      "name": "balm",
+      "slug": "balm",
+      "via": "slug"
+    },
+    {
+      "name": "bluemap",
+      "slug": "bluemap",
+      "via": "slug"
+    },
+    {
+      "name": "caelus",
+      "slug": "caelus",
+      "via": "slug"
+    },
+    {
+      "name": "cameraoverhaul",
+      "slug": "cameraoverhaul",
+      "via": "slug"
+    },
+    {
+      "name": "configured",
+      "slug": "configured",
+      "via": "slug"
+    },
+    {
+      "name": "crafttweaker",
+      "slug": "crafttweaker",
+      "via": "slug"
+    },
+    {
+      "name": "create-connected",
+      "slug": "create-connected",
+      "via": "slug"
+    },
+    {
+      "name": "emojiful",
+      "slug": "emojiful",
+      "via": "slug"
+    },
+    {
+      "name": "enderscape",
+      "slug": "enderscape",
+      "via": "slug"
+    },
+    {
+      "name": "expandability",
+      "slug": "expandability",
+      "via": "slug"
+    },
+    {
+      "name": "fallingleaves",
+      "slug": "fallingleaves",
+      "via": "slug"
+    },
+    {
+      "name": "flywheel",
+      "slug": "flywheel",
+      "via": "slug"
+    },
+    {
+      "name": "forgematica",
+      "slug": "forgematica",
+      "via": "slug"
+    },
+    {
+      "name": "fwa",
+      "slug": "fwa",
+      "via": "slug"
+    }
+  ],
+  "runtime_libs": [
+    {
+      "name": "client",
+      "reports": 131
+    },
+    {
+      "name": "forge",
+      "reports": 77
+    },
+    {
+      "name": "fmlloader",
+      "reports": 52
+    },
+    {
+      "name": "eventbus",
+      "reports": 51
+    },
+    {
+      "name": "neoforge",
+      "reports": 46
+    },
+    {
+      "name": "bootstraplauncher",
+      "reports": 45
+    },
+    {
+      "name": "securejarhandler",
+      "reports": 39
+    },
+    {
+      "name": "fmlcore",
+      "reports": 37
+    },
+    {
+      "name": "gson",
+      "reports": 37
+    },
+    {
+      "name": "datafixerupper",
+      "reports": 30
+    },
+    {
+      "name": "bus",
+      "reports": 28
+    },
+    {
+      "name": "server",
+      "reports": 27
+    },
+    {
+      "name": "fabric-loader",
+      "reports": 25
+    },
+    {
+      "name": "lwjgl-glfw",
+      "reports": 25
+    },
+    {
+      "name": "javafmllanguage",
+      "reports": 24
+    }
+  ],
+  "unresolved": [
+    {
+      "name": "libbamboo",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 2,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "fabric-command-api",
+      "origins": [
+        "jar"
+      ],
+      "reports": 1,
+      "reason": "name_collision_or_alias"
+    },
+    {
+      "name": "wi-zoom",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "adastra",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "name_collision_or_alias"
+    },
+    {
+      "name": "adventuredungeons",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "appliedenergistics2",
+      "origins": [
+        "jar",
+        "mixin"
+      ],
+      "reports": 6,
+      "reason": "name_collision_or_alias"
+    },
+    {
+      "name": "fabric-lifecycle-events",
+      "origins": [
+        "jar"
+      ],
+      "reports": 5,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "puzzleslib",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "notenoughanimations",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 8,
+      "reason": "name_collision_or_alias"
+    },
+    {
+      "name": "valkyrienskies",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 4,
+      "reason": "name_collision_or_alias"
+    },
+    {
+      "name": "fabric-rendering-data-attachment-v1",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 2,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "core",
+      "origins": [
+        "jar"
+      ],
+      "reports": 7,
+      "reason": "name_collision_or_alias"
+    },
+    {
+      "name": "structurize",
+      "origins": [
+        "jar"
+      ],
+      "reports": 1,
+      "reason": "name_collision_or_alias"
+    },
+    {
+      "name": "bankstorage",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 3,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "glsl-processor",
+      "origins": [
+        "jar"
+      ],
+      "reports": 2,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "supermartijn642corelib",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 6,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "beamblocks",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "betterendforge",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 2,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "bloodmagic",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "name_collision_or_alias"
+    },
+    {
+      "name": "betterendisland",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 5,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "biomeswevegone",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "fast_projectile",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "NewLaunch",
+      "origins": [
+        "jar"
+      ],
+      "reports": 6,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "bygonenether",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 2,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "structureessentials",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "shutupexperimentalsettings",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "cherishedworlds",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "offroad",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "name_collision_or_alias"
+    },
+    {
+      "name": "enhancedcelestials",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 4,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "fabric-biome-api-v1",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "eeeabsmobs",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "weaponleveling",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "rarcompat",
+      "origins": [
+        "jar",
+        "mixin"
+      ],
+      "reports": 7,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "hexplat",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 2,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "enhancedai",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "ldlib2",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 2,
+      "reason": "name_collision_or_alias"
+    },
+    {
+      "name": "biomemusic",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "fabric-rendering",
+      "origins": [
+        "jar"
+      ],
+      "reports": 1,
+      "reason": "name_collision_or_alias"
+    },
+    {
+      "name": "kfflang",
+      "origins": [
+        "jar"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "puffish_attributes",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "bugDemo",
+      "origins": [
+        "jar"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "ae2mtfix",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "practical-plushies-animals",
+      "origins": [
+        "jar"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "dragonmounts",
+      "origins": [
+        "jar"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "dynamiclightsreforged",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 2,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "TConstruct",
+      "origins": [
+        "jar"
+      ],
+      "reports": 6,
+      "reason": "name_collision_or_alias"
+    },
+    {
+      "name": "justzoom",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 6,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "youkaisfeasts",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "ForgeOptiFine",
+      "origins": [
+        "jar"
+      ],
+      "reports": 1,
+      "reason": "name_collision_or_alias"
+    },
+    {
+      "name": "dogslie",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "puffish_skills",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 4,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "amecsapi",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 2,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "entity_model_features-optional",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "lionfishapi",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "name_collision_or_alias"
+    },
+    {
+      "name": "recipeessentials",
+      "origins": [
+        "jar",
+        "mixin"
+      ],
+      "reports": 2,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "modernworldcreation",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "dataanchor",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 2,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "cpapireforged",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    },
+    {
+      "name": "citresewn-defaults",
+      "origins": [
+        "mixin"
+      ],
+      "reports": 1,
+      "reason": "not_on_modrinth"
+    }
+  ],
+  "dependency_probe": {
+    "projects_probed": 25,
+    "projects_with_any_dependency": 16,
+    "projects_with_incompatible": 3,
+    "dependency_type_counts": {
+      "incompatible": 5,
+      "required": 33,
+      "optional": 28,
+      "embedded": 2
+    },
+    "incompatible_examples": [
+      {
+        "project": "wither-spawn-animation",
+        "version": "1.6.2",
+        "target_project": "KseM6VIg"
+      },
+      {
+        "project": "wither-spawn-animation",
+        "version": "1.0.0",
+        "target_project": "KseM6VIg"
+      },
+      {
+        "project": "veil",
+        "version": "4.5.2",
+        "target_project": "sk9rgfiA"
+      },
+      {
+        "project": "veil",
+        "version": "1.2.0",
+        "target_project": "4ZqxOvjD"
+      },
+      {
+        "project": "ae2",
+        "version": "26.3.1-alpha",
+        "target_project": "tq47Uqpn"
+      }
+    ]
+  }
+}

@@ -35,7 +35,6 @@ import argparse
 import glob
 import json
 import os
-import re
 import sys
 from collections import defaultdict
 
@@ -47,6 +46,90 @@ from mcd.triage.attribution import triage          # noqa: E402
 
 GITHUB = os.path.join(ROOT, "corpus", "github")
 INDEX = os.path.join(ROOT, "corpus", "index.jsonl")
+
+# How much trust an edge deserves, independent of WHAT it claims.
+#
+# `relation` answers "what does this edge assert"; `evidence_tier` answers "on
+# what kind of evidence". They are orthogonal on purpose: a `caused` claim can
+# rest on a maintainer's label or on our own ranking, and those are not equally
+# worth acting on. Without this field the 9,721 presence-only pairs and the 82
+# causal ones sit in the same shape, and any consumer that forgets to filter by
+# `relation` will treat co-presence as guilt (ROADMAP 1D.3).
+EVIDENCE_TIERS = ("declared", "maintainer_verdict", "inferred", "cooccurrence")
+
+# Verdict labels that actually pin the mod. `user_error_or_config`,
+# `insufficient_data`, `meta` and `not_a_bug` say something about the report,
+# not about who is at fault, so they cannot promote an edge.
+CAUSE_PINNING_VERDICTS = frozenset({"bug_in_this_mod", "outdated_version"})
+
+
+def derive_evidence_tier(relation: str, maintainer_verdict: str | None) -> str:
+    """The single source of truth for `evidence_tier`.
+
+    Pure function of two fields that already exist, so the generator and any
+    migration produce identical results -- there is no second copy of this rule.
+
+    `declared` (author-declared conflicts/breaks from jar manifests or the
+    Modrinth API) is deliberately NOT producible here: this tool only reads
+    crash reports, and it has never seen a declared edge. The tier exists so
+    that when 1D.2 does add declared edges, they are distinguishable from our
+    inference instead of being silently mixed in.
+    """
+    if relation == "co_occurred":
+        return "cooccurrence"
+    if maintainer_verdict in CAUSE_PINNING_VERDICTS:
+        return "maintainer_verdict"
+    return "inferred"
+
+
+# Fixed key order so diffs stay readable and `evidence_tier` sits next to the
+# claim it qualifies.
+ROW_KEYS = (
+    "subject", "object", "relation", "evidence_tier", "loader", "mc_version",
+    "mod_version", "evidence_count", "source_reports", "maintainer_verdict",
+    "confidence", "sample_evidence", "first_seen", "last_seen",
+)
+
+
+def emit_row(claim: dict) -> dict:
+    """Order the keys and (re)derive the tier, so output cannot drift."""
+    # `evidence_tier` is always emitted even when absent from the input, so it
+    # keeps its place next to `relation` instead of landing at the end.
+    row = {
+        key: claim.get(key)
+        for key in ROW_KEYS
+        if key in claim or key == "evidence_tier"
+    }
+    row["evidence_tier"] = derive_evidence_tier(
+        claim.get("relation") or "", claim.get("maintainer_verdict")
+    )
+    return row
+
+
+def rederive_tier(path: str) -> int:
+    """Add/recompute `evidence_tier` in an existing file, without re-parsing
+    the corpus. Idempotent; used to migrate data gathered before the field
+    existed. Verifies every row keeps a recognised relation first, so a typo in
+    the data is caught instead of being laundered into a tier."""
+    with open(path, encoding="utf-8") as fh:
+        rows = [json.loads(line) for line in fh if line.strip()]
+    bad = sorted({r.get("relation") for r in rows} - {"caused", "suspected", "co_occurred"})
+    if bad:
+        print(f"refusing: unknown relation(s) {bad}", file=sys.stderr)
+        return 1
+    counts: dict[str, int] = defaultdict(int)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8", newline="\n") as fh:
+        for row in rows:
+            out = emit_row(row)
+            counts[out["evidence_tier"]] += 1
+            fh.write(json.dumps(out, ensure_ascii=False) + "\n")
+    os.replace(tmp, path)
+    print(f"rederived {sum(counts.values())} rows -> {path}")
+    for tier in EVIDENCE_TIERS:
+        if counts[tier]:
+            print(f"    {tier:18} {counts[tier]}")
+    return 0
 
 
 def load_index() -> dict[str, dict]:
@@ -88,7 +171,14 @@ def main() -> int:
     ap.add_argument("--out", default=os.path.join(ROOT, "corpus", "compat-edges.jsonl"))
     ap.add_argument("--no-cooccurred", action="store_true",
                     help="emit only caused/suspected (high-signal) edges")
+    ap.add_argument("--rederive-tier", metavar="PATH", default=None,
+                    help="recompute evidence_tier in an existing edges file and "
+                         "exit, without scanning the corpus. Idempotent; use it to "
+                         "migrate data written before the field existed.")
     args = ap.parse_args()
+
+    if args.rederive_tier:
+        return rederive_tier(args.rederive_tier)
 
     idx = load_index()
     # (subject, object, relation, loader, mc) -> aggregate
@@ -178,17 +268,22 @@ def main() -> int:
                                  a["subject"], a["object"]))
     with open(args.out, "w", encoding="utf-8", newline="\n") as fh:
         for a in rows:
-            fh.write(json.dumps(a, ensure_ascii=False) + "\n")
+            fh.write(json.dumps(emit_row(a), ensure_ascii=False) + "\n")
 
     by_rel = defaultdict(int)
+    by_tier = defaultdict(int)
     for a in rows:
         by_rel[a["relation"]] += 1
+        by_tier[derive_evidence_tier(a["relation"], a["maintainer_verdict"])] += 1
     print(f"fragments scanned : {len(files)}")
     print(f"raw edges         : caused={n_caused} suspected={n_susp} "
           f"co_occurred={n_cooc}")
     print(f"aggregated claims : {len(rows)} -> {args.out}")
     for rel in ("caused", "suspected", "co_occurred"):
         print(f"    {rel:12} {by_rel[rel]}")
+    for tier in EVIDENCE_TIERS:
+        if by_tier[tier]:
+            print(f"    tier:{tier:18} {by_tier[tier]}")
     size = os.path.getsize(args.out)
     print(f"file size         : {size/1024:.0f} KB")
     return 0

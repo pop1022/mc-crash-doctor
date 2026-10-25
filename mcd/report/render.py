@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import sys
 from typing import IO
 
 from ..model import CrashReport, Finding, Severity
@@ -68,6 +67,18 @@ def build_summary(rep: CrashReport) -> dict:
     }
 
 
+def _fmt_platform(s: dict, *, via: str = " (via {})") -> str:
+    """`loader version`, with the launcher appended in the caller's notation.
+
+    All three renderers print this, and they used to build it by hand -- which
+    is how "None" ends up in a report when a log has no loader line.
+    """
+    out = " ".join(p for p in (s["loader"], s["loader_version"]) if p)
+    if s["launcher"]:
+        out += via.format(s["launcher"])
+    return out
+
+
 def _fmt_heap(s: dict) -> str:
     if s["heap_max_mib"]:
         pct = ""
@@ -123,8 +134,7 @@ def render_markdown(rep: CrashReport, findings: list[Finding], triage,
 
     w("## Environment\n\n")
     w("| | |\n|---|---|\n")
-    w(f"| Platform | {s['loader']} {s['loader_version'] or ''}"
-      f"{(' (via ' + s['launcher'] + ')') if s['launcher'] else ''} |\n")
+    w(f"| Platform | {_fmt_platform(s)} |\n")
     w(f"| Minecraft | {s['minecraft_version'] or '?'} |\n")
     w(f"| Java | {s['java_version'] or '?'} (major {s['java_major']}) |\n")
     w(f"| Heap | {_fmt_heap(s)} |\n")
@@ -177,8 +187,7 @@ def render_plain(rep: CrashReport, findings: list[Finding], triage,
     w = out.write
     w(f"\n{line}\n Minecraft crash diagnosis\n{line}\n\n")
     w(f"  source   : {rep.source_path}\n")
-    w(f"  platform : {s['loader']} {s['loader_version'] or ''}"
-        f"{(' via ' + s['launcher']) if s['launcher'] else ''}\n")
+    w(f"  platform : {_fmt_platform(s, via=' via {}')}\n")
     w(f"  version  : Minecraft {s['minecraft_version'] or '?'} | "
         f"Java {s['java_version'] or '?'}\n")
     w(f"  heap     : {_fmt_heap(s)}"
@@ -251,9 +260,7 @@ def render_terminal(rep: CrashReport, findings: list[Finding], triage,
     env = Table.grid(padding=(0, 2))
     env.add_column(style="dim", no_wrap=True)
     env.add_column()
-    plat = s["loader"] + (f" {s['loader_version']}" if s["loader_version"] else "")
-    if s["launcher"]:
-        plat += f" [dim](via {s['launcher']})[/dim]"
+    plat = _fmt_platform(s, via=" [dim](via {})[/dim]")
     env.add_row("platform", plat)
     env.add_row("version", f"Minecraft [bold]{s['minecraft_version'] or '?'}[/bold]"
                            f"  ·  Java {s['java_major'] or '?'}")

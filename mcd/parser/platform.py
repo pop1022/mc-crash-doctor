@@ -230,7 +230,7 @@ def _collect(text: str) -> list[PlatformHit]:
     return hits
 
 
-def _best(hits: list[PlatformHit], order: list[str]) -> PlatformHit | None:
+def _best(hits: list[PlatformHit]) -> PlatformHit | None:
     """Pick the winner.
 
     Ordering is (tier, specificity-rank, offset): the most authoritative tier
@@ -241,7 +241,7 @@ def _best(hits: list[PlatformHit], order: list[str]) -> PlatformHit | None:
     by offset there mislabels the server.
 
     The rank is the matched probe's own index, not a per-loader lookup: the same
-    loader appears at several indices (magma has T0/T1/T2 probes), and a dict
+    loader appears at several indices (magma has T0/T1/T2 probes), and a mapping
     keyed by loader name would keep only the last -- collapsing Magma's T0
     banner down to its T2 package-name rank and losing it to plain Forge.
     """
@@ -250,16 +250,12 @@ def _best(hits: list[PlatformHit], order: list[str]) -> PlatformHit | None:
     return min(hits, key=lambda h: (h.tier, h.probe_index, h.offset))
 
 
-_ORDER_LOADER = [p.loader for p in PROBES]
-_ORDER_LAUNCHER = [p.loader for p in LAUNCHER_PROBES]
-
-
 def detect_platform_detailed(text: str) -> tuple[PlatformHit | None, PlatformHit | None]:
     """Return (loader_hit, launcher_hit); either may be None."""
     hits = _collect(text)
     loader_hits = [h for h in hits if h.axis == "loader"]
     launcher_hits = [h for h in hits if h.axis == "launcher"]
-    return _best(loader_hits, _ORDER_LOADER), _best(launcher_hits, _ORDER_LAUNCHER)
+    return _best(loader_hits), _best(launcher_hits)
 
 
 def detect_platform(text: str) -> tuple[str, str]:

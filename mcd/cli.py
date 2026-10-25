@@ -11,19 +11,19 @@
 from __future__ import annotations
 
 import argparse
-import glob
-import os
 import sys
 from pathlib import Path
 
+from . import __version__
+from .extract import fetch_log
 from .model import CrashReport, Finding, Severity
 from .parser.report import parse_file, parse_text
 from .report.render import (render_json, render_markdown, render_plain,
-                            render_terminal)
+                           render_terminal)
 from .rules.engine import RuleSet, run_rules
 from .triage.attribution import suspects_for_rules, triage
 
-VERSION = "0.1.0"
+VERSION = __version__
 
 REPORT_GLOBS = ("crash-*.txt", "*.log", "*.txt")
 
@@ -108,16 +108,16 @@ def main(argv: list[str] | None = None) -> int:
         text = sys.stdin.read()
         rep, findings, t = diagnose(None, text, source="<stdin>")
         _emit(rep, findings, t, _fmt(args), out, color)
-        return _exit(findings, args.exit_code)
+        return _exit(_worst(findings), args.exit_code)
 
     if args.url:
-        text = _fetch_url(args.url)
+        text = fetch_log(args.url)
         if text is None:
             print(f"error: could not fetch {args.url}", file=sys.stderr)
             return 2
         rep, findings, t = diagnose(None, text, source=args.url)
         _emit(rep, findings, t, _fmt(args), out, color)
-        return _exit(findings, args.exit_code)
+        return _exit(_worst(findings), args.exit_code)
 
     target = args.dir or args.path
     if not target:
@@ -145,13 +145,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"error parsing {f}: {type(e).__name__}: {e}", file=sys.stderr)
             continue
         _emit(rep, findings, t, _fmt(args), out, color)
-        for fd in findings:
-            if fd.severity > worst:
-                worst = fd.severity
+        worst = max(worst, _worst(findings))
 
-    if args.exit_code and worst >= Severity.ERROR:
-        return 1
-    return 0
+    return _exit(worst, args.exit_code)
 
 
 def _fmt(args) -> str:
@@ -164,27 +160,14 @@ def _fmt(args) -> str:
     return "terminal"
 
 
-def _exit(findings: list[Finding], exit_code: bool) -> int:
-    if exit_code and any(f.severity >= Severity.ERROR for f in findings):
-        return 1
-    return 0
+def _worst(findings: list[Finding]) -> Severity:
+    """The most severe finding, or INFO for an empty list."""
+    return max((f.severity for f in findings), default=Severity.INFO)
 
 
-def _fetch_url(url: str) -> str | None:
-    """Fetch a log; understands mclo.gs share links and plain raw URLs."""
-    import re
-    import urllib.request
-
-    m = re.search(r"mclo\.gs/(\w+)/([A-Za-z0-9]+)", url)
-    if m:
-        url = f"https://api.mclo.gs/1/raw/{m.group(2)}"
-    try:
-        req = urllib.request.Request(
-            url, headers={"User-Agent": f"mc-crash-doctor/{VERSION}"})
-        with urllib.request.urlopen(req, timeout=30) as r:
-            return r.read(8_000_000).decode("utf-8", errors="replace")
-    except Exception:  # noqa: BLE001
-        return None
+def _exit(worst: Severity, enabled: bool) -> int:
+    """Exit 1 when --exit-code is on and anything reached ERROR."""
+    return 1 if enabled and worst >= Severity.ERROR else 0
 
 
 if __name__ == "__main__":

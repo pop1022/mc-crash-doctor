@@ -12,14 +12,41 @@ are only the fallback; Pages always deploys a fresh build.
 """
 from __future__ import annotations
 
+import hashlib
 import json
-import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 WEB = ROOT / "web"
+
+#: Files that end up inside the wheel.
+_SHIPPED_SUFFIXES = (".py", ".yaml", ".yml")
+
+
+def source_digest() -> str:
+    """sha256 over every shipped file under ``mcd/`` (path + bytes).
+
+    WHY THIS EXISTS
+    ---------------
+    ``tests/test_web_bundle.py`` compared module *names*: it caught a wheel
+    with a missing or deleted module, but not a wheel shipping last week's
+    *contents*. That gap is not hypothetical -- fixing catastrophic regex
+    backtracking in ``mcd/parser/report.py`` changed no file name, so the
+    committed wheel kept the 9-second parser and every guard stayed green.
+
+    The digest makes "run tools/build_web.py after any mcd/ change" an
+    assertion instead of a comment in a docstring.
+    """
+    h = hashlib.sha256()
+    for p in sorted((ROOT / "mcd").rglob("*")):
+        if p.is_file() and p.suffix in _SHIPPED_SUFFIXES:
+            h.update(p.relative_to(ROOT).as_posix().encode("utf-8"))
+            h.update(b"\0")
+            h.update(p.read_bytes())
+            h.update(b"\0")
+    return h.hexdigest()
 
 
 def main() -> int:
@@ -46,7 +73,7 @@ def main() -> int:
     subprocess.run([sys.executable, str(ROOT / "tools" / "make_web_sample.py")],
                    cwd=ROOT, check=True)
 
-    manifest = {"file": wheel.name}
+    manifest = {"file": wheel.name, "source_digest": source_digest()}
     (WEB / "wheel-manifest.json").write_text(
         json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(f"web/{wheel.name}")

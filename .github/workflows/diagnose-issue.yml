@@ -1,0 +1,62 @@
+name: diagnose-issue
+
+# Dogfood: every issue that carries a crash report gets an automatic
+# diagnosis comment (and gets it *updated* on edit -- the action edits its own
+# comment, so a thread never fills up with stale diagnoses).
+#
+# Triggers only when the issue actually looks like a crash report: the
+# "Crash not diagnosed" template applies the `triage` label, and hand-written
+# reports usually paste the banner or a paste link. Chatter is left alone.
+
+on:
+  issues:
+    types: [opened, edited, reopened, labeled]
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: Issue number to diagnose
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: diagnose-${{ github.event.issue.number || inputs.issue }}
+  cancel-in-progress: true
+
+jobs:
+  diagnose:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.issue &&
+       github.event.issue.user.type != 'Bot' &&
+       !contains(github.event.issue.labels.*.name, 'no-diagnosis') &&
+       (contains(github.event.issue.labels.*.name, 'triage') ||
+        contains(github.event.issue.body, 'Minecraft Crash Report') ||
+        contains(github.event.issue.body, 'mclo.gs') ||
+        contains(github.event.issue.body, 'pastebin.com') ||
+        contains(github.event.issue.body, 'gist.github.com') ||
+        contains(github.event.issue.body, 'at net.minecraft')))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Diagnose the report in this issue
+        id: mcd
+        uses: ./
+        with:
+          issue: ${{ github.event.issue.number || inputs.issue }}
+          comment: "true"
+          # Offline-first: set to "false" if the runner cannot reach paste
+          # hosts, or if you would rather keep link-following manual.
+          follow-links: "true"
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "found=${{ steps.mcd.outputs.found }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "findings=${{ steps.mcd.outputs.findings }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "worst=${{ steps.mcd.outputs.worst_severity }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "suspect=${{ steps.mcd.outputs.suspect }}" >> "$GITHUB_STEP_SUMMARY"

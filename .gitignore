@@ -37,5 +37,11 @@ corpus/harvest_summary.json
 # and user working preferences -- deliberately never published.
 HANDOFF.md
 
+# Local agent workspace/memory (same reason: local paths, session notes).
+.workbuddy/
+
 # The aternos corpus IS committed (MIT, with attribution in NOTICE.md).
 !corpus/aternos/
+
+# Modrinth 元数据缓存（第三方内容，不入库）
+data/modrinth-cache/

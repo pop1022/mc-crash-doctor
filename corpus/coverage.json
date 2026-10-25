@@ -1,0 +1,235 @@
+{
+  "generated_at": "2026-10-25T14:55:36+0800",
+  "files_scanned": 454,
+  "parse_errors": 0,
+  "parse_error_examples": [],
+  "totals": {
+    "n": 454,
+    "diagnosed": 337,
+    "rate": 0.7423,
+    "uncovered": 117
+  },
+  "buckets": {
+    "watchdog": {
+      "n": 14,
+      "diagnosed": 13,
+      "severe": 13,
+      "verdict_known": 2
+    },
+    "mixin": {
+      "n": 64,
+      "diagnosed": 57,
+      "severe": 57,
+      "verdict_known": 25
+    },
+    "native": {
+      "n": 7,
+      "diagnosed": 4,
+      "severe": 4,
+      "verdict_known": 1
+    },
+    "mod-loading": {
+      "n": 82,
+      "diagnosed": 71,
+      "severe": 71,
+      "verdict_known": 26
+    },
+    "world-data": {
+      "n": 21,
+      "diagnosed": 20,
+      "severe": 20,
+      "verdict_known": 3
+    },
+    "mod-bug": {
+      "n": 91,
+      "diagnosed": 75,
+      "severe": 74,
+      "verdict_known": 12
+    },
+    "other": {
+      "n": 175,
+      "diagnosed": 97,
+      "severe": 95,
+      "verdict_known": 44
+    }
+  },
+  "bucket_order": [
+    "oom",
+    "watchdog",
+    "mixin",
+    "native",
+    "mod-loading",
+    "plugin",
+    "world-data",
+    "mod-bug",
+    "other"
+  ],
+  "loaders": {
+    "fabric": 173,
+    "forge": 127,
+    "neoforge": 87,
+    "vanilla": 40,
+    "quilt": 21,
+    "mohist": 3,
+    "arclight": 2,
+    "custom-skin-loader": 1
+  },
+  "uncovered_signatures": [
+    {
+      "signature": "java.lang.Throwable: Manually triggered debug crash",
+      "count": 4,
+      "bucket": "other"
+    },
+    {
+      "signature": "java.lang.reflect.InvocationTargetException",
+      "count": 3,
+      "bucket": "mixin"
+    },
+    {
+      "signature": "java.lang.RuntimeException: An exception occurred when launching the server!",
+      "count": 2,
+      "bucket": "other"
+    },
+    {
+      "signature": "java.lang.RuntimeException: Minecraft game provider couldn't locate the game! The game may be absent from th",
+      "count": 2,
+      "bucket": "other"
+    },
+    {
+      "signature": "net.fabricmc.loader.impl.FormattedException: java.lang.RuntimeException: Could not execute entrypoint stage 'preLaunch' due t",
+      "count": 2,
+      "bucket": "mod-loading"
+    },
+    {
+      "signature": "java.lang.ClassCastException: Cannot coerce loader value to a String",
+      "count": 2,
+      "bucket": "other"
+    },
+    {
+      "signature": "com.mojang.text2speech.Narrator$InitializeException: Failed to load library flite",
+      "count": 2,
+      "bucket": "native"
+    },
+    {
+      "signature": "org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: @Shadow field val$p_434753_ was not located in the target class net.minecraft.cl",
+      "count": 1,
+      "bucket": "mixin"
+    },
+    {
+      "signature": "java.lang.NullPointerException: Cannot invoke \"net.caffeinemc.mods.sodium.client.render.chunk.translucent_sortin",
+      "count": 1,
+      "bucket": "mod-bug"
+    },
+    {
+      "signature": "net.minecraft.ReportedException: Manually triggered debug crash",
+      "count": 1,
+      "bucket": "other"
+    },
+    {
+      "signature": "org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError: An unexpected critical error was encountered",
+      "count": 1,
+      "bucket": "mixin"
+    },
+    {
+      "signature": "java.lang.NullPointerException: Trying to access unbound value: ResourceKey[minecraft:block / aether:skyroot_log",
+      "count": 1,
+      "bucket": "other"
+    },
+    {
+      "signature": "com.google.gson.JsonParseException: com.google.gson.stream.MalformedJsonException: Use JsonReader.setLenient(true) t",
+      "count": 1,
+      "bucket": "other"
+    },
+    {
+      "signature": "java.lang.IllegalStateException: Overflowed the mesh time buffer at 224x31",
+      "count": 1,
+      "bucket": "world-data"
+    },
+    {
+      "signature": "java.lang.RuntimeException: Sodium mod config not found",
+      "count": 1,
+      "bucket": "mod-bug"
+    },
+    {
+      "signature": "net.neoforged.neoforge.logging.CrashReportExtender$ModLoadingCrashException: Mod loading has failed",
+      "count": 1,
+      "bucket": "mod-loading"
+    },
+    {
+      "signature": "java.lang.RuntimeException: Exception thrown while executing job",
+      "count": 1,
+      "bucket": "other"
+    },
+    {
+      "signature": "java.lang.ArrayIndexOutOfBoundsException: Index 4 out of bounds for length 4",
+      "count": 1,
+      "bucket": "mod-bug"
+    },
+    {
+      "signature": "io.netty.handler.codec.DecoderException: java.io.IOException: Packet play/clientbound/minecraft:level_particles (class_26",
+      "count": 1,
+      "bucket": "other"
+    },
+    {
+      "signature": "java.lang.IllegalArgumentException: Data for attachment 'worldgendevtools:feature_positions' was too big (32768 byte",
+      "count": 1,
+      "bucket": "other"
+    },
+    {
+      "signature": "java.lang.ClassCastException: class net.minecraft.client.renderer.RenderType$CompositeRenderType cannot be cas",
+      "count": 1,
+      "bucket": "other"
+    },
+    {
+      "signature": "net.fabricmc.fabric.impl.registry.sync.RemapException: Received 4 registry entries that are unknown to this client.",
+      "count": 1,
+      "bucket": "mod-bug"
+    },
+    {
+      "signature": "java.lang.RuntimeException: error remapping game jars [F:\\Modded MC\\curseforge\\minecraft\\Install\\versions\\fa",
+      "count": 1,
+      "bucket": "other"
+    },
+    {
+      "signature": "java.lang.RuntimeException: Failed to read classTweaker file from mod fabric-biome-api-v1",
+      "count": 1,
+      "bucket": "other"
+    },
+    {
+      "signature": "java.lang.ClassNotFoundException: net.minecraft.client.Minecraft",
+      "count": 1,
+      "bucket": "mod-loading"
+    },
+    {
+      "signature": "java.io.UncheckedIOException: java.nio.file.AccessDeniedException: <HOME>\\AppData\\Roaming.minecraft\\<INSTANCE>",
+      "count": 1,
+      "bucket": "other"
+    },
+    {
+      "signature": "java.lang.RuntimeException: Could not execute entrypoint stage 'client' due to errors, provided by 'fabric-r",
+      "count": 1,
+      "bucket": "other"
+    },
+    {
+      "signature": "java.lang.RuntimeException: Error creating Mixin config omega-config.mixins.json for mod omega-config",
+      "count": 1,
+      "bucket": "mixin"
+    },
+    {
+      "signature": "java.lang.StackOverflowError: null",
+      "count": 1,
+      "bucket": "other"
+    },
+    {
+      "signature": "java.lang.RuntimeException: Error creating Mixin config fabric-crash-report-info-v1.mixins.json for mod fabr",
+      "count": 1,
+      "bucket": "mixin"
+    }
+  ],
+  "uncovered_verdicts": {
+    "(none)": 97,
+    "user_error_or_config": 19,
+    "bug_in_this_mod": 1
+  },
+  "elapsed_seconds": 36.0
+}

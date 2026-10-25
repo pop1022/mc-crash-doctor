@@ -159,7 +159,7 @@ def run_corpus(ruleset: RuleSet, label: str, pattern: str,
     print(f"  files w/ suspect : {attributed}/{len(files)} "
           f"({attributed/len(files):.0%})")
     print(f"  severities       : {dict(severities)}")
-    print(f"  rule hit counts  :")
+    print("  rule hit counts  :")
     for rid, c in rule_hits.most_common():
         print(f"    {c:>4}  {rid}")
     never = [r.id for r in ruleset.rules if rid_not_hit(r.id, rule_hits)]

@@ -13,11 +13,20 @@ Signals, strongest first:
 1. **Mixin ownership** -- ``pl:mixin:APP:create.mixins.json:Class from mod
    (create)`` names the mod that applied the patch *at the failing frame*.
    A mixin crash is nearly always the mixin owner's fault.
-2. **Mod-id stack frames** -- the first non-vanilla, non-loader class in the
+1b. **Mixin-generated method names** -- Fabric names a patched method
+   ``wrapOperation$cdi000$fabric-registry-sync-v0$wrapIsServerCall``: the
+   segment after the seed is the owning mod. This is the only written trace of
+   the owner in reports that never print a ``from mod (x)`` marker, which is
+   most Fabric API crashes (see ``tools/attribution_ablation.py``).
+1c. **Mod-id stack frames** -- the first non-vanilla, non-loader class in the
    root-cause trace, e.g. ``com.ferreusveritas.dynamictrees.util.CompatHelper``.
    The package root is matched against the Mod List to resolve a mod id.
-3. **Jar names** -- ``~[some-mod-1.2.3.jar%2312!/:1.2.3]`` matched against the
+2. **Jar names** -- ``~[some-mod-1.2.3.jar%2312!/:1.2.3]`` matched against the
    Mod List's file column.
+
+A candidate that is *not* in this list: the ``TRANSFORMER/<modid>@<version>/``
+frame layer. It was implemented, measured, and removed -- see the comment in
+``triage()``.
 
 Each candidate gets a score; scores are normalised to 0..1 confidence. The top
 few are reported, because sometimes two mods are genuinely interacting (mod A's
@@ -30,12 +39,13 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 
-from ..model import CrashReport, Mod, StackFrame
+from ..model import CrashReport, Mod
 
 # Weights tuned by hand against real reports; see score() for rationale.
 W_GAME_SUSPECTED = 12.0  # the game's own `Suspected Mods:` line -- strongest
 W_MIXIN = 10.0          # explicit ownership at the failing frame
 W_MIXIN_CFG = 7.0       # mixin config prefix, ownership not printed
+W_MIXIN_METHOD = 6.0    # `<name>$<seed>$<modid>$<rest>` in a frame's method
 W_FRAME_TOP = 5.0       # mod-owned frame in the top 3 of the root cause
 W_FRAME = 2.5           # mod-owned frame deeper in the root cause
 W_JAR = 3.0             # jar seen at a failing frame
@@ -274,6 +284,45 @@ def _mixin_config_modid(cfg: str, by_id: dict[str, Mod]) -> str | None:
     return c  # unresolved but still informative
 
 
+#: How close to the throw site a frame-level *hint* signal is still allowed to
+#: be counted. Beyond this the frame is usually a library, a logger or a crash
+#: reporter that happens to sit on the unwinding path.
+NEAR_FRAME_LIMIT = 5
+
+#: Fabric names a mixin-generated method ``<realName>$<seed>$<modid>$<rest>``.
+#: The seed is a short alphabetic prefix plus a 3+ digit counter (``cdi000``,
+#: ``xyz123``). Anchoring on the seed is what separates a real mod id from the
+#: jargon a bare ``\$...\$`` scan returns -- measured on the harvested corpus,
+#: the unanchored version's most common "ids" were ``bridge``, ``new`` and
+#: ``static``.
+_SEEDED_METHOD_RE = re.compile(r"\$([a-z]{0,8}\d{3,})\$([A-Za-z0-9_.\-]{2,48})(?:\$|$)")
+
+#: Names that can appear in the mod-id slot but denote the platform, not a mod:
+#: ``handler$abc000$minecraft$...`` is every vanilla patch, and ``mixinextras``
+#: is a mixin library. Naming either a suspect is worse than saying nothing.
+PLATFORM_LAYERS = frozenset({
+    "minecraft", "neoforge", "forge", "fabricloader", "fabric_loader",
+    "quilt_loader", "quiltloader", "java", "javabase", "mixinextras",
+})
+
+
+def mixin_method_modid(method: str) -> str | None:
+    """Owner of a mixin-generated method name, or None.
+
+    ``wrapOperation$cdi000$fabric-registry-sync-v0$wrapIsServerCall`` ->
+    ``fabric-registry-sync-v0``. This is the only written trace of the owner in
+    reports that never print a ``from mod (x)`` marker, which is the majority of
+    Fabric API crashes.
+    """
+    if not method or "$" not in method:
+        return None
+    m = _SEEDED_METHOD_RE.search(method)
+    if not m:
+        return None
+    mid = m.group(2).lower()
+    return None if mid in PLATFORM_LAYERS else mid
+
+
 def triage(rep: CrashReport, *, top_n: int = 5) -> TriageResult:
     """Attribute the crash to mods, strongest evidence first."""
     by_id, by_jar, _ = _index_mods(rep)
@@ -288,6 +337,18 @@ def triage(rep: CrashReport, *, top_n: int = 5) -> TriageResult:
         scores[mid] += weight
         if reason not in reasons[mid]:
             reasons[mid].append(reason)
+
+    #: (modid, signal) pairs already counted. A frame-level signal must not
+    #: stack: ten frames carrying the same mod's mixin method is still one
+    #: piece of evidence, and summing it let a weak signal outvote the loader's
+    #: own `Suspected Mods` line (measured: 3 hits lost when this was summed).
+    counted_once: set[tuple[str, str]] = set()
+
+    def add_once(mid: str | None, weight: float, reason: str, signal: str) -> None:
+        if not mid or (mid, signal) in counted_once:
+            return
+        counted_once.add((mid, signal))
+        add(mid, weight, reason)
 
     # 0. the game's OWN `Suspected Mods:` line -- vanilla/Fabric compute this
     #    from the crash-time classloader context, which is stronger evidence
@@ -315,9 +376,52 @@ def triage(rep: CrashReport, *, top_n: int = 5) -> TriageResult:
                 elif mid:
                     unresolved.append(f"{mid} (from mixin config {f.mixin_config})")
 
-    # 2. mod-owned frames in the root-cause trace
     rc = rep.root_cause
     trace_blocks = [rc] if rc else list(rep.exceptions[:1])
+
+    # 1b. owner baked into a mixin-generated method name. Weaker than an
+    #     explicit `from mod (x)` because it only says "this frame was patched
+    #     by X", not "this frame is where X failed" -- but in Fabric API
+    #     reports it is the *only* written evidence of ownership, and without
+    #     it attribution goes silent on 57% of the reports that carry a
+    #     Suspected Mods line (measured: tools/attribution_ablation.py).
+    #
+    #     DEPTH LIMIT: top 5 frames only. Two of the first three hits this
+    #     signal produced came from frame #12 and #14 -- deep enough that the
+    #     patch belongs to a *crash reporter*, not to the failure. Not Enough
+    #     Crashes' mixin is literally named
+    #     `atTheEndOfSecondCatchBeforePrintingCrashReport`: it is present in
+    #     every crash report it decorates, which makes it perfect evidence of
+    #     "this report was processed" and worthless evidence of cause.
+    #
+    #     A sibling signal -- the `TRANSFORMER/<modid>@<ver>/` frame layer --
+    #     was implemented and then removed: on the oracle sample it added
+    #     exactly one answer and that answer was wrong (twilightforest for a
+    #     report the loader attributed to accessories), while also outvoting
+    #     the same report's Suspected Mods hint. Removed rather than tuned.
+    #     NOTE (2026-10-25): the general frame-parser repair reproduced that
+    #     same outcome on that same report -- #2543 now names twilightforest,
+    #     again over the accessories hint -- through the ordinary mod-owned-frame
+    #     signal. So the rejection above rests on one case, and that case has
+    #     since been decided the other way for reasons unrelated to it (5,432
+    #     frames that had lost their method and line entirely). The two
+    #     measurements disagree; recording that is better than letting a future
+    #     reader conclude the layer signal was simply noise.
+    for e in rep.exceptions:
+        for i, f in enumerate(e.frames[:NEAR_FRAME_LIMIT]):
+            # `f.method` is the field that carries the seed. `f.cls` is still
+            # scanned because the frame splitter is best-effort: until
+            # 2026-10-25 it glued the method onto the class for every hyphenated
+            # Fabric name, and if that ever regresses, a silent 79-frame loss of
+            # evidence is exactly the kind of change nothing else would catch.
+            # tests/test_frame_parse.py is the guard; this fallback is the belt.
+            mid = mixin_method_modid(f.method) or mixin_method_modid(f.cls)
+            if mid:
+                add_once(mid, W_MIXIN_METHOD,
+                         f"frame #{i} method {f.method or f.cls} is generated "
+                         f"by '{mid}'", "mixin_method")
+
+    # 2. mod-owned frames in the root-cause trace
     for block in trace_blocks:
         if not block:
             continue
@@ -360,7 +464,7 @@ def triage(rep: CrashReport, *, top_n: int = 5) -> TriageResult:
     blob = f"{rep.description} {' '.join(e.message for e in rep.exceptions)}".lower()
     for mid, m in by_id.items():
         if mid and len(mid) >= 4 and mid in blob:
-            add(mid, W_DESC, f"named in the crash description/message")
+            add(mid, W_DESC, "named in the crash description/message")
 
     if not scores:
         if unresolved:
@@ -376,7 +480,16 @@ def triage(rep: CrashReport, *, top_n: int = 5) -> TriageResult:
         return res
 
     total = sum(scores.values()) or 1.0
-    ranked = sorted(scores.items(), key=lambda kv: -kv[1])
+    # Ties break on the modid, never on discovery order.
+    #
+    # `scores` is a defaultdict, so equal scores used to be ordered by whichever
+    # mod was seen first -- i.e. by the order of frames and Mod List rows in the
+    # report. Two reports describing the same interaction, with the two mods
+    # written in the opposite order, could then name different top suspects.
+    # That is textbook position bias, and it makes "top-1 is the repo's mod"
+    # a partly arbitrary outcome. Sorting by (-score, modid) is deterministic,
+    # report-order independent and still puts the strongest evidence first.
+    ranked = sorted(scores.items(), key=lambda kv: (-kv[1], kv[0].lower()))
     top_score = ranked[0][1] if ranked else 0.0
     for mid, sc in ranked[:top_n]:
         m = by_id.get(mid.lower()) or by_id.get(mid)

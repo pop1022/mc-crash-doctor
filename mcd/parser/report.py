@@ -61,7 +61,6 @@ JAR_VER_RE = re.compile(r"!/?:?([\w.\-+]*)\]?$")
 MIXIN_APP_RE = re.compile(r"pl:mixin:APP:([\w.\-]+?)\.mixins\.json:([\w.$]+)")
 FROM_MOD_RE = re.compile(r"from mod \(([^)]*)\)")
 CL_MARKER_RE = re.compile(r"\{([^}]*)\}")
-LOC_RE = re.compile(r"([\w.$]+(?:\.[\w$<>]+)*)\.([\w$<>]+)\(([\w.]*(?:java|kt|scala))?:?(\d+)?\)")
 
 # --- system details ---------------------------------------------------------
 DETAIL_RE = re.compile(r"^\s*([\w \-/().]+?):\s*(.*)$")
@@ -85,7 +84,6 @@ JAVA_VER_RE = re.compile(r"^\s*Java Version:\s*(.+?)\s*$", re.M)
 JVM_NAME_RE = re.compile(r"^\s*Java VM Version:\s*(.+?)\s*$", re.M)
 OS_RE = re.compile(r"^\s*Operating System:\s*(.+?)\s*$", re.M)
 CPU_RE = re.compile(r"^\s*CPUs:\s*(\d+)", re.M)
-MODLAUNCHER_RE = re.compile(r"^\s*Mod Launcher:\s*(.+?)\s*$", re.M)
 CRASH_UUID_RE = re.compile(r"^\s*Crash Report UUID:\s*(.+?)\s*$", re.M)
 SERVER_RUNNING_RE = re.compile(r"^\s*Server Running:\s*(\w+)", re.M)
 PLAYER_COUNT_RE = re.compile(r"^\s*Player Count:\s*(\d+)", re.M)
@@ -99,10 +97,6 @@ def _to_int(s: str) -> int:
     return int(s.replace(",", ""))
 
 
-def _unit_to_bytes(n: int, unit: str) -> int:
-    return n * _UNIT.get(unit.lower(), 1)
-
-
 def _mib_from_flag(num: int, suffix: str) -> int:
     s = suffix.lower()
     if s == "k":
@@ -114,17 +108,52 @@ def _mib_from_flag(num: int, suffix: str) -> int:
 
 # --- mod lists --------------------------------------------------------------
 FORGE_MODLIST_HEADER_RE = re.compile(r"^\s*Mods?\s*:\s*\d+\s*$|^\s*Mod List:\s*$", re.M)
-# Forge 1.13+: jar | name | modid | version | status | manifest
-FORGE_ROW_RE = re.compile(
-    r"^\s*([^\t|]+?)\s*\|\s*([^\t|]*?)\s*\|\s*([^\t|]*?)\s*\|\s*"
-    r"([^\t|]*?)\s*\|\s*([^\t|]*?)\s*\|\s*(.*?)\s*$"
-)
+# Forge 1.13+ rows are `jar | name | modid | version | status | manifest`.
+# Split on "|" (see _forge_row). There used to be a FORGE_ROW_RE here; it was
+# removed because its six lazy groups backtracked catastrophically on mangled
+# rows -- 9.4 s for a single 276 KB report.
 FABRIC_MODLIST_HEADER_RE = re.compile(r"^\s*(Fabric|Quilt) Mods:\s*$", re.M)
 # Fabric: two-space indent, "modid: Display Name 1.2.3"
 FABRIC_ROW_RE = re.compile(r"^\s{2}([\w.\-]+):\s*(.+?)\s*$")
 COREMOD_HEADER_RE = re.compile(
     r"^\s*Loaded coremods \(and transformers\):\s*$|^\s*coremods are present:\s*$", re.M
 )
+
+
+def _forge_row(line: str) -> tuple[str, str, str, str, str, str] | None:
+    """Split one ``|``-delimited Mod List row. Linear; no backtracking.
+
+    WHY THIS IS NOT A REGEX ANY MORE
+    --------------------------------
+    It used to be::
+
+        ^\\s*([^\\t|]+?)\\s*\\|\\s*([^\\t|]*?)\\s*\\| ... \\|\\s*(.*?)\\s*$
+
+    six lazy groups with ``\\s*`` interleaved between them and a literal ``|``.
+    On a well-formed table that is fine. On a *mangled* row -- a pasted log
+    line with a dozen pipes and long whitespace runs -- every separator
+    position can absorb characters either into the lazy class or into the
+    adjacent ``\\s*``, so the engine has exponentially many ways to split the
+    same bytes. Two harvested reports (276 KB and 159 KB) took 9.4 s each to
+    parse; a full corpus pass spent ~95% of its time in this one call.
+
+    Splitting on ``|`` is O(n) and accepts exactly what the regex accepted:
+    at least five separators (six fields), no tab in the first five fields,
+    a non-empty first field. Anything the sixth field contains -- including
+    further pipes -- stays in the sixth field, as with ``(.*?)``.
+    """
+    if line.count("|") < 5:
+        return None
+    # the old regex opened with `^\s*`, so leading indentation (Forge indents
+    # rows with tabs) was never part of the first field; strip it first, or
+    # the tab check below rejects every real row.
+    parts = line.lstrip().split("|")
+    if len(parts) < 6:
+        return None
+    if any("\t" in p for p in parts[:5]) or not parts[0].strip():
+        return None
+    f, name, modid, ver, status = (p.strip() for p in parts[:5])
+    return f, name, modid, ver, status, "|".join(parts[5:]).strip()
 
 
 def _parse_forge_modlist(text: str, start: int) -> tuple[list[Mod], int]:
@@ -137,15 +166,15 @@ def _parse_forge_modlist(text: str, start: int) -> tuple[list[Mod], int]:
         # stop at the next section header or a non-table line
         if SECTION_RE.match(ln) or SEP_RE.match(ln):
             return mods, start + off
-        m = FORGE_ROW_RE.match(ln)
-        if not m:
+        row = _forge_row(ln)
+        if row is None:
             # tolerate a trailing non-table line
             if mods and not ln.lstrip().startswith("|"):
                 # some reports end the table abruptly
                 if not any(c in ln for c in "|"):
                     return mods, start + off
             continue
-        f, name, modid, ver, status, manifest = (x.strip() for x in m.groups())
+        f, name, modid, ver, status, manifest = row
         mods.append(Mod(file=f, name=name, modid=modid, version=ver,
                         status=status, manifest=manifest))
     return mods, len(text)
@@ -198,6 +227,68 @@ def _parse_coremods(text: str, start: int) -> tuple[list[str], int]:
 
 
 # --- frames -----------------------------------------------------------------
+#: JVM / Forge / Fabric append two kinds of trailer *after* the ``(...)`` that
+#: are not part of the frame: the debug block ``{}`` and the artifact bracket,
+#: written either as ``~[mod.jar:1.2.3]`` or as ``[mod.jar:1.2.3]``. Both
+#: spellings show up in the same report (CaffeineMC/sodium#3460 uses ``~[...]``
+#: for every frame and plain ``[...]`` for the last one), and the old code
+#: stripped only ``~[`` -- so on the plain form the regex never matched, the
+#: frame fell through to ``f.cls = head``, and method + line number were lost.
+#: Measured before the fix: 5,432 frames across 148 of 454 reports.
+_FRAME_TRAILERS = (
+    re.compile(r"\s*\{[^{}]*\}\s*$"),
+    re.compile(r"\s*~?\[[^\[\]]*\]\s*$"),
+)
+
+#: `pkg.Class.method(File.java:42)`. The method charset needs ``-``: Fabric
+#: generates names like ``wrapOperation$cdi000$fabric-registry-sync-v0$foo``.
+#: Without it the whole method name was swallowed into `cls` -- and worse, the
+#: residue looked like a plausible class name, so nothing downstream complained.
+FRAME_BODY_RE = re.compile(r"^(.*?)(?:\.([\w$<>-]+))?\(([^)]*)\)\s*$")
+
+
+def _frame_head(raw: str) -> str:
+    """Reduce a raw frame line to ``pkg.Class.method(File.java:42)``.
+
+    Strips, in order: the debug/artifact trailers (``{}``, ``~[jar]``,
+    ``[jar]``), then the module prefix -- which is written three different ways
+    in this corpus::
+
+        java.base/java.lang.Thread.run            JPMS module, plain Java 9+
+        org.spongepowered.mixin/org.spongepowered...   JPMS module with dots
+        cpw.mods.modlauncher@11.0.5/cpw.mods...    JPMS module with a version
+        TRANSFORMER/minecraft@1.21.10/net.minecraft...  NeoForge layer
+
+    The NeoForge layer matters most: leaving it in made ``is_minecraft`` False
+    for every vanilla game frame (16,286 frames, 28% of the corpus), so
+    `tools/coverage_report.py` counted vanilla throw sites as "the bug is in mod
+    code" and `_modid_from_class` never matched on them.
+
+    Rather than enumerate the spellings, drop everything left of the last
+    ``/`` -- a Java class name cannot contain a slash, so nothing before it can
+    be part of the class. Nothing is lost either: the original line stays in
+    ``frame.raw``, which is where `mcd/triage/attribution.py` reads the layer
+    from when it wants it.
+    """
+    head = raw.strip()
+    # loop instead of one alternation: the trailers appear in both orders
+    # (``~[jar] {}`` in Forge reports, ``{} [jar]`` in others)
+    for _ in range(4):
+        before = head
+        for rx in _FRAME_TRAILERS:
+            head = rx.sub("", head).strip()
+        if head == before:
+            break
+
+    # Split off the parameter list first so a path inside it
+    # (``(file:/srv/Foo.java:12)``) can never be mistaken for a module prefix.
+    cut = head.find("(")
+    body, tail = (head, "") if cut < 0 else (head[:cut], head[cut:])
+    if "/" in body:
+        body = body.rsplit("/", 1)[-1]
+    return (body + tail).strip()
+
+
 def _parse_frame(raw: str, index: int) -> StackFrame:
     f = StackFrame(raw=raw, index=index)
     if "(Native Method)" in raw:
@@ -224,9 +315,8 @@ def _parse_frame(raw: str, index: int) -> StackFrame:
         f.transformers = [t.strip() for t in cl.group(1).split(",") if t.strip()]
 
     # class / method / line
-    head = raw.split("~[", 1)[0].strip()
-    head = re.sub(r"\s*\{.*\}\s*$", "", head).strip()
-    m = re.match(r"^(.*?)(?:\.([\w$<>]+))?\(([^)]*)\)\s*$", head)
+    head = _frame_head(raw)
+    m = FRAME_BODY_RE.match(head)
     if m:
         cls, meth, arg = m.group(1), m.group(2), m.group(3)
         f.cls = cls or ""
@@ -238,7 +328,11 @@ def _parse_frame(raw: str, index: int) -> StackFrame:
         f.cls = head
 
     fq = f.cls or f.method
-    if fq.startswith("net.minecraft"):
+    # `net.minecraft.` with the dot, not a bare prefix: `net.minecraftforge.*`
+    # starts with `net.minecraft` too, so the old test labelled every Forge frame
+    # as vanilla and the `elif` below could never fire. Both flags mean "platform
+    # code", so nothing downstream changed behaviour -- the labels were just lies.
+    if fq == "net.minecraft" or fq.startswith("net.minecraft."):
         f.is_minecraft = True
     elif fq.startswith(("net.minecraftforge", "net.neoforged", "cpw.mods")):
         f.is_forge = True
@@ -563,12 +657,26 @@ def parse_text(text: str, *, source_path: str = "") -> CrashReport:
     return rep
 
 
-def parse_file(path: str | Path) -> CrashReport:
-    p = Path(path)
-    raw = p.read_bytes()
-    for enc in ("utf-8", "utf-8-sig", "cp1252", "latin-1"):
+_TEXT_ENCODINGS = ("utf-8", "utf-8-sig", "cp1252", "latin-1")
+
+
+def read_report_text(path: str | Path) -> str:
+    """Decode a report file, trying every encoding Minecraft launchers emit.
+
+    The codepage fallbacks are not decoration: a Windows launcher writes `§`
+    and accented player names in the system codepage, so a strict utf-8 read
+    raises -- and a lenient one would swap in U+FFFD and quietly stop matching
+    rules. Every caller that needs the text (not just a parsed report) must go
+    through here, or the two paths will disagree about the same file.
+    """
+    raw = Path(path).read_bytes()
+    for enc in _TEXT_ENCODINGS:
         try:
-            return parse_text(raw.decode(enc), source_path=str(p))
+            return raw.decode(enc)
         except UnicodeDecodeError:
             continue
-    return parse_text(raw.decode("utf-8", errors="replace"), source_path=str(p))
+    return raw.decode("utf-8", errors="replace")
+
+
+def parse_file(path: str | Path) -> CrashReport:
+    return parse_text(read_report_text(path), source_path=str(path))

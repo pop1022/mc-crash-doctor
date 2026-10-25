@@ -65,9 +65,16 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
-          # The job's GITHUB_TOKEN has pages:write (see permissions: above),
-          # so this enables Pages on first run even if the repo never had it
-          # turned on -- no manual Settings click, no PAT pages scope needed.
+          # `enablement: true` is a no-op once Pages exists. It does NOT
+          # bootstrap the site: on a repo that never had Pages turned on, this
+          # step fails with
+          #   Create Pages site failed: Resource not accessible by integration
+          # even though the job's GITHUB_TOKEN carries pages:write, and a
+          # fine-grained PAT gets the same 403 from POST /pages. Creating the
+          # site for the first time is an owner-only, web-UI action:
+          #   Settings -> Pages -> Build and deployment -> Source: GitHub Actions
+          # That click has been done; this line stays so a fresh fork fails
+          # loudly here instead of deploying to nowhere.
           enablement: true
 
       - name: Upload artifact

@@ -126,6 +126,36 @@ for f in findings:
         print("  →", fix)
 ```
 
+### 作为 GitHub Action
+
+自动诊断仓库 issue 里贴出的崩溃报告：从 issue 正文抽取报告（代码块、裸贴、
+或 mclo.gs / gist / pastebin 链接），**重跑时编辑自己那条评论**而不是再发一条
+（否则每次改错别字都会刷出一条旧诊断）：
+
+```yaml
+permissions:
+  issues: write
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pop1022/mc-crash-doctor@main
+        with:
+          comment: "true"
+          fail-on: never     # 改成 "fatal" 可让服务端被杀时构建失败
+```
+
+输出：`found`、`findings`、`worst_severity`、`suspect`、`suspect_confidence`、
+`commented`。CI 里诊断仓库内文件用 `path:`，贴链接用 `url:`。抽不出报告的闲聊
+issue 不会获得回复（`found=false`，不发评论）。本仓库已用它诊断自己的 issue，
+见 [`.github/workflows/diagnose-issue.yml`](.github/workflows/diagnose-issue.yml)。
+
 ## 已覆盖的故障类型
 
 三个规则包共 41 条规则。规则是 YAML——加一条不用写 Python。
@@ -205,8 +235,8 @@ python tests/debug_platform.py --file <log>   # 为什么判成了 X？
 
 ## 路线图
 
-- [ ] 网页版——浏览器里粘贴即诊断，无需安装
-- [ ] GitHub Action——自动诊断 issue 里贴的崩溃报告
+- [~] 网页版——浏览器里粘贴、选文件或拖放，直接给出结论，无需安装。界面默认中文，可一键切英文（诊断正文仍来自 YAML 规则）。基于 Pyodide 全在本地跑，已用真实浏览器端到端验证；公网地址待一次性启用 Pages（见 ROADMAP 0.2）。
+- [~] GitHub Action——自动诊断 issue 里贴的崩溃报告（`action.yml` + `diagnose-issue.yml` 已就位，待真 issue 试跑，ROADMAP 1C.1）
 - [ ] 基于 Modrinth API（7.5 万模组）的模组关系图——已知冲突与版本兼容查询
 - [ ] 用维护者标签做弱监督分类器，在规则无法定论时给嫌疑模组排序
 - [ ] 客户端日志实时跟踪（监听 `latest.log`）

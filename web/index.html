@@ -1,48 +1,134 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>mc-crash-doctor — diagnose Minecraft crashes in your browser</title>
-<meta name="description" content="Paste a Minecraft crash report or server log. Diagnosed entirely in your browser by the mc-crash-doctor rule engine — the log never leaves your machine.">
+<title>mc-crash-doctor — 在浏览器里诊断 Minecraft 崩溃</title>
+<meta id="meta-desc" name="description" content="粘贴 Minecraft 崩溃报告或服务器日志，由 mc-crash-doctor 规则引擎在浏览器本地完成诊断；日志不会离开你的电脑。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%2358a6ff'/><text x='16' y='24' font-size='19' text-anchor='middle' fill='%23ffffff' font-family='monospace'>▣</text></svg>">
 <style>
   :root {
     --bg: #0d1117; --panel: #161b22; --border: #30363d;
     --fg: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
     --fatal: #f85149; --error: #f85149; --warn: #d29922;
     --hint: #39c5cf; --ok: #3fb950;
+    --focus: #58a6ff;
   }
   @media (prefers-color-scheme: light) {
     :root { --bg:#fff; --panel:#f6f8fa; --border:#d0d7de; --fg:#1f2328;
             --muted:#656d76; --accent:#0969da; --fatal:#cf222e; --error:#cf222e;
-            --warn:#9a6700; --hint:#1b7c83; --ok:#1a7f37; }
+            --warn:#9a6700; --hint:#1b7c83; --ok:#1a7f37; --focus:#0969da; }
   }
   * { box-sizing: border-box; }
+  /* An author `display` rule beats the UA's [hidden] rule, so #progress
+     (display:flex) and any <button> (display:inline-flex) stayed visible even
+     with .hidden = true. This is the fix: hidden must win. */
+  [hidden] { display: none !important; }
   body { margin:0; background:var(--bg); color:var(--fg);
-         font:15px/1.55 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+         font:15px/1.62 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,
+              "PingFang SC","Hiragino Sans GB","Microsoft YaHei",
+              "Noto Sans CJK SC",sans-serif; }
   .wrap { max-width: 900px; margin: 0 auto; padding: 28px 20px 60px; }
+
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden;
+             clip:rect(0 0 0 0); white-space:nowrap; }
+  .topbar { display:flex; align-items:flex-start; justify-content:space-between;
+            gap:12px; flex-wrap:wrap; }
   h1 { font-size: 24px; margin: 0 0 4px; }
   h1 .logo { color: var(--accent); }
-  .sub { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+  .sub { color: var(--muted); margin: 0 0 14px; font-size: 14px; }
   .privacy { display:inline-block; background:var(--panel); border:1px solid var(--border);
              border-radius:999px; padding:3px 12px; font-size:12.5px; color:var(--muted);
-             margin-bottom:18px; }
+             margin:0 0 18px; }
   .privacy b { color: var(--ok); font-weight:600; }
+
+  /* 语言切换：紧凑的次级控件（44px 触控高度，与主按钮一致） */
+  .lang { display:flex; gap:6px; flex:0 0 auto; margin-top:2px; }
+  .lang button { min-height:44px; padding:0 14px; font-size:13px; font-weight:600;
+                 background:transparent; color:var(--muted);
+                 border:1px solid var(--border); border-radius:8px; }
+  .lang button:hover:not([aria-pressed="true"]) { color:var(--fg); }
+  .lang button[aria-pressed="true"] { color:var(--fg); border-color:var(--accent);
+                                      background:var(--panel); }
+
+  .field-label { display:block; font-size:12px; letter-spacing:.6px;
+                 color:var(--muted); margin:0 0 6px; }
+  .drop { border:1px dashed var(--border); border-radius:10px; padding:6px; }
+  .drop.over { border-color: var(--accent); background: var(--panel); }
+  .drop.over textarea { pointer-events:none; }
   textarea { width:100%; min-height:220px; resize:vertical; background:var(--panel);
              color:var(--fg); border:1px solid var(--border); border-radius:8px;
-             padding:12px; font:12.5px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; }
-  textarea:focus { outline:none; border-color:var(--accent); }
+             padding:12px; display:block;
+             font:12.5px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; }
+  textarea:focus-visible { outline:2px solid var(--focus); outline-offset:1px;
+                           border-color:var(--accent); }
+  .hint { color:var(--muted); font-size:12.5px; margin:8px 2px 0; }
+  .hint code { font-size:12px; }
+
   .row { display:flex; gap:10px; align-items:center; margin-top:12px; flex-wrap:wrap; }
-  button { background:var(--accent); color:#fff; border:0; border-radius:8px;
-           padding:9px 22px; font-size:15px; font-weight:600; cursor:pointer; }
-  button:disabled { opacity:.5; cursor:wait; }
-  button.ghost { background:transparent; color:var(--muted); border:1px solid var(--border);
-                 font-weight:400; padding:8px 16px; font-size:13.5px; }
-  #status { color:var(--muted); font-size:13.5px; }
+  button, .linkbtn { min-height:44px; display:inline-flex; align-items:center;
+                     justify-content:center; background:var(--accent); color:#fff;
+                     border:0; border-radius:8px; padding:0 22px; font-size:15px;
+                     font-weight:600; cursor:pointer; font-family:inherit; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  button.ghost, .linkbtn.ghost { background:transparent; color:var(--muted);
+                     border:1px solid var(--border); font-weight:400;
+                     padding:0 16px; font-size:13.5px; text-decoration:none; }
+  button.ghost:hover:not(:disabled) { color:var(--fg); border-color:var(--muted); }
+  button:focus-visible, .linkbtn:focus-visible {
+                     outline:2px solid var(--focus); outline-offset:2px; }
+
+  #status { color:var(--muted); font-size:13.5px; margin:12px 2px 0; }
   #status.err { color: var(--fatal); }
+  #status.ok { color: var(--ok); }
+
+  .progress { list-style:none; display:flex; gap:8px; margin:10px 2px 0; padding:0;
+              font-size:12.5px; color:var(--muted); flex-wrap:wrap; }
+  .progress li { border:1px solid var(--border); border-radius:999px; padding:2px 10px; }
+  .progress li[data-state="active"] { color:var(--fg); border-color:var(--accent); }
+  .progress li[data-state="done"] { color:var(--ok); border-color:var(--ok); }
+  .progress li[data-state="failed"] { color:var(--fatal); border-color:var(--fatal); }
+
+  .notice { margin-top:14px; border:1px solid var(--warn); border-left:4px solid var(--warn);
+            border-radius:8px; padding:12px 14px; font-size:13.5px; background:var(--panel); }
+  .notice.ok { border-color:var(--ok); border-left-color:var(--ok); }
+  .notice p { margin:0 0 6px; }
+  .notice p:last-child { margin-bottom:0; }
+  .notice pre { margin:8px 0; overflow:auto; font-size:11.5px; color:var(--muted);
+                background:var(--bg); border:1px solid var(--border);
+                border-radius:6px; padding:8px; }
+
   .card { background:var(--panel); border:1px solid var(--border); border-radius:10px;
           padding:16px 18px; margin-top:16px; }
   .card h2 { margin:0 0 10px; font-size:16px; }
+
+  .verdict { border-color:var(--border); }
+  .verdict .eyebrow { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .verdict .eyebrow span.where { color:var(--muted); font-size:12px; }
+  .verdict h2 { font-size:19px; line-height:1.45; margin:0 0 4px; outline:none;
+                overflow-wrap:anywhere; }
+  .verdict .cause-meta { color:var(--muted); font-size:12px; margin:0 0 12px;
+                         font-family:ui-monospace,Consolas,monospace; word-break:break-word; }
+  .suspect-row { display:flex; align-items:center; gap:10px; padding:10px 12px;
+                 background:var(--bg); border:1px solid var(--border); border-radius:8px;
+                 margin-bottom:12px; flex-wrap:wrap; }
+  .suspect-row .who { flex:1; min-width:140px; }
+  .suspect-row .k { display:block; color:var(--muted); font-size:11px; margin-bottom:2px; }
+  .suspect-row .v { font-weight:600; font-size:14px; }
+  .suspect-row .conf { text-align:right; }
+  .suspect-row .suspect { border:0; background:transparent; padding:0; font-size:14px; }
+  .why { margin:0 0 12px; padding-left:18px; color:var(--muted); font-size:12.5px; }
+  .why li { margin:2px 0; }
+  .starthere .k { display:block; color:var(--muted); font-size:11px;
+                  margin-bottom:4px; }
+  .starthere ol { margin:0 0 12px; padding-left:20px; }
+  .starthere li { margin:4px 0; }
+  .actions { display:flex; gap:8px; flex-wrap:wrap; border-top:1px solid var(--border);
+             padding-top:12px; margin-top:2px; }
+
+  .overview { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;
+              margin:18px 2px 0; font-size:14px; }
+  .overview .counts { color:var(--muted); font-size:13px; }
   .sev { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.5px;
          border-radius:4px; padding:2px 7px; margin-right:8px; vertical-align:2px; }
   .sev.fatal,.sev.error { background:var(--fatal); color:#fff; }
@@ -50,15 +136,15 @@
   .sev.hint { background:var(--hint); color:#000; }
   .sev.info { background:var(--muted); color:#fff; }
   .finding + .finding { margin-top:18px; padding-top:16px; border-top:1px solid var(--border); }
-  .finding h3 { margin:0 0 6px; font-size:15.5px; }
+  .finding h3 { margin:0 0 6px; font-size:15.5px; line-height:1.5; }
   .finding p { margin:6px 0; }
   .finding ul { margin:6px 0 6px 0; padding-left:20px; }
   .finding li { margin:3px 0; }
-  .label { color:var(--muted); font-size:12px; text-transform:uppercase;
+  .label { color:var(--muted); font-size:12px;
            letter-spacing:.6px; margin-top:10px; }
   .evidence { background:var(--bg); border:1px solid var(--border); border-radius:6px;
               padding:8px 10px; font:12px/1.5 ui-monospace,Consolas,monospace;
-              white-space:pre-wrap; word-break:break-all; color:var(--muted); margin-top:4px; }
+              white-space:pre-wrap; overflow-wrap:anywhere; color:var(--muted); margin-top:4px; }
   .suspects { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
   .suspect { border:1px solid var(--border); border-radius:8px; padding:6px 12px;
              background:var(--bg); font-size:13.5px; }
@@ -70,30 +156,85 @@
   .meta div span { color:var(--muted); }
   .none { color:var(--muted); }
   a { color:var(--accent); }
+  .finding a, .notice a, .none a { text-decoration:underline; }
   footer { margin-top:36px; color:var(--muted); font-size:13px; text-align:center; }
-  details.raw summary { cursor:pointer; color:var(--muted); font-size:13px; margin-top:14px; }
+  footer a { text-decoration:none; }
+  details { margin-top:14px; }
+  details > summary { cursor:pointer; color:var(--muted); font-size:13px; }
+  details > summary:focus-visible { outline:2px solid var(--focus); outline-offset:3px; }
   details.raw pre { overflow:auto; background:var(--bg); border:1px solid var(--border);
                     border-radius:6px; padding:10px; font-size:11.5px; color:var(--muted); }
+  details.env { margin-top:16px; border:1px solid var(--border); border-radius:8px;
+                padding:10px 12px; background:var(--panel); }
+  details.env .meta { margin-top:10px; }
+
+  /* 英文界面才需要全大写/字距；中文没有大小写，去掉免得字形发虚 */
+  html[lang="en"] .field-label,
+  html[lang="en"] .starthere .k,
+  html[lang="en"] .label { text-transform:uppercase; letter-spacing:.6px; }
+
+  @media (max-width: 520px) {
+    .wrap { padding: 20px 14px 48px; }
+    h1 { font-size: 21px; }
+    textarea { min-height: 160px; }
+    .row > button, .row > .linkbtn { flex:1 1 100%; }
+    .verdict h2 { font-size:17px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .drop { transition: border-color .15s, background-color .15s; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1><span class="logo">▣</span> mc-crash-doctor</h1>
-  <p class="sub">Paste a Minecraft crash report or server log → root cause, fix steps, and the mod to blame.</p>
-  <p class="privacy">🔒 <b>Diagnosed entirely in your browser.</b> The log never leaves your machine — no upload, no server, no analytics.</p>
+  <header>
+    <div class="topbar">
+      <h1><span class="logo" aria-hidden="true">▣</span> mc-crash-doctor</h1>
+      <div class="lang" role="group" aria-label="界面语言 / Language">
+        <button type="button" id="lang-zh" data-lang="zh" aria-pressed="true">中文</button>
+        <button type="button" id="lang-en" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+    </div>
+    <p class="sub" data-i18n="sub">粘贴 Minecraft 崩溃报告或服务器日志 → 直接给出根因、修复步骤，以及该找哪个模组算账。</p>
+    <p class="privacy" id="privacy" data-i18n-html="privacy"
+       title="诊断在标签页内的 WebAssembly 里完成，不上传、无服务器、无统计。">🔒 <b>纯本地运行。</b> 日志不会离开你的浏览器。</p>
+  </header>
 
-  <textarea id="log" placeholder="Paste your crash-report.txt / latest.log here…&#10;&#10;(Tip: the full crash report works best — Mod List and System Details make attribution much stronger.)" spellcheck="false"></textarea>
-  <div class="row">
-    <button id="go" disabled>Diagnose</button>
-    <button class="ghost" id="sample" disabled>Try a sample</button>
-    <span id="status">loading Python engine… (first visit ≈10 s, cached after)</span>
-  </div>
+  <main>
+    <label class="field-label" for="log" data-i18n="fieldLabel">崩溃报告或日志</label>
+    <div class="drop" id="drop">
+      <textarea id="log" spellcheck="false" aria-describedby="hint"
+        data-i18n-placeholder="placeholder"
+        placeholder="把 crash-report.txt / latest.log 粘到这里，或者把文件拖进这个框…"></textarea>
+    </div>
+    <p class="hint" id="hint" data-i18n-html="hint">贴完整报告效果最好——Mod List 和 System Details 能让定责准确很多。
+      也可以把 <code>.txt</code>/<code>.log</code> 文件拖进这个框，或点「选择文件…」。</p>
 
-  <div id="out"></div>
+    <div class="row">
+      <button id="go" data-i18n="diagnose" disabled>开始诊断</button>
+      <button class="ghost" id="sample" data-i18n="sample" disabled>用示例试试</button>
+      <button class="ghost" id="pick" data-i18n="pick">选择文件…</button>
+      <input type="file" id="file" accept=".txt,.log,.text,text/plain" hidden>
+      <button class="ghost" id="clear" data-i18n="clear" hidden>清空</button>
+    </div>
+
+    <p id="status" role="status" aria-live="polite">正在加载 Python 引擎…（首次约 10 秒，之后走缓存）</p>
+
+    <ol class="progress" id="progress" aria-label="引擎加载进度">
+      <li data-step="runtime" data-i18n="stepRuntime" data-state="active">Python 运行时</li>
+      <li data-step="engine" data-i18n="stepEngine" data-state="pending">规则引擎</li>
+      <li data-step="ready" data-i18n="stepReady" data-state="pending">就绪</li>
+    </ol>
+
+    <div id="notice" class="notice" role="alert" hidden></div>
+  </main>
+
+  <section id="out" aria-label="诊断结果"></section>
+  <span id="copystatus" class="sr-only" role="status" aria-live="polite"></span>
 
   <footer>
     <a href="https://github.com/pop1022/mc-crash-doctor">github.com/pop1022/mc-crash-doctor</a>
-    · same engine as the CLI · rules are YAML, PRs welcome
+    <span data-i18n="footerTail">· 与 CLI 同一套引擎 · 规则是 YAML，欢迎 PR</span>
   </footer>
 </div>
 

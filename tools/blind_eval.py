@@ -50,7 +50,7 @@ import json
 import os
 import re
 import sys
-from collections import Counter, defaultdict
+from collections import defaultdict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
@@ -247,6 +247,63 @@ def _pct(a: int, b: int) -> str:
     return f"{a}/{b} ({a / b:.0%})" if b else f"{a}/{b} (n/a)"
 
 
+#: Two-sided 95% normal quantile. Hard-coded rather than computed so the report
+#: does not need SciPy, and so the number cannot drift with a library upgrade.
+Z95 = 1.959963984540054
+
+#: Below this denominator we publish the count and the interval, never the bare
+#: percentage. 30 is the usual line where the normal approximation to a binomial
+#: starts to behave; Wilson is fine below it, but the *point estimate* is not
+#: worth quoting on its own either way.
+MIN_QUOTABLE_N = 30
+
+
+def wilson(k: int, n: int, z: float = Z95) -> tuple[float, float]:
+    """Wilson score interval for k/n.
+
+    WHY NOT THE NORMAL APPROXIMATION
+    --------------------------------
+    This report's headline is 1/7. The textbook `p ± z*sqrt(p(1-p)/n)` gives
+    0.143 ± 0.26, i.e. a lower bound below zero, which is not a probability and
+    gets clipped to "0%" -- reading as "could be perfect". Wilson never leaves
+    [0, 1], behaves at small n and at 0/n or n/n, and is the interval the
+    roadmap's own limitation note was quoting.
+
+    A bare "14%" is not a finding: with n=7 the same data is consistent with
+    anything from ~3% to ~40%. The point estimate is what gets published and
+    misquoted, so the interval has to travel with it.
+    """
+    if n <= 0:
+        return (0.0, 1.0)
+    p = k / n
+    denom = 1 + z * z / n
+    centre = (p + z * z / (2 * n)) / denom
+    half = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5) / denom
+    lo = max(0.0, centre - half)
+    hi = min(1.0, centre + half)
+    # Floating-point dust: 10/10 comes out as 0.9999999999999999 and 0/3 as
+    # 5.5e-17. A report that prints "99.99999999999999%" or "[0.0000000000001%,
+    # ...]" is the same sloppiness this function exists to remove, so snap
+    # anything within an epsilon of a boundary onto it.
+    eps = 1e-12
+    if lo < eps:
+        lo = 0.0
+    if hi > 1 - eps:
+        hi = 1.0
+    return (lo, hi)
+
+
+def _ci(k: int, n: int) -> dict:
+    lo, hi = wilson(k, n)
+    return {"k": k, "n": n, "rate": (k / n) if n else None,
+            "lo": round(lo, 4), "hi": round(hi, 4)}
+
+
+def _ci_str(k: int, n: int) -> str:
+    lo, hi = wilson(k, n)
+    return f"{_pct(k, n)}  95% CI [{lo:.0%}, {hi:.0%}]"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", default=os.path.join(ROOT, "corpus",
@@ -263,16 +320,16 @@ def main() -> int:
 
     print(f"\n══ BLIND SET ({res['n']} reports) ══")
     print(f"  parse errors      : {res['parse_errors']}")
-    print(f"  diagnosed         : {_pct(res['diagnosed'], res['n'])}")
-    print(f"  with root cause   : {_pct(res['root_cause'], res['n'])}")
+    print(f"  diagnosed         : {_ci_str(res['diagnosed'], res['n'])}")
+    print(f"  with root cause   : {_ci_str(res['root_cause'], res['n'])}")
     print("  by maintainer verdict:")
     for v, (n, d) in res["by_verdict"].items():
         star = " *" if v in CRASH_VERDICTS else ""
         print(f"    {v:24} {_pct(d, n)}{star}")
-    print(f"  mod repos         : {_pct(m['diag'], m['n'])} diagnosed")
-    print(f"  loader repos      : {_pct(l['diag'], l['n'])} diagnosed")
+    print(f"  mod repos         : {_ci_str(m['diag'], m['n'])} diagnosed")
+    print(f"  loader repos      : {_ci_str(l['diag'], l['n'])} diagnosed")
 
-    print(f"\n══ ATTRIBUTION vs maintainer verdict (mod repos) ══")
+    print("\n══ ATTRIBUTION vs maintainer verdict (mod repos) ══")
     print("  bug_in_this_mod   -> top-1 SHOULD name the repo's mod")
     print(f"    correct   : {_pct(m['bug_hit'], m['bug_n'])}")
     print(f"    missed    : {_pct(m['bug_miss'], m['bug_n'])}  <- real blame errors")
@@ -288,9 +345,15 @@ def main() -> int:
     blame_errors = m["bug_miss"] + m["else_wrongrepo"]
     if scored:
         print(f"\n  >>> BLAME-ERROR RATE (ROADMAP 1B.2 basis): "
-              f"{blame_errors}/{scored} = {blame_errors/scored:.0%}")
-        print(f"      (direction-aware: counts top-1 wrong for bug_in_this_mod "
-              f"AND top-1=repo for root_cause_elsewhere)")
+              f"{_ci_str(blame_errors, scored)}")
+        print("      (direction-aware: counts top-1 wrong for bug_in_this_mod "
+              "AND top-1=repo for root_cause_elsewhere)")
+        if scored < MIN_QUOTABLE_N:
+            lo, hi = wilson(blame_errors, scored)
+            print(f"      !! n={scored} is too small to quote as a rate. The same "
+                  f"data is consistent with {lo:.0%}-{hi:.0%}. Quote the "
+                  f"interval, or say 'we documented exactly {blame_errors} "
+                  f"failure mode(s)', never the bare percentage.")
 
     if res["misattribution_samples"]:
         print("\n  blame-error samples (verify by hand -- weak labels err too):")
@@ -309,11 +372,15 @@ def main() -> int:
         d_scored = dm["bug_n"] + dm["else_n"]
         d_err = dm["bug_miss"] + dm["else_wrongrepo"]
         print(f"\n══ DEV SET comparison ({dres['n']} reports) ══")
-        print(f"  diagnosed         : {_pct(dres['diagnosed'], dres['n'])}")
-        print(f"  blame-error rate  : {_pct(d_err, d_scored)}")
+        print(f"  diagnosed         : {_ci_str(dres['diagnosed'], dres['n'])}")
+        print(f"  blame-error rate  : {_ci_str(d_err, d_scored)}")
+        print("      (comparison only: dev reports motivated the rules, so a "
+              "better dev number proves nothing about generalisation)")
         res["_dev"] = {"n": dres["n"], "diagnosed": dres["diagnosed"],
                        "bug_hit": dm["bug_hit"], "bug_n": dm["bug_n"],
-                       "blame_errors": d_err, "scored": d_scored}
+                       "blame_errors": d_err, "scored": d_scored,
+                       "ci": {"diagnosed": _ci(dres["diagnosed"], dres["n"]),
+                              "blame_error": _ci(d_err, d_scored)}}
 
     doc = {
         "generated_by": "tools/blind_eval.py",
@@ -326,6 +393,27 @@ def main() -> int:
         "blind": {k: v for k, v in res.items()
                   if k not in ("misattribution_samples",
                                "good_external_samples", "_dev")},
+        # Every ratio above, with its 95% interval attached. The point estimate
+        # alone is what gets copied into a README and then quoted as if it were
+        # a property of the tool; at n=7 it is not.
+        "ci95": {
+            "method": "Wilson score interval, z=1.959963984540054",
+            "min_quotable_n": MIN_QUOTABLE_N,
+            "diagnosed": _ci(res["diagnosed"], res["n"]),
+            "root_cause": _ci(res["root_cause"], res["n"]),
+            "mod_repo_diagnosed": _ci(m["diag"], m["n"]),
+            "loader_repo_diagnosed": _ci(l["diag"], l["n"]),
+            "blame_error": _ci(blame_errors, scored),
+            "by_verdict_diagnosed": {
+                v: _ci(d, n) for v, (n, d) in res["by_verdict"].items()},
+            # A ratio whose denominator is under MIN_QUOTABLE_N is a count, not
+            # a rate. This flag travels with the data so a downstream consumer
+            # cannot quote "14%" without having been told not to.
+            "quotable_as_rate": {
+                "diagnosed": res["n"] >= MIN_QUOTABLE_N,
+                "blame_error": scored >= MIN_QUOTABLE_N,
+            },
+        },
         "misattribution_samples": res["misattribution_samples"],
         "good_external_samples": res["good_external_samples"],
     }

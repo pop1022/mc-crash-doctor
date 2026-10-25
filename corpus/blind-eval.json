@@ -12,16 +12,16 @@
   "blind": {
     "n": 218,
     "parse_errors": 0,
-    "diagnosed": 141,
+    "diagnosed": 155,
     "root_cause": 217,
     "by_verdict": {
       "(none)": [
         159,
-        100
+        111
       ],
       "bug_in_this_mod": [
         4,
-        2
+        3
       ],
       "known_issue": [
         5,
@@ -45,16 +45,16 @@
       ],
       "user_error_or_config": [
         42,
-        26
+        28
       ]
     },
     "mod_repo": {
       "n": 143,
-      "diag": 102,
+      "diag": 112,
       "bug_n": 4,
-      "bug_hit": 1,
+      "bug_hit": 3,
       "bug_miss": 0,
-      "bug_nopick": 3,
+      "bug_nopick": 1,
       "else_n": 3,
       "else_correct": 2,
       "else_wrongrepo": 1,
@@ -64,7 +64,108 @@
     },
     "loader_repo": {
       "n": 75,
-      "diag": 39
+      "diag": 43
+    }
+  },
+  "ci95": {
+    "method": "Wilson score interval, z=1.959963984540054",
+    "min_quotable_n": 30,
+    "diagnosed": {
+      "k": 155,
+      "n": 218,
+      "rate": 0.7110091743119266,
+      "lo": 0.6476,
+      "hi": 0.7671
+    },
+    "root_cause": {
+      "k": 217,
+      "n": 218,
+      "rate": 0.9954128440366973,
+      "lo": 0.9745,
+      "hi": 0.9992
+    },
+    "mod_repo_diagnosed": {
+      "k": 112,
+      "n": 143,
+      "rate": 0.7832167832167832,
+      "lo": 0.7088,
+      "hi": 0.8429
+    },
+    "loader_repo_diagnosed": {
+      "k": 43,
+      "n": 75,
+      "rate": 0.5733333333333334,
+      "lo": 0.4605,
+      "hi": 0.679
+    },
+    "blame_error": {
+      "k": 1,
+      "n": 7,
+      "rate": 0.14285714285714285,
+      "lo": 0.0257,
+      "hi": 0.5131
+    },
+    "by_verdict_diagnosed": {
+      "(none)": {
+        "k": 111,
+        "n": 159,
+        "rate": 0.6981132075471698,
+        "lo": 0.6228,
+        "hi": 0.7641
+      },
+      "bug_in_this_mod": {
+        "k": 3,
+        "n": 4,
+        "rate": 0.75,
+        "lo": 0.3006,
+        "hi": 0.9544
+      },
+      "known_issue": {
+        "k": 5,
+        "n": 5,
+        "rate": 1.0,
+        "lo": 0.5655,
+        "hi": 1.0
+      },
+      "meta": {
+        "k": 2,
+        "n": 2,
+        "rate": 1.0,
+        "lo": 0.3424,
+        "hi": 1.0
+      },
+      "not_a_bug": {
+        "k": 1,
+        "n": 1,
+        "rate": 1.0,
+        "lo": 0.2065,
+        "hi": 1.0
+      },
+      "outdated_version": {
+        "k": 2,
+        "n": 2,
+        "rate": 1.0,
+        "lo": 0.3424,
+        "hi": 1.0
+      },
+      "root_cause_elsewhere": {
+        "k": 3,
+        "n": 3,
+        "rate": 1.0,
+        "lo": 0.4385,
+        "hi": 1.0
+      },
+      "user_error_or_config": {
+        "k": 28,
+        "n": 42,
+        "rate": 0.6666666666666666,
+        "lo": 0.5155,
+        "hi": 0.7899
+      }
+    },
+    "quotable_as_rate": {
+      "diagnosed": true,
+      "blame_error": false
     }
   },
   "misattribution_samples": [
@@ -94,10 +195,26 @@
   ],
   "dev": {
     "n": 236,
-    "diagnosed": 164,
-    "bug_hit": 0,
+    "diagnosed": 182,
+    "bug_hit": 2,
     "bug_n": 4,
     "blame_errors": 1,
-    "scored": 6
+    "scored": 6,
+    "ci": {
+      "diagnosed": {
+        "k": 182,
+        "n": 236,
+        "rate": 0.7711864406779662,
+        "lo": 0.7135,
+        "hi": 0.8202
+      },
+      "blame_error": {
+        "k": 1,
+        "n": 6,
+        "rate": 0.16666666666666666,
+        "lo": 0.0301,
+        "hi": 0.5635
+      }
+    }
   }
 }

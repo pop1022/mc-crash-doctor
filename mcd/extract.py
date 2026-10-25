@@ -16,6 +16,9 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Callable
+
+from . import __version__
 
 CACHE_DIR = Path(os.environ.get("MCD_CACHE", str(Path.home() / ".cache" / "mcd-corpus")))
 
@@ -25,7 +28,6 @@ BANNER_RE = re.compile(r"-{2,}\s*Minecraft Crash Report\s*-{2,}", re.I)
 DESCRIPTION_RE = re.compile(r"^\s*Description:\s*(.+?)\s*$", re.M)
 STACKFRAME_RE = re.compile(r"^\s*(?:at|\u0009at)\s+[\w.$/]+\s*\(", re.M)
 LOG_LINE_RE = re.compile(r"^\s*\[\d{2}:\d{2}:\d{2}\]", re.M)
-NEOFORGE_RE = re.compile(r"neoforge|fml\.ModLoadingException", re.I)
 
 FENCE_RE = re.compile(
     r"^[ \t]*(?:```+|~~~+)[^\n]*\n(.*?)^[ \t]*(?:```+|~~~+)[ \t]*$",
@@ -33,9 +35,28 @@ FENCE_RE = re.compile(
 )
 
 # External paste hosts we know how to dereference.
-MCLOGS_RE = re.compile(r"https?://(?:www\.)?(?:api\.)?mclo\.gs/(\w+)/([A-Za-z0-9]+)", re.I)
+#
+# mclo.gs share links are https://mclo.gs/<id> (ONE path segment) -- the
+# optional middle segment only covers the older "mclo.gs/<name>/<id>" shape
+# people still paste. The raw API form (api.mclo.gs/1/raw/<id>) is matched
+# separately, because "1/raw" would otherwise be read as that middle segment.
+# Both spellings previously fell through to `None`, so `--url <share link>`
+# silently fetched the HTML page instead of the log.
+MCLOGS_RE = re.compile(
+    r"https?://(?:(?:www\.)?mclo\.gs/(?:[\w-]+/)?(?P<id>[A-Za-z0-9]+)"
+    r"|api\.mclo\.gs/\d+/raw/(?P<raw>[A-Za-z0-9]+))",
+    re.I,
+)
 GIST_RE = re.compile(r"https?://gist\.github\.com/(?:[\w.\-]+/)?([0-9a-f]{32})", re.I)
 PASTEBIN_RE = re.compile(r"https?://pastebin\.com/(?:raw/)?([A-Za-z0-9]{8})", re.I)
+
+
+def mclogs_id(url: str) -> str | None:
+    """The paste id in a mclo.gs share link or raw API URL, else None."""
+    m = MCLOGS_RE.search(url)
+    if not m:
+        return None
+    return m.group("id") or m.group("raw")
 
 
 @dataclass
@@ -47,7 +68,6 @@ class Extracted:
     sources: list[str] = field(default_factory=list)    # 'inline' | 'mclo.gs:xxx' ...
     has_banner: bool = False
     has_log_lines: bool = False
-    n_stackframes: int = 0
 
     @property
     def best(self) -> str | None:
@@ -78,25 +98,31 @@ def _looks_like_report(text: str) -> bool:
     return False
 
 
+READ_LIMIT = 8_000_000
+_UA_HARVEST = "mc-crash-doctor corpus harvester (research)"
+_TIMEOUTS = (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError)
+
+
+def _http_get(url: str, *, timeout: int, ua: str) -> str | None:
+    """GET a URL as text; None on any network, HTTP or TLS failure."""
+    req = urllib.request.Request(
+        url, headers={"User-Agent": ua, "Accept": "*/*"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return r.read(READ_LIMIT).decode("utf-8", errors="replace")
+    except _TIMEOUTS:
+        return None
+
+
 def _fetch(url: str, *, timeout: int = 25) -> str | None:
+    """Cached GET, for the corpus harvester (batch work, staleness is fine)."""
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     key = re.sub(r"\W+", "_", url)[-120:]
     cache = CACHE_DIR / f"{key}.txt"
     if cache.exists():
         return cache.read_text(encoding="utf-8", errors="replace")
-    req = urllib.request.Request(
-        url,
-        headers={
-            "User-Agent": "mc-crash-doctor corpus harvester (research)",
-            "Accept": "*/*",
-        },
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            data = r.read(8_000_000).decode("utf-8", errors="replace")
-    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError):
-        return None
-    if len(data) < 60:
+    data = _http_get(url, timeout=timeout, ua=_UA_HARVEST)
+    if not data or len(data) < 60:
         return None
     cache.write_text(data, encoding="utf-8")
     return data
@@ -142,6 +168,59 @@ def deref_pastebin(pid: str) -> str | None:
     return _fetch(f"https://pastebin.com/raw/{pid}")
 
 
+# One row per supported paste host: how to find its links, how to pull the id
+# out of a match, the label recorded in `sources`, and how to dereference it.
+# The three hosts used to be three copy-pasted loops; adding a fourth host is
+# now a single row instead of another 12-line block.
+_PASTE_HOSTS: tuple[tuple[re.Pattern[str], Callable[[re.Match], str], str], ...] = (
+    (MCLOGS_RE, lambda m: m.group("id") or m.group("raw"), "mclo.gs"),
+    (GIST_RE, lambda m: m.group(1), "gist"),
+    (PASTEBIN_RE, lambda m: m.group(1), "pastebin"),
+)
+
+
+def _deref(host: str, pid: str, pat: str | None) -> str | None:
+    if host == "mclo.gs":
+        return deref_mclogs(pid)
+    if host == "gist":
+        return deref_gist(pid, pat=pat)
+    return deref_pastebin(pid)
+
+
+def _follow_links(out: Extracted, body: str, *, pat: str | None,
+                  max_links: int) -> None:
+    """Dereference up to `max_links` pastes and keep the ones that are reports."""
+    seen: set[str] = set()
+    for regex, ident, host in _PASTE_HOSTS:
+        for m in regex.finditer(body):
+            if len(seen) >= max_links:
+                return
+            pid = ident(m)
+            if not pid or pid in seen:
+                continue
+            seen.add(pid)
+            txt = _deref(host, pid, pat)
+            if txt and _looks_like_report(txt):
+                out.texts.append(txt)
+                out.sources.append(f"{host}:{pid}")
+            time.sleep(0.4)
+
+
+def fetch_log(url: str, *, timeout: int = 30) -> str | None:
+    """Fetch a log from a share link or a raw URL (mclo.gs aware).
+
+    Deliberately uncached: this backs the CLI ``--url`` flag and the GitHub
+    Action, where re-reading a stale paste would diagnose the wrong crash.
+    The corpus harvester uses :func:`_fetch` instead, which caches on disk.
+    """
+    if "://" not in url:      # tolerate a pasted "mclo.gs/abc123"
+        url = "https://" + url
+    pid = mclogs_id(url)
+    if pid:
+        url = f"https://api.mclo.gs/1/raw/{pid}"
+    return _http_get(url, timeout=timeout, ua=f"mc-crash-doctor/{__version__}")
+
+
 def extract(body: str, *, follow_links: bool = True,
             pat: str | None = None, max_links: int = 3) -> Extracted:
     """Pull every candidate crash text out of an issue body.
@@ -151,7 +230,6 @@ def extract(body: str, *, follow_links: bool = True,
     out = Extracted(body=body)
     out.has_banner = bool(BANNER_RE.search(body))
     out.has_log_lines = len(LOG_LINE_RE.findall(body)) >= 3
-    out.n_stackframes = len(STACKFRAME_RE.findall(body))
 
     # 1. fenced blocks (dedented)
     for m in FENCE_RE.finditer(body):
@@ -170,44 +248,5 @@ def extract(body: str, *, follow_links: bool = True,
         return out
 
     # 3. external pastes
-    seen: set[str] = set()
-    for m in MCLOGS_RE.finditer(body):
-        if len(seen) >= max_links:
-            break
-        lid = m.group(2)
-        if lid in seen:
-            continue
-        seen.add(lid)
-        txt = deref_mclogs(lid)
-        if txt and _looks_like_report(txt):
-            out.texts.append(txt)
-            out.sources.append(f"mclo.gs:{lid}")
-        time.sleep(0.4)
-
-    for m in GIST_RE.finditer(body):
-        if len(seen) >= max_links:
-            break
-        gid = m.group(1)
-        if gid in seen:
-            continue
-        seen.add(gid)
-        txt = deref_gist(gid, pat=pat)
-        if txt and _looks_like_report(txt):
-            out.texts.append(txt)
-            out.sources.append(f"gist:{gid}")
-        time.sleep(0.4)
-
-    for m in PASTEBIN_RE.finditer(body):
-        if len(seen) >= max_links:
-            break
-        pid = m.group(1)
-        if pid in seen:
-            continue
-        seen.add(pid)
-        txt = deref_pastebin(pid)
-        if txt and _looks_like_report(txt):
-            out.texts.append(txt)
-            out.sources.append(f"pastebin:{pid}")
-        time.sleep(0.4)
-
+    _follow_links(out, body, pat=pat, max_links=max_links)
     return out

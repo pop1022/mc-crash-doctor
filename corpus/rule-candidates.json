@@ -1,0 +1,2520 @@
+{
+  "summary": {
+    "total_reports": 454,
+    "uncovered": 117,
+    "clusters": 107,
+    "singletons": 100,
+    "singleton_reports": 100,
+    "reports_per_rule": 1.09,
+    "top_n": 10,
+    "top_n_reports": 20,
+    "top_n_share": 0.1709,
+    "r4_threshold": 0.3,
+    "r4_fires": true,
+    "verdicts": {
+      "reusable": 6,
+      "needs_generalisation": 1,
+      "singleton": 87,
+      "singleton+overfit": 13
+    }
+  },
+  "clusters": [
+    {
+      "signature": "java.lang.Throwable: Manually triggered debug crash",
+      "size": 4,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.Throwable"
+      ],
+      "description": [
+        "Manually triggered debug crash"
+      ],
+      "overfit": [],
+      "verdict": "reusable",
+      "when": {
+        "description": [
+          "Manually triggered debug crash"
+        ],
+        "exception": [
+          "^java\\.lang\\.Throwable$"
+        ],
+        "exception_msg": [
+          "Manually\\ triggered\\ debug\\ crash"
+        ]
+      },
+      "reports": [
+        "CaffeineMC__sodium/3473",
+        "CaffeineMC__sodium/3505",
+        "CaffeineMC__sodium/3873",
+        "CaffeineMC__sodium/3915"
+      ]
+    },
+    {
+      "signature": "java.lang.reflect.InvocationTargetException",
+      "size": 3,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.IllegalArgumentException",
+        "java.lang.reflect.GenericSignatureFormatError",
+        "net.fabricmc.loader.impl.lib.classtweaker.reader.ClassTweakerFormatException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "needs_generalisation",
+      "when": {
+        "exception": [
+          "^(java\\.lang\\.IllegalArgumentException|java\\.lang\\.reflect\\.GenericSignatureFormatError|net\\.fabricmc\\.loader\\.impl\\.lib\\.classtweaker\\.reader\\.ClassTweakerFormatException)$"
+        ]
+      },
+      "reports": [
+        "CaffeineMC__sodium/3611",
+        "FabricMC__fabric-api/5417",
+        "FabricMC__fabric-loader/1135"
+      ]
+    },
+    {
+      "signature": "com.mojang.text2speech.Narrator$InitializeException: Failed to load library flite",
+      "size": 2,
+      "bucket": "native",
+      "kinds": [
+        "java.lang.NullPointerException",
+        "java.lang.UnsatisfiedLinkError"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "reusable",
+      "when": {
+        "exception": [
+          "^(java\\.lang\\.NullPointerException|java\\.lang\\.UnsatisfiedLinkError)$"
+        ],
+        "exception_msg": [
+          "Failed\\ to\\ load\\ library\\ flite"
+        ]
+      },
+      "reports": [
+        "Snownee__Jade/423",
+        "Snownee__Jade/543"
+      ]
+    },
+    {
+      "signature": "java.lang.ClassCastException: Cannot coerce loader value to a String",
+      "size": 2,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.ClassCastException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "reusable",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.ClassCastException$"
+        ],
+        "exception_msg": [
+          "Cannot\\ coerce\\ loader\\ value\\ to\\ a\\ String"
+        ]
+      },
+      "reports": [
+        "QuiltMC__quilt-loader/368",
+        "QuiltMC__quilt-loader/415"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: An exception occurred when launching the server!",
+      "size": 2,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.RuntimeException",
+        "java.nio.file.FileSystemException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "reusable",
+      "when": {
+        "exception": [
+          "^(java\\.lang\\.RuntimeException|java\\.nio\\.file\\.FileSystemException)$"
+        ],
+        "exception_msg": [
+          "An\\ exception\\ occurred\\ when\\ launching\\ the\\ server!"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/1022",
+        "FabricMC__fabric-loader/1093"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: Minecraft game provider couldn't locate the game! The game may be absent from th",
+      "size": 2,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.RuntimeException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "reusable",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.RuntimeException$"
+        ],
+        "exception_msg": [
+          "Minecraft\\ game\\ provider\\ couldn't\\ locate\\ the\\ game!\\ The\\ game\\ may\\ be\\ absent\\ from\\ th"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/1032",
+        "FabricMC__fabric-loader/714"
+      ]
+    },
+    {
+      "signature": "net.fabricmc.loader.impl.FormattedException: java.lang.RuntimeException: Could not execute entrypoint stage 'preLaunch' due t",
+      "size": 2,
+      "bucket": "mod-loading",
+      "kinds": [
+        "java.lang.IllegalStateException",
+        "java.lang.NoSuchMethodException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "reusable",
+      "when": {
+        "exception": [
+          "^(java\\.lang\\.IllegalStateException|java\\.lang\\.NoSuchMethodException)$"
+        ],
+        "exception_msg": [
+          "java\\.lang\\.RuntimeException:\\ Could\\ not\\ execute\\ entrypoint\\ stage\\ 'preLaunch'\\ due\\ t"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/651",
+        "FabricMC__fabric-loader/783"
+      ]
+    },
+    {
+      "signature": "com.google.common.util.concurrent.ExecutionError: java.lang.StackOverflowError",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.StackOverflowError"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.StackOverflowError$"
+        ],
+        "exception_msg": [
+          "java\\.lang\\.StackOverflowError"
+        ]
+      },
+      "reports": [
+        "Snownee__Jade/434"
+      ]
+    },
+    {
+      "signature": "com.google.gson.JsonParseException: Unknown registry key in ResourceKey[minecraft:root / minecraft:recipe_serializer",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "com.google.gson.JsonParseException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^com\\.google\\.gson\\.JsonParseException$"
+        ],
+        "exception_msg": [
+          "Unknown\\ registry\\ key\\ in\\ ResourceKey\\[minecraft:root\\ /\\ minecraft:recipe_serializer"
+        ]
+      },
+      "reports": [
+        "Snownee__Jade/464"
+      ]
+    },
+    {
+      "signature": "com.google.gson.JsonParseException: com.google.gson.stream.MalformedJsonException: Expected name at line 8 column 6",
+      "size": 1,
+      "bucket": "mod-bug",
+      "kinds": [
+        "java.lang.RuntimeException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.RuntimeException$"
+        ],
+        "exception_msg": [
+          "com\\.google\\.gson\\.stream\\.MalformedJsonException:\\ Expected\\ name\\ at\\ line\\ 8\\ column\\ 6"
+        ]
+      },
+      "reports": [
+        "Snownee__Jade/632"
+      ]
+    },
+    {
+      "signature": "com.google.gson.JsonParseException: com.google.gson.stream.MalformedJsonException: Use JsonReader.setLenient(true) t",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.UnsupportedOperationException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.UnsupportedOperationException$"
+        ],
+        "exception_msg": [
+          "com\\.google\\.gson\\.stream\\.MalformedJsonException:\\ Use\\ JsonReader\\.setLenient\\(true\\)\\ t"
+        ]
+      },
+      "reports": [
+        "CaffeineMC__sodium/3731"
+      ]
+    },
+    {
+      "signature": "com.mojang.authlib.exceptions.InvalidCredentialsException: Status: 401",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.Exception"
+      ],
+      "description": [],
+      "overfit": [
+        "long number"
+      ],
+      "verdict": "singleton+overfit",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.Exception$"
+        ],
+        "exception_msg": [
+          "Status:\\ 401"
+        ]
+      },
+      "reports": [
+        "TheIllusiveC4__Curios/470"
+      ]
+    },
+    {
+      "signature": "io.netty.handler.codec.DecoderException: The received string length is longer than maximum allowed (27 > 25)",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "io.netty.handler.codec.DecoderException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^io\\.netty\\.handler\\.codec\\.DecoderException$"
+        ],
+        "exception_msg": [
+          "The\\ received\\ string\\ length\\ is\\ longer\\ than\\ maximum\\ allowed\\ \\(27\\ >\\ 25\\)"
+        ]
+      },
+      "reports": [
+        "TheIllusiveC4__Curios/346"
+      ]
+    },
+    {
+      "signature": "io.netty.handler.codec.DecoderException: Unknown serializer type 111",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "io.netty.handler.codec.DecoderException"
+      ],
+      "description": [],
+      "overfit": [
+        "long number"
+      ],
+      "verdict": "singleton+overfit",
+      "when": {
+        "exception": [
+          "^io\\.netty\\.handler\\.codec\\.DecoderException$"
+        ],
+        "exception_msg": [
+          "Unknown\\ serializer\\ type\\ 111"
+        ]
+      },
+      "reports": [
+        "QuiltMC__quilt-loader/379"
+      ]
+    },
+    {
+      "signature": "io.netty.handler.codec.DecoderException: java.io.IOException: Packet play/clientbound/minecraft:level_particles (class_26",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.io.IOException"
+      ],
+      "description": [
+        "Packet handling error"
+      ],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "description": [
+          "Packet handling error"
+        ],
+        "exception": [
+          "^java\\.io\\.IOException$"
+        ],
+        "exception_msg": [
+          "java\\.io\\.IOException:\\ Packet\\ play/clientbound/minecraft:level_particles\\ \\(class_26"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-api/4622"
+      ]
+    },
+    {
+      "signature": "io.netty.handler.codec.EncoderException: Failed to encode packet 'serverbound/minecraft:custom_payload'",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "io.netty.handler.codec.EncoderException"
+      ],
+      "description": [
+        "Packet handling error"
+      ],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "description": [
+          "Packet handling error"
+        ],
+        "exception": [
+          "^io\\.netty\\.handler\\.codec\\.EncoderException$"
+        ],
+        "exception_msg": [
+          "Failed\\ to\\ encode\\ packet\\ 'serverbound/minecraft:custom_payload'"
+        ]
+      },
+      "reports": [
+        "McJtyMods__RFTools/2211"
+      ]
+    },
+    {
+      "signature": "java.io.FileNotFoundException: https://raw.githubusercontent.com/ToCraft/craftedcore/main/common/src/main/resou",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.IllegalArgumentException"
+      ],
+      "description": [],
+      "overfit": [
+        "path"
+      ],
+      "verdict": "singleton+overfit",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.IllegalArgumentException$"
+        ],
+        "exception_msg": [
+          "https://raw\\.githubusercontent\\.com/ToCraft/craftedcore/main/common/src/main/resou"
+        ]
+      },
+      "reports": [
+        "TeamTwilight__twilightforest/2534"
+      ]
+    },
+    {
+      "signature": "java.io.IOException: File [G:\\恢复\\测试服务器-新\\modernfix\\structureCacheV1\\apotheosis_tower_leaf_38f64271eab",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.io.FileNotFoundException"
+      ],
+      "description": [],
+      "overfit": [
+        "path"
+      ],
+      "verdict": "singleton+overfit",
+      "when": {
+        "exception": [
+          "^java\\.io\\.FileNotFoundException$"
+        ],
+        "exception_msg": [
+          "File\\ \\[G:\\\\恢复\\\\测试服务器\\-新\\\\modernfix\\\\structureCacheV1\\\\apotheosis_tower_leaf_38f64271eab"
+        ]
+      },
+      "reports": [
+        "embeddedt__ModernFix/485"
+      ]
+    },
+    {
+      "signature": "java.io.IOException: The handle is invalid",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.io.IOException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.io\\.IOException$"
+        ],
+        "exception_msg": [
+          "The\\ handle\\ is\\ invalid"
+        ]
+      },
+      "reports": [
+        "Shadows-of-Fire__Placebo/16"
+      ]
+    },
+    {
+      "signature": "java.io.UncheckedIOException: java.nio.file.AccessDeniedException: <HOME>\\AppData\\Roaming.minecraft\\<INSTANCE>",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.nio.file.AccessDeniedException"
+      ],
+      "description": [],
+      "overfit": [
+        "path"
+      ],
+      "verdict": "singleton+overfit",
+      "when": {
+        "exception": [
+          "^java\\.nio\\.file\\.AccessDeniedException$"
+        ],
+        "exception_msg": [
+          "java\\.nio\\.file\\.AccessDeniedException:\\ <HOME>\\\\AppData\\\\Roaming\\.minecraft\\\\<INSTANCE>"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/1080"
+      ]
+    },
+    {
+      "signature": "java.lang.ArrayIndexOutOfBoundsException: -1",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.ArrayIndexOutOfBoundsException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.ArrayIndexOutOfBoundsException$"
+        ],
+        "exception_msg": [
+          "\\-1"
+        ]
+      },
+      "reports": [
+        "Shadows-of-Fire__Placebo/7"
+      ]
+    },
+    {
+      "signature": "java.lang.ArrayIndexOutOfBoundsException: 4",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.ArrayIndexOutOfBoundsException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.ArrayIndexOutOfBoundsException$"
+        ],
+        "exception_msg": [
+          "4"
+        ]
+      },
+      "reports": [
+        "Shadows-of-Fire__Placebo/13"
+      ]
+    },
+    {
+      "signature": "java.lang.ArrayIndexOutOfBoundsException: Index 4 out of bounds for length 4",
+      "size": 1,
+      "bucket": "mod-bug",
+      "kinds": [
+        "java.lang.ArrayIndexOutOfBoundsException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.ArrayIndexOutOfBoundsException$"
+        ],
+        "exception_msg": [
+          "Index\\ 4\\ out\\ of\\ bounds\\ for\\ length\\ 4"
+        ]
+      },
+      "reports": [
+        "CaffeineMC__sodium/3893"
+      ]
+    },
+    {
+      "signature": "java.lang.ClassCastException: class com.thevortex.allthemodium.material.ATMTier cannot be cast to class net.mi",
+      "size": 1,
+      "bucket": "mod-bug",
+      "kinds": [
+        "java.lang.ClassCastException"
+      ],
+      "description": [
+        "Unexpected error"
+      ],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "description": [
+          "Unexpected error"
+        ],
+        "exception": [
+          "^java\\.lang\\.ClassCastException$"
+        ],
+        "exception_msg": [
+          "class\\ com\\.thevortex\\.allthemodium\\.material\\.ATMTier\\ cannot\\ be\\ cast\\ to\\ class\\ net\\.mi"
+        ]
+      },
+      "reports": [
+        "Snownee__Jade/534"
+      ]
+    },
+    {
+      "signature": "java.lang.ClassCastException: class net.minecraft.client.renderer.RenderType$CompositeRenderType cannot be cas",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.ClassCastException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.ClassCastException$"
+        ],
+        "exception_msg": [
+          "class\\ net\\.minecraft\\.client\\.renderer\\.RenderType\\$CompositeRenderType\\ cannot\\ be\\ cas"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-api/4738"
+      ]
+    },
+    {
+      "signature": "java.lang.ClassNotFoundException: kotlin.jvm.internal.Lambda",
+      "size": 1,
+      "bucket": "mod-loading",
+      "kinds": [
+        "java.lang.ClassNotFoundException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.ClassNotFoundException$"
+        ],
+        "exception_msg": [
+          "kotlin\\.jvm\\.internal\\.Lambda"
+        ]
+      },
+      "reports": [
+        "Snownee__Jade/613"
+      ]
+    },
+    {
+      "signature": "java.lang.ClassNotFoundException: net.fabricmc.loader.impl.launch.knot.KnotClient",
+      "size": 1,
+      "bucket": "mod-loading",
+      "kinds": [
+        "java.lang.ClassNotFoundException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.ClassNotFoundException$"
+        ],
+        "exception_msg": [
+          "net\\.fabricmc\\.loader\\.impl\\.launch\\.knot\\.KnotClient"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/821"
+      ]
+    },
+    {
+      "signature": "java.lang.ClassNotFoundException: net.minecraft.client.Minecraft",
+      "size": 1,
+      "bucket": "mod-loading",
+      "kinds": [
+        "java.lang.ClassNotFoundException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.ClassNotFoundException$"
+        ],
+        "exception_msg": [
+          "net\\.minecraft\\.client\\.Minecraft"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/1034"
+      ]
+    },
+    {
+      "signature": "java.lang.ClassNotFoundException: net.minecraft.client.renderer.texture.AbstractTexture",
+      "size": 1,
+      "bucket": "mod-loading",
+      "kinds": [
+        "java.lang.ClassNotFoundException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.ClassNotFoundException$"
+        ],
+        "exception_msg": [
+          "net\\.minecraft\\.client\\.renderer\\.texture\\.AbstractTexture"
+        ]
+      },
+      "reports": [
+        "TheIllusiveC4__Curios/391"
+      ]
+    },
+    {
+      "signature": "java.lang.ClassNotFoundException: shadows.placebo.util.PlaceboTaskQueue",
+      "size": 1,
+      "bucket": "mod-loading",
+      "kinds": [
+        "java.lang.ClassNotFoundException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.ClassNotFoundException$"
+        ],
+        "exception_msg": [
+          "shadows\\.placebo\\.util\\.PlaceboTaskQueue"
+        ]
+      },
+      "reports": [
+        "Shadows-of-Fire__Placebo/38"
+      ]
+    },
+    {
+      "signature": "java.lang.Error: Invalid java.home value? 'D:' for vm 'OpenJDK 64-Bit Server VM'",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.Error"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.Error$"
+        ],
+        "exception_msg": [
+          "Invalid\\ java\\.home\\ value\\?\\ 'D:'\\ for\\ vm\\ 'OpenJDK\\ 64\\-Bit\\ Server\\ VM'"
+        ]
+      },
+      "reports": [
+        "QuiltMC__quilt-loader/400"
+      ]
+    },
+    {
+      "signature": "java.lang.Error: Why would you set the warning level multiple times?",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.Error"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.Error$"
+        ],
+        "exception_msg": [
+          "Why\\ would\\ you\\ set\\ the\\ warning\\ level\\ multiple\\ times\\?"
+        ]
+      },
+      "reports": [
+        "QuiltMC__quilt-loader/224"
+      ]
+    },
+    {
+      "signature": "java.lang.IllegalArgumentException: Data for attachment 'worldgendevtools:feature_positions' was too big (32768 byte",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.IllegalArgumentException"
+      ],
+      "description": [
+        "Exception chunk generation/loading"
+      ],
+      "overfit": [
+        "long number"
+      ],
+      "verdict": "singleton+overfit",
+      "when": {
+        "description": [
+          "Exception chunk generation/loading"
+        ],
+        "exception": [
+          "^java\\.lang\\.IllegalArgumentException$"
+        ],
+        "exception_msg": [
+          "Data\\ for\\ attachment\\ 'worldgendevtools:feature_positions'\\ was\\ too\\ big\\ \\(32768\\ byte"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-api/4669"
+      ]
+    },
+    {
+      "signature": "java.lang.IllegalArgumentException: No value with id -1",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.IllegalArgumentException"
+      ],
+      "description": [
+        "Packet handling error"
+      ],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "description": [
+          "Packet handling error"
+        ],
+        "exception": [
+          "^java\\.lang\\.IllegalArgumentException$"
+        ],
+        "exception_msg": [
+          "No\\ value\\ with\\ id\\ \\-1"
+        ]
+      },
+      "reports": [
+        "embeddedt__ModernFix/515"
+      ]
+    },
+    {
+      "signature": "java.lang.IllegalArgumentException: Payload may not be larger than 32767 bytes",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.IllegalArgumentException"
+      ],
+      "description": [],
+      "overfit": [
+        "long number"
+      ],
+      "verdict": "singleton+overfit",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.IllegalArgumentException$"
+        ],
+        "exception_msg": [
+          "Payload\\ may\\ not\\ be\\ larger\\ than\\ 32767\\ bytes"
+        ]
+      },
+      "reports": [
+        "McJtyMods__RFTools/1898"
+      ]
+    },
+    {
+      "signature": "java.lang.IllegalArgumentException: Unsupported class file major version 21845",
+      "size": 1,
+      "bucket": "mod-bug",
+      "kinds": [
+        "java.lang.IllegalArgumentException"
+      ],
+      "description": [],
+      "overfit": [
+        "long number"
+      ],
+      "verdict": "singleton+overfit",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.IllegalArgumentException$"
+        ],
+        "exception_msg": [
+          "Unsupported\\ class\\ file\\ major\\ version\\ 21845"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/809"
+      ]
+    },
+    {
+      "signature": "java.lang.IllegalArgumentException: null",
+      "size": 1,
+      "bucket": "watchdog",
+      "kinds": [
+        "java.lang.IllegalArgumentException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.IllegalArgumentException$"
+        ],
+        "exception_msg": [
+          "null"
+        ]
+      },
+      "reports": [
+        "TeamTwilight__twilightforest/2450"
+      ]
+    },
+    {
+      "signature": "java.lang.IllegalArgumentException: unknown format type: lựa chọn  --> Note: this string translate to \"options\" in e",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.IllegalArgumentException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.IllegalArgumentException$"
+        ],
+        "exception_msg": [
+          "unknown\\ format\\ type:\\ lựa\\ chọn\\ \\ \\-\\->\\ Note:\\ this\\ string\\ translate\\ to\\ \"options\"\\ in\\ e"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/871"
+      ]
+    },
+    {
+      "signature": "java.lang.IllegalStateException: Can't getDevice() before it was initialized",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.IllegalStateException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.IllegalStateException$"
+        ],
+        "exception_msg": [
+          "Can't\\ getDevice\\(\\)\\ before\\ it\\ was\\ initialized"
+        ]
+      },
+      "reports": [
+        "Snownee__Jade/692"
+      ]
+    },
+    {
+      "signature": "java.lang.IllegalStateException: Capability missing for <UUID>",
+      "size": 1,
+      "bucket": "mod-bug",
+      "kinds": [
+        "java.lang.IllegalStateException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.IllegalStateException$"
+        ],
+        "exception_msg": [
+          "Capability\\ missing\\ for\\ <UUID>"
+        ]
+      },
+      "reports": [
+        "TheIllusiveC4__Curios/463"
+      ]
+    },
+    {
+      "signature": "java.lang.IllegalStateException: Not building!",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.IllegalStateException"
+      ],
+      "description": [
+        "Unexpected error"
+      ],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "description": [
+          "Unexpected error"
+        ],
+        "exception": [
+          "^java\\.lang\\.IllegalStateException$"
+        ],
+        "exception_msg": [
+          "Not\\ building!"
+        ]
+      },
+      "reports": [
+        "mekanism__Mekanism/8376"
+      ]
+    },
+    {
+      "signature": "java.lang.IllegalStateException: Overflowed the mesh time buffer at 224x31",
+      "size": 1,
+      "bucket": "world-data",
+      "kinds": [
+        "java.lang.IllegalStateException"
+      ],
+      "description": [
+        "Render Frame"
+      ],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "description": [
+          "Render Frame"
+        ],
+        "exception": [
+          "^java\\.lang\\.IllegalStateException$"
+        ],
+        "exception_msg": [
+          "Overflowed\\ the\\ mesh\\ time\\ buffer\\ at\\ 224x31"
+        ]
+      },
+      "reports": [
+        "CaffeineMC__sodium/3809"
+      ]
+    },
+    {
+      "signature": "java.lang.IllegalStateException: Player is either on another team or not on any team. Cannot remove from team 'Na",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.IllegalStateException"
+      ],
+      "description": [
+        "Packet handling error"
+      ],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "description": [
+          "Packet handling error"
+        ],
+        "exception": [
+          "^java\\.lang\\.IllegalStateException$"
+        ],
+        "exception_msg": [
+          "Player\\ is\\ either\\ on\\ another\\ team\\ or\\ not\\ on\\ any\\ team\\.\\ Cannot\\ remove\\ from\\ team\\ 'Na"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/959"
+      ]
+    },
+    {
+      "signature": "java.lang.IllegalStateException: Texture is required if use_mob_texture is false",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.IllegalStateException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.IllegalStateException$"
+        ],
+        "exception_msg": [
+          "Texture\\ is\\ required\\ if\\ use_mob_texture\\ is\\ false"
+        ]
+      },
+      "reports": [
+        "mekanism__Mekanism/8256"
+      ]
+    },
+    {
+      "signature": "java.lang.IllegalStateException: Tried to lookup sprite, but atlas is not initialized",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.IllegalStateException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.IllegalStateException$"
+        ],
+        "exception_msg": [
+          "Tried\\ to\\ lookup\\ sprite,\\ but\\ atlas\\ is\\ not\\ initialized"
+        ]
+      },
+      "reports": [
+        "embeddedt__ModernFix/651"
+      ]
+    },
+    {
+      "signature": "java.lang.IncompatibleClassChangeError: Method 'int net.minecraft.world.item.ItemStack.getEnchantmentLevel(net.minecraft",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.IncompatibleClassChangeError"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.IncompatibleClassChangeError$"
+        ],
+        "exception_msg": [
+          "Method\\ 'int\\ net\\.minecraft\\.world\\.item\\.ItemStack\\.getEnchantmentLevel\\(net\\.minecraft"
+        ]
+      },
+      "reports": [
+        "embeddedt__ModernFix/645"
+      ]
+    },
+    {
+      "signature": "java.lang.NullPointerException: Cannot invoke \"com.wudji.xplusautofish.XPlusAutofish.tick(net.minecraft.client.M",
+      "size": 1,
+      "bucket": "mod-bug",
+      "kinds": [
+        "java.lang.NullPointerException"
+      ],
+      "description": [
+        "Unexpected error"
+      ],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "description": [
+          "Unexpected error"
+        ],
+        "exception": [
+          "^java\\.lang\\.NullPointerException$"
+        ],
+        "exception_msg": [
+          "Cannot\\ invoke\\ \"com\\.wudji\\.xplusautofish\\.XPlusAutofish\\.tick\\(net\\.minecraft\\.client\\.M"
+        ]
+      },
+      "reports": [
+        "Shadows-of-Fire__Placebo/89"
+      ]
+    },
+    {
+      "signature": "java.lang.NullPointerException: Cannot invoke \"it.unimi.dsi.fastutil.objects.ObjectArrayList.get(int)\" because \"",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.NullPointerException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.NullPointerException$"
+        ],
+        "exception_msg": [
+          "Cannot\\ invoke\\ \"it\\.unimi\\.dsi\\.fastutil\\.objects\\.ObjectArrayList\\.get\\(int\\)\"\\ because\\ \""
+        ]
+      },
+      "reports": [
+        "embeddedt__ModernFix/473"
+      ]
+    },
+    {
+      "signature": "java.lang.NullPointerException: Cannot invoke \"net.caffeinemc.mods.sodium.client.render.chunk.translucent_sortin",
+      "size": 1,
+      "bucket": "mod-bug",
+      "kinds": [
+        "java.lang.NullPointerException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.NullPointerException$"
+        ],
+        "exception_msg": [
+          "Cannot\\ invoke\\ \"net\\.caffeinemc\\.mods\\.sodium\\.client\\.render\\.chunk\\.translucent_sortin"
+        ]
+      },
+      "reports": [
+        "CaffeineMC__sodium/3506"
+      ]
+    },
+    {
+      "signature": "java.lang.NullPointerException: Cannot invoke \"net.minecraft.class_2680.method_26227()\" because the return value",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.NullPointerException"
+      ],
+      "description": [
+        "Unexpected error"
+      ],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "description": [
+          "Unexpected error"
+        ],
+        "exception": [
+          "^java\\.lang\\.NullPointerException$"
+        ],
+        "exception_msg": [
+          "Cannot\\ invoke\\ \"net\\.minecraft\\.class_2680\\.method_26227\\(\\)\"\\ because\\ the\\ return\\ value"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/877"
+      ]
+    },
+    {
+      "signature": "java.lang.NullPointerException: Cannot invoke \"net.minecraft.class_3222.method_5682()\" because \"player\" is null",
+      "size": 1,
+      "bucket": "mod-bug",
+      "kinds": [
+        "java.lang.NullPointerException"
+      ],
+      "description": [
+        "Ticking player"
+      ],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "description": [
+          "Ticking player"
+        ],
+        "exception": [
+          "^java\\.lang\\.NullPointerException$"
+        ],
+        "exception_msg": [
+          "Cannot\\ invoke\\ \"net\\.minecraft\\.class_3222\\.method_5682\\(\\)\"\\ because\\ \"player\"\\ is\\ null"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/947"
+      ]
+    },
+    {
+      "signature": "java.lang.NullPointerException: Cannot invoke \"org.quiltmc.loader.api.VersionInterval.getMin()\" because \"this.qu",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.NullPointerException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.NullPointerException$"
+        ],
+        "exception_msg": [
+          "Cannot\\ invoke\\ \"org\\.quiltmc\\.loader\\.api\\.VersionInterval\\.getMin\\(\\)\"\\ because\\ \"this\\.qu"
+        ]
+      },
+      "reports": [
+        "QuiltMC__quilt-loader/296"
+      ]
+    },
+    {
+      "signature": "java.lang.NullPointerException: Cannot invoke \"xaero.map.graphics.GLObjectDeleter.work()\" because \"xaero.map.Wor",
+      "size": 1,
+      "bucket": "mod-bug",
+      "kinds": [
+        "java.lang.NullPointerException"
+      ],
+      "description": [
+        "Unexpected error"
+      ],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "description": [
+          "Unexpected error"
+        ],
+        "exception": [
+          "^java\\.lang\\.NullPointerException$"
+        ],
+        "exception_msg": [
+          "Cannot\\ invoke\\ \"xaero\\.map\\.graphics\\.GLObjectDeleter\\.work\\(\\)\"\\ because\\ \"xaero\\.map\\.Wor"
+        ]
+      },
+      "reports": [
+        "Shadows-of-Fire__Placebo/86"
+      ]
+    },
+    {
+      "signature": "java.lang.NullPointerException: Trying to access unbound value: ResourceKey[minecraft:block / aether:skyroot_log",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.NullPointerException"
+      ],
+      "description": [
+        "Unexpected error"
+      ],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "description": [
+          "Unexpected error"
+        ],
+        "exception": [
+          "^java\\.lang\\.NullPointerException$"
+        ],
+        "exception_msg": [
+          "Trying\\ to\\ access\\ unbound\\ value:\\ ResourceKey\\[minecraft:block\\ /\\ aether:skyroot_log"
+        ]
+      },
+      "reports": [
+        "CaffeineMC__sodium/3728"
+      ]
+    },
+    {
+      "signature": "java.lang.NullPointerException: entité de bloc à cocher",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.NullPointerException"
+      ],
+      "description": [
+        "entité de blocage"
+      ],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "description": [
+          "entité de blocage"
+        ],
+        "exception": [
+          "^java\\.lang\\.NullPointerException$"
+        ],
+        "exception_msg": [
+          "entité\\ de\\ bloc\\ à\\ cocher"
+        ]
+      },
+      "reports": [
+        "McJtyMods__RFTools/1995"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: Could not create directory <HOME>\\AppData\\Roaming\\.minecraft\\<INSTANCE>\\iris-res",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.nio.file.NoSuchFileException"
+      ],
+      "description": [],
+      "overfit": [
+        "path"
+      ],
+      "verdict": "singleton+overfit",
+      "when": {
+        "exception": [
+          "^java\\.nio\\.file\\.NoSuchFileException$"
+        ],
+        "exception_msg": [
+          "Could\\ not\\ create\\ directory\\ <HOME>\\\\AppData\\\\Roaming\\\\\\.minecraft\\\\<INSTANCE>\\\\iris\\-res"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/805"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: Could not execute entrypoint stage 'client' due to errors, provided by 'fabric-r",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.IllegalArgumentException"
+      ],
+      "description": [
+        "Initializing game"
+      ],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "description": [
+          "Initializing game"
+        ],
+        "exception": [
+          "^java\\.lang\\.IllegalArgumentException$"
+        ],
+        "exception_msg": [
+          "Could\\ not\\ execute\\ entrypoint\\ stage\\ 'client'\\ due\\ to\\ errors,\\ provided\\ by\\ 'fabric\\-r"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/1153"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: Error creating Mixin config fabric-crash-report-info-v1.mixins.json for mod fabr",
+      "size": 1,
+      "bucket": "mixin",
+      "kinds": [
+        "java.lang.IllegalArgumentException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.IllegalArgumentException$"
+        ],
+        "exception_msg": [
+          "Error\\ creating\\ Mixin\\ config\\ fabric\\-crash\\-report\\-info\\-v1\\.mixins\\.json\\ for\\ mod\\ fabr"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/750"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: Error creating Mixin config omega-config.mixins.json for mod omega-config",
+      "size": 1,
+      "bucket": "mixin",
+      "kinds": [
+        "java.lang.IllegalArgumentException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.IllegalArgumentException$"
+        ],
+        "exception_msg": [
+          "Error\\ creating\\ Mixin\\ config\\ omega\\-config\\.mixins\\.json\\ for\\ mod\\ omega\\-config"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/620"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: Exception thrown while executing job",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "net.minecraft.world.level.chunk.MissingPaletteEntryException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^net\\.minecraft\\.world\\.level\\.chunk\\.MissingPaletteEntryException$"
+        ],
+        "exception_msg": [
+          "Exception\\ thrown\\ while\\ executing\\ job"
+        ]
+      },
+      "reports": [
+        "CaffeineMC__sodium/3879"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: Fabric permissions version 0.4.0-SNAPSHOT is not supported. Please update Fabric",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.io.IOException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.io\\.IOException$"
+        ],
+        "exception_msg": [
+          "Fabric\\ permissions\\ version\\ 0\\.4\\.0\\-SNAPSHOT\\ is\\ not\\ supported\\.\\ Please\\ update\\ Fabric"
+        ]
+      },
+      "reports": [
+        "Snownee__Jade/650"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: Failed to load class file for 'net.minecraft.client.main.Main'!",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.io.FileNotFoundException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.io\\.FileNotFoundException$"
+        ],
+        "exception_msg": [
+          "Failed\\ to\\ load\\ class\\ file\\ for\\ 'net\\.minecraft\\.client\\.main\\.Main'!"
+        ]
+      },
+      "reports": [
+        "QuiltMC__quilt-loader/463"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: Failed to read accessWidener file from mod wurst",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "net.fabricmc.loader.impl.lib.accesswidener.AccessWidenerFormatException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^net\\.fabricmc\\.loader\\.impl\\.lib\\.accesswidener\\.AccessWidenerFormatException$"
+        ],
+        "exception_msg": [
+          "Failed\\ to\\ read\\ accessWidener\\ file\\ from\\ mod\\ wurst"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/939"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: Failed to read classTweaker file from mod fabric-biome-api-v1",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "net.fabricmc.loader.impl.lib.classtweaker.reader.ClassTweakerFormatException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^net\\.fabricmc\\.loader\\.impl\\.lib\\.classtweaker\\.reader\\.ClassTweakerFormatException$"
+        ],
+        "exception_msg": [
+          "Failed\\ to\\ read\\ classTweaker\\ file\\ from\\ mod\\ fabric\\-biome\\-api\\-v1"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-api/5046"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: Non-unique Mixin config name mixins.reach-entity-attributes.json used by the mod",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.RuntimeException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.RuntimeException$"
+        ],
+        "exception_msg": [
+          "Non\\-unique\\ Mixin\\ config\\ name\\ mixins\\.reach\\-entity\\-attributes\\.json\\ used\\ by\\ the\\ mod"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/778"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: Non-unique Mixin config name xlpackets.mixins.json used by the mods thiccpackets",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.RuntimeException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.RuntimeException$"
+        ],
+        "exception_msg": [
+          "Non\\-unique\\ Mixin\\ config\\ name\\ xlpackets\\.mixins\\.json\\ used\\ by\\ the\\ mods\\ thiccpackets"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/834"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: Sodium mod config not found",
+      "size": 1,
+      "bucket": "mod-bug",
+      "kinds": [
+        "java.lang.RuntimeException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.RuntimeException$"
+        ],
+        "exception_msg": [
+          "Sodium\\ mod\\ config\\ not\\ found"
+        ]
+      },
+      "reports": [
+        "CaffeineMC__sodium/3832"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: Unfixable conflicts",
+      "size": 1,
+      "bucket": "mod-bug",
+      "kinds": [
+        "java.lang.RuntimeException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.RuntimeException$"
+        ],
+        "exception_msg": [
+          "Unfixable\\ conflicts"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/905"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: Unknown variable: BIOME_PALE_GARDEN",
+      "size": 1,
+      "bucket": "mod-bug",
+      "kinds": [
+        "java.lang.RuntimeException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.RuntimeException$"
+        ],
+        "exception_msg": [
+          "Unknown\\ variable:\\ BIOME_PALE_GARDEN"
+        ]
+      },
+      "reports": [
+        "Snownee__Jade/563"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: broken shader file",
+      "size": 1,
+      "bucket": "mod-bug",
+      "kinds": [
+        "java.lang.RuntimeException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.RuntimeException$"
+        ],
+        "exception_msg": [
+          "broken\\ shader\\ file"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/883"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: error remapping game jars [<HOME>\\AppData\\Roaming\\com.modrinth.theseus\\meta\\vers",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.nio.file.NoSuchFileException"
+      ],
+      "description": [],
+      "overfit": [
+        "path"
+      ],
+      "verdict": "singleton+overfit",
+      "when": {
+        "exception": [
+          "^java\\.nio\\.file\\.NoSuchFileException$"
+        ],
+        "exception_msg": [
+          "error\\ remapping\\ game\\ jars\\ \\[<HOME>\\\\AppData\\\\Roaming\\\\com\\.modrinth\\.theseus\\\\meta\\\\vers"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/863"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: error remapping game jars [F:\\Modded MC\\curseforge\\minecraft\\Install\\versions\\fa",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.io.IOException"
+      ],
+      "description": [],
+      "overfit": [
+        "path"
+      ],
+      "verdict": "singleton+overfit",
+      "when": {
+        "exception": [
+          "^java\\.io\\.IOException$"
+        ],
+        "exception_msg": [
+          "error\\ remapping\\ game\\ jars\\ \\[F:\\\\Modded\\ MC\\\\curseforge\\\\minecraft\\\\Install\\\\versions\\\\fa"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-api/4986"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: java.util.concurrent.ExecutionException: java.lang.ArrayIndexOutOfBoundsExceptio",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.ArrayIndexOutOfBoundsException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.ArrayIndexOutOfBoundsException$"
+        ],
+        "exception_msg": [
+          "java\\.util\\.concurrent\\.ExecutionException:\\ java\\.lang\\.ArrayIndexOutOfBoundsExceptio"
+        ]
+      },
+      "reports": [
+        "QuiltMC__quilt-loader/482"
+      ]
+    },
+    {
+      "signature": "java.lang.RuntimeException: net.fabricmc.loader.api.VersionParsingException: Could not parse version number",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.NumberFormatException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.NumberFormatException$"
+        ],
+        "exception_msg": [
+          "net\\.fabricmc\\.loader\\.api\\.VersionParsingException:\\ Could\\ not\\ parse\\ version\\ number"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/945"
+      ]
+    },
+    {
+      "signature": "java.lang.StackOverflowError: Exception in server tick loop",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.StackOverflowError"
+      ],
+      "description": [
+        "Exception in server tick loop"
+      ],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "description": [
+          "Exception in server tick loop"
+        ],
+        "exception": [
+          "^java\\.lang\\.StackOverflowError$"
+        ],
+        "exception_msg": [
+          "Exception\\ in\\ server\\ tick\\ loop"
+        ]
+      },
+      "reports": [
+        "SlimeKnights__TinkersConstruct/5446"
+      ]
+    },
+    {
+      "signature": "java.lang.StackOverflowError: null",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.StackOverflowError"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.StackOverflowError$"
+        ],
+        "exception_msg": [
+          "null"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/710"
+      ]
+    },
+    {
+      "signature": "java.lang.StringIndexOutOfBoundsException: Range [16, 13) out of bounds for length 45",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.StringIndexOutOfBoundsException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.StringIndexOutOfBoundsException$"
+        ],
+        "exception_msg": [
+          "Range\\ \\[16,\\ 13\\)\\ out\\ of\\ bounds\\ for\\ length\\ 45"
+        ]
+      },
+      "reports": [
+        "QuiltMC__quilt-loader/474"
+      ]
+    },
+    {
+      "signature": "java.lang.Throwable: null",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.Throwable"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.Throwable$"
+        ],
+        "exception_msg": [
+          "null"
+        ]
+      },
+      "reports": [
+        "QuiltMC__quilt-loader/233"
+      ]
+    },
+    {
+      "signature": "java.lang.TypeNotPresentException: Type kts/dev/common/A not present",
+      "size": 1,
+      "bucket": "mod-loading",
+      "kinds": [
+        "java.lang.ClassNotFoundException"
+      ],
+      "description": [],
+      "overfit": [
+        "path"
+      ],
+      "verdict": "singleton+overfit",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.ClassNotFoundException$"
+        ],
+        "exception_msg": [
+          "Type\\ kts/dev/common/A\\ not\\ present"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/900"
+      ]
+    },
+    {
+      "signature": "java.lang.UnsatisfiedLinkError: Failed to locate library: liblwjgl.so",
+      "size": 1,
+      "bucket": "native",
+      "kinds": [
+        "java.lang.UnsatisfiedLinkError"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.UnsatisfiedLinkError$"
+        ],
+        "exception_msg": [
+          "Failed\\ to\\ locate\\ library:\\ liblwjgl\\.so"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/977"
+      ]
+    },
+    {
+      "signature": "java.lang.UnsupportedOperationException: Reflective setAccessible(true) disabled",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.io.IOException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.io\\.IOException$"
+        ],
+        "exception_msg": [
+          "Reflective\\ setAccessible\\(true\\)\\ disabled"
+        ]
+      },
+      "reports": [
+        "TeamTwilight__twilightforest/2666"
+      ]
+    },
+    {
+      "signature": "java.net.ConnectException: Connection timed out: connect",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.net.SocketException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.net\\.SocketException$"
+        ],
+        "exception_msg": [
+          "Connection\\ timed\\ out:\\ connect"
+        ]
+      },
+      "reports": [
+        "Shadows-of-Fire__Placebo/108"
+      ]
+    },
+    {
+      "signature": "java.net.SocketTimeoutException: connect timed out",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.net.SocketTimeoutException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.net\\.SocketTimeoutException$"
+        ],
+        "exception_msg": [
+          "connect\\ timed\\ out"
+        ]
+      },
+      "reports": [
+        "Shadows-of-Fire__Placebo/37"
+      ]
+    },
+    {
+      "signature": "java.net.http.HttpConnectTimeoutException: HTTP connect timed out",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.net.ConnectException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.net\\.ConnectException$"
+        ],
+        "exception_msg": [
+          "HTTP\\ connect\\ timed\\ out"
+        ]
+      },
+      "reports": [
+        "TeamTwilight__twilightforest/2550"
+      ]
+    },
+    {
+      "signature": "java.net.http.HttpTimeoutException: request timed out",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.net.http.HttpTimeoutException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.net\\.http\\.HttpTimeoutException$"
+        ],
+        "exception_msg": [
+          "request\\ timed\\ out"
+        ]
+      },
+      "reports": [
+        "TeamTwilight__twilightforest/2467"
+      ]
+    },
+    {
+      "signature": "java.nio.file.NoSuchFileException: config\\metadata.json",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "com.google.gson.stream.MalformedJsonException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^com\\.google\\.gson\\.stream\\.MalformedJsonException$"
+        ],
+        "exception_msg": [
+          "config\\\\metadata\\.json"
+        ]
+      },
+      "reports": [
+        "TeamTwilight__twilightforest/2487"
+      ]
+    },
+    {
+      "signature": "java.util.ConcurrentModificationException: null",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.util.ConcurrentModificationException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.util\\.ConcurrentModificationException$"
+        ],
+        "exception_msg": [
+          "null"
+        ]
+      },
+      "reports": [
+        "Snownee__Jade/497"
+      ]
+    },
+    {
+      "signature": "java.util.ServiceConfigurationError: org.spongepowered.asm.service.IMixinServiceBootstrap: Provider net.fabricmc.load",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "org.spongepowered.asm.service.ServiceNotAvailableError"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^org\\.spongepowered\\.asm\\.service\\.ServiceNotAvailableError$"
+        ],
+        "exception_msg": [
+          "org\\.spongepowered\\.asm\\.service\\.IMixinServiceBootstrap:\\ Provider\\ net\\.fabricmc\\.load"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/811"
+      ]
+    },
+    {
+      "signature": "java.util.concurrent.CompletionException: java.lang.ClassCastException: class net.minecraft.world.level.block.entity.Block",
+      "size": 1,
+      "bucket": "mod-bug",
+      "kinds": [
+        "java.lang.ClassCastException"
+      ],
+      "description": [
+        "Exception in server tick loop"
+      ],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "description": [
+          "Exception in server tick loop"
+        ],
+        "exception": [
+          "^java\\.lang\\.ClassCastException$"
+        ],
+        "exception_msg": [
+          "java\\.lang\\.ClassCastException:\\ class\\ net\\.minecraft\\.world\\.level\\.block\\.entity\\.Block"
+        ]
+      },
+      "reports": [
+        "Shadows-of-Fire__Placebo/45"
+      ]
+    },
+    {
+      "signature": "java.util.concurrent.CompletionException: java.lang.NoSuchMethodError: 'net.minecraft.nbt.ListTag com.simibubi.create.cont",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.util.concurrent.CompletionException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.util\\.concurrent\\.CompletionException$"
+        ],
+        "exception_msg": [
+          "java\\.lang\\.NoSuchMethodError:\\ 'net\\.minecraft\\.nbt\\.ListTag\\ com\\.simibubi\\.create\\.cont"
+        ]
+      },
+      "reports": [
+        "Snownee__Jade/468"
+      ]
+    },
+    {
+      "signature": "java.util.concurrent.CompletionException: java.lang.RuntimeException: could not reload shaders",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.io.IOException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.io\\.IOException$"
+        ],
+        "exception_msg": [
+          "java\\.lang\\.RuntimeException:\\ could\\ not\\ reload\\ shaders"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/931"
+      ]
+    },
+    {
+      "signature": "net.fabricmc.fabric.impl.registry.sync.RemapException: Received 4 registry entries that are unknown to this client.",
+      "size": 1,
+      "bucket": "mod-bug",
+      "kinds": [
+        "net.fabricmc.fabric.impl.registry.sync.RemapException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^net\\.fabricmc\\.fabric\\.impl\\.registry\\.sync\\.RemapException$"
+        ],
+        "exception_msg": [
+          "Received\\ 4\\ registry\\ entries\\ that\\ are\\ unknown\\ to\\ this\\ client\\."
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-api/4753"
+      ]
+    },
+    {
+      "signature": "net.fabricmc.loader.impl.FormattedException: java.lang.IllegalArgumentException: Invalid UUID string",
+      "size": 1,
+      "bucket": "mod-loading",
+      "kinds": [
+        "java.lang.IllegalArgumentException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.IllegalArgumentException$"
+        ],
+        "exception_msg": [
+          "java\\.lang\\.IllegalArgumentException:\\ Invalid\\ UUID\\ string"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/913"
+      ]
+    },
+    {
+      "signature": "net.fabricmc.loader.impl.FormattedException: joptsimple.MultipleArgumentsForOptionException: Found multiple arguments for opt",
+      "size": 1,
+      "bucket": "mod-loading",
+      "kinds": [
+        "joptsimple.MultipleArgumentsForOptionException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^joptsimple\\.MultipleArgumentsForOptionException$"
+        ],
+        "exception_msg": [
+          "joptsimple\\.MultipleArgumentsForOptionException:\\ Found\\ multiple\\ arguments\\ for\\ opt"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/955"
+      ]
+    },
+    {
+      "signature": "net.minecraft.ReportedException: Exception generating new chunk",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.IllegalStateException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.IllegalStateException$"
+        ],
+        "exception_msg": [
+          "Exception\\ generating\\ new\\ chunk"
+        ]
+      },
+      "reports": [
+        "McJtyMods__RFTools/2192"
+      ]
+    },
+    {
+      "signature": "net.minecraft.ReportedException: Manually triggered debug crash",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.Throwable"
+      ],
+      "description": [
+        "Manually triggered debug crash"
+      ],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "description": [
+          "Manually triggered debug crash"
+        ],
+        "exception": [
+          "^java\\.lang\\.Throwable$"
+        ],
+        "exception_msg": [
+          "Manually\\ triggered\\ debug\\ crash"
+        ]
+      },
+      "reports": [
+        "CaffeineMC__sodium/3627"
+      ]
+    },
+    {
+      "signature": "net.minecraftforge.fml.LoadingFailedException: Loading errors encountered: [",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "net.minecraftforge.fml.LoadingFailedException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^net\\.minecraftforge\\.fml\\.LoadingFailedException$"
+        ],
+        "exception_msg": [
+          "Loading\\ errors\\ encountered:\\ \\["
+        ]
+      },
+      "reports": [
+        "Shadows-of-Fire__Placebo/74"
+      ]
+    },
+    {
+      "signature": "net.neoforged.neoforge.logging.CrashReportExtender$ModLoadingCrashException: Mod loading has failed",
+      "size": 1,
+      "bucket": "mod-loading",
+      "kinds": [
+        "net.neoforged.neoforge.logging.CrashReportExtender$ModLoadingCrashException"
+      ],
+      "description": [
+        "Mod loading failures have occurred; consult the issue messages for more details"
+      ],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "description": [
+          "Mod loading failures have occurred; consult the issue messages for more details"
+        ],
+        "exception": [
+          "^net\\.neoforged\\.neoforge\\.logging\\.CrashReportExtender\\$ModLoadingCrashException$"
+        ],
+        "exception_msg": [
+          "Mod\\ loading\\ has\\ failed"
+        ]
+      },
+      "reports": [
+        "CaffeineMC__sodium/3853"
+      ]
+    },
+    {
+      "signature": "org.gradle.api.internal.tasks.testing.TestSuiteExecutionException: Could not start Gradle Test Executor 15.",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.lang.AssertionError"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.lang\\.AssertionError$"
+        ],
+        "exception_msg": [
+          "Could\\ not\\ start\\ Gradle\\ Test\\ Executor\\ 15\\."
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/987"
+      ]
+    },
+    {
+      "signature": "org.gradle.api.plugins.UnknownPluginException: Plugin [id: 'fabric-loom', version: '1.3-SNAPSHOT'] was not found in any of the",
+      "size": 1,
+      "bucket": "mod-bug",
+      "kinds": [
+        "org.gradle.api.plugins.UnknownPluginException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^org\\.gradle\\.api\\.plugins\\.UnknownPluginException$"
+        ],
+        "exception_msg": [
+          "Plugin\\ \\[id:\\ 'fabric\\-loom',\\ version:\\ '1\\.3\\-SNAPSHOT'\\]\\ was\\ not\\ found\\ in\\ any\\ of\\ the"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/835"
+      ]
+    },
+    {
+      "signature": "org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException: Invalid descriptor on fastanim.mixins.json:ParrotEntityModelMixin from mod faste",
+      "size": 1,
+      "bucket": "mixin",
+      "kinds": [
+        "org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^org\\.spongepowered\\.asm\\.mixin\\.injection\\.throwables\\.InvalidInjectionException$"
+        ],
+        "exception_msg": [
+          "Invalid\\ descriptor\\ on\\ fastanim\\.mixins\\.json:ParrotEntityModelMixin\\ from\\ mod\\ faste"
+        ]
+      },
+      "reports": [
+        "TheIllusiveC4__Curios/410"
+      ]
+    },
+    {
+      "signature": "org.spongepowered.asm.mixin.throwables.ClassAlreadyLoadedException: net.minecraft.server.world.ServerChunkLoadingManager was already classloaded",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "org.spongepowered.asm.mixin.throwables.ClassAlreadyLoadedException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^org\\.spongepowered\\.asm\\.mixin\\.throwables\\.ClassAlreadyLoadedException$"
+        ],
+        "exception_msg": [
+          "net\\.minecraft\\.server\\.world\\.ServerChunkLoadingManager\\ was\\ already\\ classloaded"
+        ]
+      },
+      "reports": [
+        "embeddedt__ModernFix/533"
+      ]
+    },
+    {
+      "signature": "org.spongepowered.asm.mixin.throwables.ClassAlreadyLoadedException: net.minecraft.world.World was already classloaded",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "org.spongepowered.asm.mixin.throwables.ClassAlreadyLoadedException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^org\\.spongepowered\\.asm\\.mixin\\.throwables\\.ClassAlreadyLoadedException$"
+        ],
+        "exception_msg": [
+          "net\\.minecraft\\.world\\.World\\ was\\ already\\ classloaded"
+        ]
+      },
+      "reports": [
+        "embeddedt__ModernFix/534"
+      ]
+    },
+    {
+      "signature": "org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: @Shadow field overlay was not located in the target class net.minecraft.client.M",
+      "size": 1,
+      "bucket": "mixin",
+      "kinds": [
+        "org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^org\\.spongepowered\\.asm\\.mixin\\.transformer\\.throwables\\.InvalidMixinException$"
+        ],
+        "exception_msg": [
+          "@Shadow\\ field\\ overlay\\ was\\ not\\ located\\ in\\ the\\ target\\ class\\ net\\.minecraft\\.client\\.M"
+        ]
+      },
+      "reports": [
+        "embeddedt__ModernFix/676"
+      ]
+    },
+    {
+      "signature": "org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: @Shadow field val$p_434753_ was not located in the target class net.minecraft.cl",
+      "size": 1,
+      "bucket": "mixin",
+      "kinds": [
+        "org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError"
+      ],
+      "description": [],
+      "overfit": [
+        "mixin shadow field"
+      ],
+      "verdict": "singleton+overfit",
+      "when": {
+        "exception": [
+          "^org\\.spongepowered\\.asm\\.mixin\\.transformer\\.throwables\\.MixinTransformerError$"
+        ],
+        "exception_msg": [
+          "@Shadow\\ field\\ val\\$p_434753_\\ was\\ not\\ located\\ in\\ the\\ target\\ class\\ net\\.minecraft\\.cl"
+        ]
+      },
+      "reports": [
+        "CaffeineMC__sodium/3460"
+      ]
+    },
+    {
+      "signature": "org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError: An unexpected critical error was encountered",
+      "size": 1,
+      "bucket": "mixin",
+      "kinds": [
+        "org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError"
+      ],
+      "description": [
+        "Initializing game"
+      ],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "description": [
+          "Initializing game"
+        ],
+        "exception": [
+          "^org\\.spongepowered\\.asm\\.mixin\\.transformer\\.throwables\\.MixinTransformerError$"
+        ],
+        "exception_msg": [
+          "An\\ unexpected\\ critical\\ error\\ was\\ encountered"
+        ]
+      },
+      "reports": [
+        "CaffeineMC__sodium/3693"
+      ]
+    },
+    {
+      "signature": "org.spongepowered.asm.mixin.transformer.throwables.ReEntrantTransformerError: Re-entrance error.",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "org.spongepowered.asm.mixin.transformer.throwables.ReEntrantTransformerError"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^org\\.spongepowered\\.asm\\.mixin\\.transformer\\.throwables\\.ReEntrantTransformerError$"
+        ],
+        "exception_msg": [
+          "Re\\-entrance\\ error\\."
+        ]
+      },
+      "reports": [
+        "Shadows-of-Fire__Placebo/17"
+      ]
+    }
+  ]
+}

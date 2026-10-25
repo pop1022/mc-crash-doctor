@@ -13,6 +13,8 @@ Each line is one aggregated **CompatibilityClaim** (VISION §4.3), deduped by
   "object": "mekanism",             // for caused/suspected: same as subject.
                                     // for co_occurred: the mod that was blamed
   "relation": "caused",             // caused | suspected | co_occurred
+  "evidence_tier": "inferred",      // declared | maintainer_verdict | inferred
+                                    //            | cooccurrence -- see below
   "loader": "forge",                // loader at crash time (nullable)
   "mc_version": "1.20.1",           // MC version at crash time (nullable)
   "mod_version": "10.4.5.19",       // subject's version if the Mod List had it
@@ -39,6 +41,55 @@ Each line is one aggregated **CompatibilityClaim** (VISION §4.3), deduped by
 | `suspected` | subject was a secondary suspect (ranks 2–4) | medium |
 | `co_occurred` | subject was **present** (Mod List) in a report where `object` was blamed | weak — presence only, NOT guilt. In a 241-mod pack every mod co-occurs with every crash; the useful quantity is the pairwise *lift* over baseline presence rates, computed by a future query layer |
 
+## evidence_tier — how much an edge is worth
+
+`relation` says **what** an edge asserts. `evidence_tier` says **on what kind of
+evidence**, and the two are orthogonal on purpose: a `caused` claim can rest on a
+maintainer's label or on our own ranking, and those are not equally worth acting
+on. Before this field existed, 9,721 presence-only pairs and 82 causal ones sat
+in the same shape, so any consumer that forgot to filter by `relation` would
+treat co-presence as guilt.
+
+| evidence_tier | count | meaning | may be used to |
+|---|---:|---|---|
+| `declared` | **0** | the mod **author** declared it (`conflicts` / `breaks` / Modrinth `dependency_type: incompatible`) | accuse, or veto a candidate |
+| `maintainer_verdict` | 11 | a maintainer labelled the issue `bug_in_this_mod` / `outdated_version` | accuse, with attribution |
+| `inferred` | 163 | our attribution (game `Suspected Mods` line, or weighted triage) | accuse, marked as inference |
+| `cooccurrence` | 9,721 | presence in the same report, nothing more | **rank candidates only — never accuse** |
+
+Three rules the data and tests enforce:
+
+1. **`cooccurrence` never accuses.** It proposes; something else disposes.
+2. **A label that does not pin the mod cannot promote an edge.**
+   `not_a_bug`, `insufficient_data`, `meta`, `user_error_or_config` say something
+   about the report, not about who is at fault, so they leave the tier at
+   `inferred`.
+3. **`declared` is unreachable from this file's inputs.** This tool only reads
+   crash reports; it has never read a jar manifest. The tier exists so that when
+   ROADMAP 1D.2 does import author declarations, they are distinguishable instead
+   of silently mixed in. `tests/test_compat_edges.py` tripwires the first
+   `declared` row precisely so that adding one is a conscious commit.
+
+The tier is a **pure function** of `(relation, maintainer_verdict)` —
+`derive_evidence_tier()` in `tools/build_compat_edges.py`. The committed file is
+reproducible from its own fields, and the test suite fails if any row disagrees.
+To re-derive without rescanning the corpus:
+
+```
+python tools/build_compat_edges.py --rederive-tier corpus/compat-edges.jsonl
+```
+
+### What this measurement says about the plan
+
+`declared` is empty, and 1D.0 showed why: author-declared incompatibilities are
+rare (5 of 71 declared dependencies on a sample of 25 projects, i.e. 7%). So
+declared edges are a **confirmation** signal, not a discovery one:
+`cooccurrence` produces candidates at scale, and `declared`/`maintainer_verdict`
+decide which candidates are real. The compatibility graph's backbone stays our
+own annotated corpus, because the public metadata does not contain enough
+negative edges to be a backbone.
+
+
 ## Provenance & privacy
 
 - Input: `corpus/github/` (gitignored raw harvest) joined to
@@ -49,6 +100,34 @@ Each line is one aggregated **CompatibilityClaim** (VISION §4.3), deduped by
 - Regenerate after any corpus re-harvest:
   `python tools/build_compat_edges.py` (~10 min for 454 fragments;
   triage runs per report).
+
+### Provenance: this file is *not* affected by the 1D.4 index repair
+
+ROADMAP 1D.4 changed `corpus/index.jsonl` (488 → 454 rows; `mod_ids` 0 → 106
+records / 3,080 ids). An earlier revision of this document warned that the
+edges below had therefore gone stale and could not be reproduced. **That was
+wrong**, and the error is recorded rather than deleted because it is the kind
+that gets made again.
+
+| assumed effect | measured reality |
+|---|---|
+| dedupe (488 → 454) would inflate `evidence_count` | **none.** `load_index()` keys records by `repo/issue` into a dict, so duplicate rows collapsed before anything read them. Edge counts come from one `bump()` per **crash file on disk** (454), never per index row. |
+| filling `mod_ids` would change where co-occurrence candidates come from | **none.** `co_occurred` is built from `rep.mods` — the parser's Mod List, re-read from each report's text. The index field is never consulted. |
+
+Verified by rebuilding against the repaired index: the output is **byte-identical**
+to this file (`cmp` clean, 9,895 rows, tier distribution unchanged at
+`cooccurrence 9,721 / inferred 163 / maintainer_verdict 11 / declared 0`).
+
+The mistake was conflating this tool with `tools/audit_modrinth_mapping.py`,
+whose candidate pool *is* drawn from `mixin_configs` + `jars` and which reports
+`mod_ids_populated` purely as a diagnostic. Two tools, two sources of mod names
+— and the reason they differ is deliberate: edges need "what appears in this
+crash", while the audit needs "what was installed".
+
+`tests/test_compat_edges.py::test_every_cited_report_still_exists_in_the_index`
+now enforces the invariant a prose warning could not: every `source_reports`
+entry must still exist in the current index, so a re-harvest that renumbers or
+drops issues fails loudly instead of quietly orphaning these counts.
 
 ## Deliberate non-goals (for now)
 

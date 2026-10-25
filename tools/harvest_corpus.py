@@ -37,6 +37,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from mcd.extract import extract as extract_candidates  # noqa: E402
+from mcd.metadata.jars import is_loader_artifact       # noqa: E402
+from mcd.parser.report import parse_text as parse_report  # noqa: E402
 
 API = "https://api.github.com"
 PER_PAGE = 50  # REST max for issue listing
@@ -62,6 +64,32 @@ CAUSED_BY_RE = re.compile(r"^Caused by:\s*(.+)$", re.MULTILINE)
 MODID_RE = re.compile(r"from mod \(([A-Za-z0-9_.\-]+)\)")
 JAR_RE = re.compile(r"~\[([^\]!]{4,64}?\.jar)")
 MIXIN_RE = re.compile(r"pl:mixin:APP:([\w.\-]+)\.mixins\.json:([\w.$]+)")
+
+
+def mod_list_ids(text: str) -> list[str]:
+    """Mod ids from the `-- Mod List --` section; `[]` when the report has none.
+
+    WHY `MODID_RE` IS NOT THE SOURCE
+    --------------------------------
+    It looks for the Forge-1.4-era `from mod (<id>)` marker. In the harvested
+    corpus that marker occurs 480 times and is `unknown` **every single time**,
+    so the index field was empty in all 488 records while looking populated.
+
+    The Mod List section is present in about one report in four and carries ~28
+    ids each; that is where the real identifiers live. Delegating to
+    `mcd.parser.report` matters: it already parses both the Forge pipe table and
+    the Fabric indented tree, and a third copy of those formats here would drift.
+
+    Platform rows (`minecraft`, `forge`, `fabricloader`) are not mods, so they
+    are filtered with `LOADER_ARTIFACTS` -- the same auditable list the jar
+    classifier uses, because a modid is a platform name minus a version suffix.
+    """
+    try:
+        rep = parse_report(text)
+    except Exception:                   # noqa: BLE001 - one bad body must not stop a harvest
+        return []
+    ids = sorted({m.modid.strip() for m in rep.mods if m.modid.strip()})
+    return [i for i in ids if not is_loader_artifact(i)][:60]
 
 # --- redaction --------------------------------------------------------------
 # Published index and any committed fixture must not carry player names,
@@ -316,15 +344,23 @@ def harvest_repo(
     states: str = "all",
     save_raw: bool = True,
     follow_links: bool = True,
+    seen: dict[str, set[int]] | None = None,
 ) -> dict:
     owner, _, name = repo.partition("/")
     print(f"\n▶ {repo}", file=sys.stderr)
     kept = 0
+    skipped_existing = 0
     scanned = 0
     page = 1
     verdicts: Counter[str] = Counter()
     exc_counter: Counter[str] = Counter()
     mod_counter: Counter[str] = Counter()
+    # `seen` is the incremental guard. It used to be computed by `load_index()`
+    # and then never passed in, so re-harvesting appended a second copy of every
+    # issue it re-scanned -- 34 duplicate rows in the 488-record index, 33 of
+    # them byte-identical. Keeping the guard inside the writing loop means the
+    # index cannot grow a duplicate even within a single run.
+    known = seen.setdefault(repo, set()) if seen is not None else None
 
     out_dir = CORPUS_GH / f"{owner}__{name}"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -352,6 +388,10 @@ def harvest_repo(
                 if "pull_request" in it:
                     continue  # not an issue
                 scanned += 1
+                if known is not None:
+                    if it["number"] in known:
+                        skipped_existing += 1
+                        continue
                 body = it.get("body") or ""
                 if len(body) < 150:
                     continue
@@ -373,7 +413,10 @@ def harvest_repo(
                     verdicts[verdict] += 1
                 for e in ext.exceptions:
                     exc_counter[e] += 1
-                for m in ext.mod_ids:
+                # Prefer the Mod List; fall back to the legacy marker only when
+                # the report has no list at all.
+                mod_ids = mod_list_ids(text) or ext.mod_ids
+                for m in mod_ids:
                     mod_counter[m] += 1
 
                 # The index IS committed (it is factual metadata), so every
@@ -394,7 +437,7 @@ def harvest_repo(
                     "descriptions": [redact(d) for d in ext.descriptions],
                     "exceptions": ext.exceptions,
                     "caused_by": [redact(c) for c in ext.caused_by],
-                    "mod_ids": ext.mod_ids,
+                    "mod_ids": mod_ids,
                     "jars": ext.jars,
                     "mixin_configs": ext.mixin_configs,
                     "body_chars": len(body),
@@ -402,6 +445,8 @@ def harvest_repo(
                 }
                 idx.write(json.dumps(rec, ensure_ascii=False) + "\n")
                 kept += 1
+                if known is not None:
+                    known.add(it["number"])
 
                 if save_raw:
                     (out_dir / f"{it['number']}.crash.txt").write_text(
@@ -413,13 +458,15 @@ def harvest_repo(
                 break
 
     print(
-        f"  ✓ scanned {scanned}, kept {kept} | verdicts {dict(verdicts)}",
+        f"  ✓ scanned {scanned}, kept {kept}, already-indexed {skipped_existing}"
+        f" | verdicts {dict(verdicts)}",
         file=sys.stderr,
     )
     return {
         "repo": repo,
         "scanned": scanned,
         "kept": kept,
+        "skipped_existing": skipped_existing,
         "verdicts": dict(verdicts),
         "top_exceptions": exc_counter.most_common(10),
         "top_mods": mod_counter.most_common(15),
@@ -498,12 +545,16 @@ def main() -> int:
         return 0
 
     summary = []
+    existing = load_index()          # incremental guard, shared across repos
+    print(f"index already holds {sum(len(v) for v in existing.values())} issues",
+          file=sys.stderr)
     for repo in repos:
         try:
             summary.append(harvest_repo(
                 client, repo, max_issues=args.max_issues, states=args.states,
                 save_raw=not args.no_raw,
-                follow_links=not args.no_follow_links))
+                follow_links=not args.no_follow_links,
+                seen=existing))
         except KeyboardInterrupt:
             print("\ninterrupted; index kept", file=sys.stderr)
             break

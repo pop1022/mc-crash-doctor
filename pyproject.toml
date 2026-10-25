@@ -1,5 +1,7 @@
 [build-system]
-requires = ["setuptools>=64", "wheel"]
+# setuptools>=77 is the floor for PEP 639 licence metadata (`license = "MIT"`);
+# with an older one the string form is rejected and the build fails.
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,7 +10,8 @@ version = "0.1.0"
 description = "Diagnose Minecraft crash reports and logs: root cause, the mod at fault, and the fix."
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "mc-crash-doctor contributors" }]
 keywords = ["minecraft", "crash", "log", "diagnostics", "forge", "neoforge",
             "fabric", "modpack", "server", "oom", "mixin"]
@@ -17,7 +20,6 @@ classifiers = [
     "Environment :: Console",
     "Intended Audience :: End Users/Desktop",
     "Intended Audience :: System Administrators",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
@@ -47,6 +49,8 @@ Issues = "https://github.com/pop1022/mc-crash-doctor/issues"
 [project.scripts]
 mc-crash-doctor = "mcd.cli:main"
 mcd = "mcd.cli:main"
+# CI glue behind action.yml; also usable locally: mcd-action --path crash.txt
+mcd-action = "mcd.action:main"
 
 [tool.setuptools.packages.find]
 include = ["mcd*"]

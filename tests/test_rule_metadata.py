@@ -33,6 +33,20 @@ def test_lifecycle_states_are_valid():
     assert not bad, f"invalid lifecycle_status: {bad}"
 
 
+def test_no_draft_rule_is_in_builtin():
+    """ROADMAP 1E.3's hard constraint, in executable form: generated candidates
+    live in `corpus/rule-drafts/` and never in a shipped pack.
+
+    `draft` is validated on load but not filtered anywhere, so a draft dropped
+    into `builtin/` would emit findings and count toward the published diagnosis
+    rate like any other rule. Nothing else in the suite would notice.
+    """
+    drafts = [r.id for r in _rs.rules if r.lifecycle_status == "draft"]
+    assert not drafts, (
+        f"draft rules shipped in mcd/rules/builtin/: {drafts} -- candidates "
+        f"belong in corpus/rule-drafts/ (see tools/suggest_rules.py --ingest)")
+
+
 def test_verified_rules_cite_real_evidence():
     """'verified' must mean real-world evidence (a harvested pin, ground
     truth, or an aternos hit) -- synthetic-only rules stay 'experimental'
