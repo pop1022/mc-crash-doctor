@@ -13,7 +13,8 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from mcd.rules.engine import LIFECYCLE_STATES, Rule, RuleSet  # noqa: E402
+from mcd.rules.engine import (LIFECYCLE_STATES, WHEN_KEYS, Rule,  # noqa: E402
+                              RuleSet)
 
 _rs = RuleSet.load()
 
@@ -31,6 +32,24 @@ def test_lifecycle_states_are_valid():
     bad = [(r.id, r.lifecycle_status) for r in _rs.rules
            if r.lifecycle_status not in LIFECYCLE_STATES]
     assert not bad, f"invalid lifecycle_status: {bad}"
+
+
+def test_every_when_key_is_honoured_by_the_engine():
+    """There is no rules schema: `evaluate_rule` reads the keys it knows and
+    ignores the rest. A typo (`exception_msgg:`) therefore produces a rule that
+    can never fire and reports nothing wrong -- the 1E.5 failure shape, a defect
+    that raises no error.
+
+    `WHEN_KEYS` is the engine's own list; this walks the shipped packs against
+    it. Only builtin packs are checked: hard-failing a user's rule directory at
+    load would break working setups to catch a typo they can see in the diff.
+    """
+    bad = []
+    for r in _rs.rules:
+        unknown = set(r.when or {}) - WHEN_KEYS
+        if unknown:
+            bad.append((r.id, sorted(unknown)))
+    assert not bad, f"engine ignores these `when` keys: {bad}"
 
 
 def test_no_draft_rule_is_in_builtin():

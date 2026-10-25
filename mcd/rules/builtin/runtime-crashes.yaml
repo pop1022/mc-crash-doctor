@@ -92,6 +92,14 @@ rules:
     when:
       has_suspect: true
       exception: ["java\\.lang\\.[\\w.]*(?:Exception|Error)"]
+      # ... but an OOM is not "this mod crashed". `oom.heap` owns that failure
+      # and gives heap advice; this rule's fixes talk about NPEs/ISEs and
+      # "update the mod", which is the wrong instruction for an exhausted heap.
+      # Dogfood issue #1 was exactly this: an OutOfMemoryError report got both
+      # findings, and the second told the user to update a mod. Measured cost
+      # of excluding it: zero -- neither corpus contains a single OOM report,
+      # so no rule loses a real hit (see the note in tests/test_rule_fixtures).
+      not_exception: ["java\\.lang\\.OutOfMemoryError"]
       # must NOT shadow the specific crash.* rules (they run at priority 50-60)
     explanation: >-
       The failing code path runs through {{suspect_top}}

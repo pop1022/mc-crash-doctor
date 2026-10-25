@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from mcd.parser.report import parse_file, parse_text  # noqa: E402
-from mcd.rules.engine import RuleSet, run_rules       # noqa: E402
+from mcd.rules.engine import Rule, RuleSet, run_rules  # noqa: E402
 
 _rs = RuleSet.load()
 _SYN = ROOT / "tests" / "fixtures" / "synthetic"
@@ -88,3 +88,63 @@ def test_all_four_zero_fire_rules_now_covered():
                        "native.gl"}
     for rule in covered:
         assert any(r.id == rule for r in _rs.rules), f"rule {rule} vanished"
+
+
+# --------------------------------------------------------------------------
+# OOM is not "this mod crashed" (found by dogfooding issue #1)
+# --------------------------------------------------------------------------
+# The corpora cannot catch this one: neither the harvested 454 nor the aternos
+# 201 contains a single OOM report (1D.4 measured the `oom` bucket as empty and
+# saw the same thing from a completely different direction). It took a real
+# crash report pasted into a real GitHub issue.
+_GT = ROOT / "tests" / "fixtures" / "ground-truth"
+_GT_OOM = _GT / "crash-2026-09-08_18.45.43-server.txt"
+
+
+def test_runtime_mod_stands_down_on_oom():
+    """`crash.runtime-mod` matches `java.lang.*(Exception|Error)`, which sweeps
+    up OutOfMemoryError. On dogfood issue #1 that produced a second finding
+    telling the user to update a mod, with copy about "runtime NPEs/ISEs" on a
+    report containing neither. The heap rule owns this failure."""
+    assert _GT_OOM.exists(), f"missing fixture {_GT_OOM}"
+    fired = _fired(_GT_OOM)
+    assert "oom.heap" in fired, fired
+    assert "crash.runtime-mod" not in fired, (
+        "crash.runtime-mod claims an OOM report again -- the `not_exception` "
+        f"condition is gone or wrong; fired={sorted(fired)}")
+
+
+def test_runtime_mod_still_fires_on_a_non_oom_crash():
+    """The guard against over-suppression. `not_exception` must remove the OOM
+    case and nothing else; if it removed the rule entirely, the fix would have
+    deleted the rule's reason to exist."""
+    hits = [p.name for p in sorted(_GT.glob("*.txt"))
+            if "crash.runtime-mod" in _fired(p)]
+    assert hits, ("crash.runtime-mod no longer fires on any ground-truth "
+                  "report -- `not_exception` is too broad")
+
+
+def test_not_exception_is_read_by_the_engine():
+    """Unit-level, so the test above cannot pass for the wrong reason (e.g. if
+    `has_suspect` happened to fail on that fixture). Both halves run on the same
+    file: with `not_exception` the rule must stay silent, without it the same
+    patterns must fire."""
+    assert _GT_OOM.exists()
+    base = {"severity": "info",
+            "when": {"exception": [r"java\.lang\..*Error"]}}
+
+    with_neg = Rule.from_dict({**base, "id": "test.not-oom",
+                               "title": "not an OOM",
+                               "when": {**base["when"],
+                                        "not_exception":
+                                            [r"java\.lang\.OutOfMemoryError"]}})
+    got = [f.rule_id for f in run_rules(parse_file(_GT_OOM),
+                                       RuleSet([with_neg]))]
+    assert got == [], f"not_exception was ignored; rule fired anyway: {got}"
+
+    without_neg = Rule.from_dict({**base, "id": "test.catchall",
+                                  "title": "catch-all"})
+    got2 = [f.rule_id for f in run_rules(parse_file(_GT_OOM),
+                                        RuleSet([without_neg]))]
+    assert got2 == ["test.catchall"], (
+        f"control failed -- the positive pattern alone must match: {got2}")

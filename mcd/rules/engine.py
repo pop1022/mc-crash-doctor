@@ -256,6 +256,28 @@ def _compare(spec: dict | int | float | None, value: float | None) -> bool:
                for op, num in spec.items() if op in _COMPARATORS)
 
 
+#: Every `when` key `evaluate_rule` actually honours.
+#:
+#: Unknown keys are silently ignored -- there is no schema and no warning, so
+#: `exception_msgg:` (a typo) produces a rule that never fires and reports
+#: nothing wrong. That is the same failure shape as the frame parser dropping
+#: half the stack without raising (ROADMAP 1E.5). `WHEN_KEYS` exists so a test
+#: can walk the shipped packs and refuse a key the engine does not read.
+#: User-supplied packs are deliberately NOT hard-failed at load: breaking a
+#: working rule directory to catch a typo is the wrong trade.
+WHEN_KEYS = frozenset({
+    # regex conditions (positive)
+    "description", "exception", "exception_msg", "exception_any", "caused_by",
+    "frame", "frame_top", "jar", "mixin", "text",
+    # regex conditions (negative) -- see the loop in evaluate_rule
+    "not_exception",
+    # exact / comparator conditions
+    "loader", "kind", "java_major", "max_heap_mib", "mod_count",
+    # mod-presence and attribution gates
+    "has_mod", "not_has_mod", "has_suspect",
+})
+
+
 def evaluate_rule(rule: Rule, ctx: MatchCtx) -> dict[str, re.Match] | None:
     """Return capture dict if the rule matches, else None."""
     w = rule.when
@@ -285,6 +307,21 @@ def evaluate_rule(rule: Rule, ctx: MatchCtx) -> dict[str, re.Match] | None:
         ("text", [ctx.text]),
     ):
         if not need(key, subs):
+            return None
+
+    # Negative regex conditions: the condition is satisfied by a report the
+    # patterns do NOT match, i.e. by an empty match set.
+    #
+    # `not_exception` exists because a catch-all is a legitimate rule shape.
+    # `crash.runtime-mod` wants "a java exception, and attribution found
+    # someone", and `.lang.<something>Error` is the honest way to say that --
+    # but it also swallows OutOfMemoryError, which has its own rule and its own
+    # advice. Without this key the choice is a catch-all that contradicts the
+    # OOM rule, or a hand-maintained negative-lookahead regex. The first is
+    # wrong (dogfood issue #1) and the second is unreadable.
+    for key, subs in (("not_exception", ctx.kinds),):
+        pats = w.get(key)
+        if pats and _any_regex(pats, subs):
             return None
 
     # exact-match fields

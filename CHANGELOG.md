@@ -354,6 +354,38 @@ versions follow [SemVer](https://semver.org/).
   silently; `jars` is not a mod list; and `mod_ids` is a dead field (0/488).
 
 ### Fixed
+- **`crash.runtime-mod` claimed OutOfMemoryError reports.** Found by dogfooding
+  the shipped Action on a real GitHub issue (issue #1), not by the test suite:
+  the rule matches `java.lang.*(Exception|Error)`, which sweeps up
+  `java.lang.OutOfMemoryError`, so an OOM report got two findings — the correct
+  heap diagnosis plus "`<mod>` crashed at runtime", whose fixes talk about
+  runtime NPEs/ISEs and "update the mod". The report contained neither.
+
+  The corpora could never have caught this: neither the harvested 454 nor the
+  aternos 201 contains a single OOM report (`oom` has been a measured-empty
+  bucket since 1D.4, arrived at from a completely different direction), so
+  co-occurrence was 0 there and 2 of 4 on the six ground-truth reports.
+
+  Fixed by adding a `not_exception` condition — the engine had `not_has_mod`
+  but no way to express "match this, unless..." — and excluding
+  `OutOfMemoryError` from the rule. Cost, measured: harvested
+  `crash.runtime-mod` hits 188 → 188, ground truth 4 → 2, spurious OOM
+  findings 2 → 0. `web/` wheel rebuilt (the `source_digest` guard caught that
+  it was stale, which is what it is for).
+- **A `when` key the engine does not read used to fail silently.** There is no
+  rules schema, so a typo like `exception_msgg:` produced a rule that could
+  never fire and reported nothing — the 1E.5 failure shape: a defect that
+  raises no error. `WHEN_KEYS` is now the engine's own list of honoured keys,
+  and `test_every_when_key_is_honoured_by_the_engine` walks the shipped packs
+  against it. User-supplied packs are deliberately not hard-failed at load:
+  breaking a working rule directory to catch a typo is the wrong trade.
+- **`tools/suggest_rules.py` did not run on Python 3.9.** It wrote the pack via
+  `Path.write_text(..., newline="\n")`, a keyword that only exists from 3.10,
+  while `pyproject.toml` declares `requires-python = ">=3.9"` — so the command
+  printed in the module docstring raised `TypeError` on a supported version.
+  Switched to builtin `open(..., newline="\n")`; `MCD_DRIFT_FULL=1` confirms the
+  regenerated pack is byte-identical.
+
 - **Half the stack frames in the corpus were being discarded, and nothing
   noticed** (ROADMAP 1E.5). `_parse_frame` reduced a raw line to
   `pkg.Class.method(File.java:N)` with three narrow rules, each of which failed
