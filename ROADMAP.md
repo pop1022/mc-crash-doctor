@@ -244,6 +244,17 @@
   - **为什么前置 1E**：发布意味着外部用户开始引用我们的结论。没有区间估计就
     对外说"甩锅率 14%"，等于承诺一个统计上站不住的数字（见 `docs/RESEARCH.md`
     J4 与 §3.4）。
+  - 状态（2026-10-25）：**代码侧已就绪，只差 PyPI 网页端一次性配置**。
+    `.github/workflows/publish.yml` 已写好并通过 YAML 解析校验：tag `v*` 触发、
+    OIDC Trusted Publishing（仓库里没有任何 token）、发布前跑与 tests.yml 相同的
+    四道门禁、校验 `tag == mcd.__version__`（本地已验证 v0.1.0 通过 / v0.2.0
+    失败）、校验产物含 3 个规则包且无字节码。
+    还缺的一步（只有你能做，约 5 分钟）：PyPI → Your projects → Publishing →
+    Add a pending publisher，五个字段必须与 `publish.yml` 顶部注释里的完全一致
+    （`mc-crash-doctor` / `pop1022` / `mc-crash-doctor` / `publish.yml` / `pypi`）。
+    然后 `git tag v0.1.0 && git push origin v0.1.0` 即发布。
+    **诚实标注：这个 workflow 从未运行过**（还没有 tag），`workflow_dispatch`
+    默认 `dry_run=true`，所以误触也不会传包。
 
 ### 1D. 证据分级与声明式兼容边（依据：RESEARCH J1 / C5）
 

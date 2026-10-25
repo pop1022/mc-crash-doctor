@@ -39,6 +39,19 @@ versions follow [SemVer](https://semver.org/).
 - **`tests/test_rule_drafts.py`** — 9 tests re-checking every draft on disk, plus
   `test_no_draft_rule_is_in_builtin` for the other direction. Cost: 0.25 s.
 
+- **`.github/workflows/publish.yml` — the half of PyPI publishing that does not
+  need credentials.** Tag `v*` triggers it; PyPI is reached by Trusted
+  Publishing (OIDC), so no token lives in this repo. Before anything is
+  uploaded it re-runs the same four gates `tests.yml` runs -- a green branch push
+  is not evidence that the *tag* is green, and "yank" is not "delete" -- and it
+  refuses to build when the tag does not match `mcd.__version__` (verified
+  locally: `v0.1.0` passes, `v0.2.0` fails). A manual dispatch defaults to
+  `dry_run: true`, so the only path that publishes is a tag push.
+
+  Not yet run: no tag has been pushed, and the PyPI side still needs a pending
+  publisher (five fields, listed verbatim in the file's header). The failure mode
+  until then is a loud OIDC exchange error, before upload.
+
 - **`tests/test_rule_lifecycle.py` + `corpus/rule-lifecycle.json` — the loop that
   keeps four rules `experimental` forever.** `tools/stamp_provenance.py` has
   always known how to promote a rule ("a real report fired this"); nothing ever
