@@ -69,20 +69,26 @@ mc-crash-doctor 专攻这一类，并交叉索引三个独立的溯源信号来�
 
 ## 安装
 
-```bash
-pip install mc-crash-doctor              # CLI + 引擎
-pip install "mc-crash-doctor[pretty]"    # + rich 彩色终端输出
-```
+**PyPI 上还没有**（ROADMAP 1C.2：发布 workflow 已就绪，账号配置还没做）。
+在那之前 `pip install mc-crash-doctor` 会返回 404；用下面的源码安装，或直接用
+在线网页版。
 
-Python 3.9+。唯一的硬依赖是 PyYAML。
-
-源码安装：
+源码安装（目前唯一可用的方式）：
 
 ```bash
 git clone https://github.com/pop1022/mc-crash-doctor
 cd mc-crash-doctor
 pip install -e ".[pretty]"
 ```
+
+发布之后：
+
+```bash
+pip install mc-crash-doctor              # CLI + 引擎
+pip install "mc-crash-doctor[pretty]"    # + rich 彩色终端输出
+```
+
+Python 3.9+。唯一的硬依赖是 PyYAML。
 
 ## 用法
 

@@ -79,20 +79,26 @@ Scores are normalised to confidence. When two mods score within 20% of each othe
 
 ## Install
 
-```bash
-pip install mc-crash-doctor          # CLI + engine
-pip install "mc-crash-doctor[pretty]"  # + rich terminal output
-```
+**PyPI: not published yet** (ROADMAP 1C.2 — the release workflow exists, the
+account setup does not). Until then `pip install mc-crash-doctor` returns 404;
+use the source install below, or the hosted web app.
 
-Python 3.9+. Only hard dependency is PyYAML.
-
-From source:
+From source (this is the only install that works today):
 
 ```bash
 git clone https://github.com/pop1022/mc-crash-doctor
 cd mc-crash-doctor
 pip install -e ".[pretty]"
 ```
+
+Once published:
+
+```bash
+pip install mc-crash-doctor            # CLI + engine
+pip install "mc-crash-doctor[pretty]"  # + rich terminal output
+```
+
+Python 3.9+. Only hard dependency is PyYAML.
 
 ## Usage
 
