@@ -462,7 +462,7 @@ def triage(rep: CrashReport, *, top_n: int = 5) -> TriageResult:
 
     # 4. mod named in the description / exception message
     blob = f"{rep.description} {' '.join(e.message for e in rep.exceptions)}".lower()
-    for mid, m in by_id.items():
+    for mid in by_id:
         if mid and len(mid) >= 4 and mid in blob:
             add(mid, W_DESC, "named in the crash description/message")
 

@@ -57,3 +57,19 @@ include = ["mcd*"]
 
 [tool.setuptools.package-data]
 "mcd.rules.builtin" = ["*.yaml", "*.yml"]
+
+[tool.ruff]
+# The package declares requires-python >= 3.9 but is developed on 3.12, so this
+# is the only thing that would catch a 3.10+ construct sneaking in. Everything
+# uses `from __future__ import annotations`, which is what makes `X | Y`
+# annotations safe on 3.9 -- target-version keeps that honest.
+target-version = "py39"
+line-length = 100
+
+[tool.ruff.lint]
+# Correctness only, deliberately. Pyflakes catches undefined names and dead
+# imports; E9 catches syntax errors; bugbear catches the class of bug that
+# looks fine and is not (mutable defaults, closures over loop variables,
+# `except` that swallows too much). Style rules are not enforced -- a diff
+# that is 80% reformatting hides the 20% that matters.
+select = ["F", "E9", "B"]

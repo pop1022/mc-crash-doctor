@@ -498,7 +498,7 @@ def _collect_evidence(rule: Rule, ctx: MatchCtx,
                       caps: dict[str, re.Match]) -> list[str]:
     """Quoted evidence lines supporting the finding."""
     out: list[str] = []
-    for key, m in caps.items():
+    for m in caps.values():
         try:
             frag = m.group(0)
         except Exception:  # noqa: BLE001

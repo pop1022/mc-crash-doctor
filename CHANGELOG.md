@@ -33,6 +33,21 @@ versions follow [SemVer](https://semver.org/).
   where the repeated work actually was.
 
 ### Fixed
+- **`--markdown` produced a table no markdown parser could read.** The
+  `Root cause` cell took an exception signature verbatim, and a Java message
+  like `expected mask a|b but got c|d` turns a two-column table into a
+  five-column one. `--markdown` exists to be pasted into an issue, so arbitrary
+  report text is the normal input, not an edge case -- measured: one report,
+  five cells, row unparseable. All table cells in the crash-report renderer now
+  go through `md_cell()`, and the pack renderer got the same treatment for
+  `kind` / `subject` / the `undecided` columns (only `detail` was escaped).
+  Newlines are collapsed too: a multi-line message ended the row outright.
+- **`deref_gist` read a remote body with no size cap.** Every other fetch in
+  `extract.py` goes through `_http_get`, which stops at `READ_LIMIT` (8 MB);
+  this one used `json.load(r)` on the raw stream. Now capped the same way, and
+  a malformed body returns `None` instead of raising.
+- **Two unused imports, two unused loop variables** across `mcd/` and `tests/`
+  -- the residue that the new lint gate now keeps at zero.
 - **A batch where every file failed exited 0.** On a machine without PyYAML the
   engine raised per file, the loop counted it as "error parsing <file>" and
   carried on, and the run finished with `worst == INFO` — a wholly broken run
@@ -52,6 +67,23 @@ versions follow [SemVer](https://semver.org/).
   its verdict depends on the tests and nothing else.
 
 ### Added
+- **A lint gate as gate 6/6, plus `[tool.ruff]` in `pyproject.toml`.**
+  `select = ["F", "E9", "B"]` at `target-version = "py39"` — correctness only,
+  no style rules, because a diff that is 80% reformatting hides the 20% that
+  matters. The `py39` target is the one thing that can catch a 3.10+ construct
+  sneaking into a package that declares `requires-python = ">=3.9"` while being
+  developed on 3.12. The step skips cleanly when ruff is absent, so a
+  contributor without it does not see a red gate.
+- **`mcd/textfmt.py`** — one function, `md_cell()`, shared by both renderers.
+  Kept dependency-free on purpose: `report/render.py` pulls in the optional
+  `rich` import and the pack side must not inherit it to escape a pipe.
+
+- **`tests/test_markdown_escape.py`** — 8 tests, 0.07 s. Pins the cell contract
+  (`a|b` -> `a\|b`, newline collapsed, backslash escaped before the pipe) and
+  then asserts the real thing: every row of the rendered environment table has
+  exactly two cells, and the pack `undecided` table exactly four. Includes the
+  reverse control -- clean content must gain no escape sequences.
+
 - **Batch runs print a tally on stderr** —
   `mc-crash-doctor: 120/120 diagnosed (86 with findings), 0 failed, 2.1s`.
   stderr on purpose: `--json`/`--markdown` on stdout stay machine-readable. A

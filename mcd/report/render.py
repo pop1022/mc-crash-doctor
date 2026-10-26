@@ -6,6 +6,7 @@ import json
 from typing import IO
 
 from ..model import CrashReport, Finding, Severity
+from ..textfmt import md_cell
 
 try:
     from rich.console import Console
@@ -35,6 +36,9 @@ SEV_LABEL = {
 # --------------------------------------------------------------------------
 # summary block shared by all formats
 # --------------------------------------------------------------------------
+_cell = md_cell      # local alias; the implementation lives in mcd.textfmt
+
+
 def build_summary(rep: CrashReport) -> dict:
     sysd = rep.system
     rc = rep.root_cause
@@ -134,22 +138,23 @@ def render_markdown(rep: CrashReport, findings: list[Finding], triage,
 
     w("## Environment\n\n")
     w("| | |\n|---|---|\n")
-    w(f"| Platform | {_fmt_platform(s)} |\n")
-    w(f"| Minecraft | {s['minecraft_version'] or '?'} |\n")
-    w(f"| Java | {s['java_version'] or '?'} (major {s['java_major']}) |\n")
-    w(f"| Heap | {_fmt_heap(s)} |\n")
-    w(f"| Mods | {s['mods_parsed'] or s['mod_count'] or '?'} |\n")
-    w(f"| OS | {s['os'] or '?'} |\n")
+    w(f"| Platform | {_cell(_fmt_platform(s))} |\n")
+    w(f"| Minecraft | {_cell(s['minecraft_version'] or '?')} |\n")
+    w(f"| Java | {_cell(s['java_version'] or '?')} (major {_cell(s['java_major'])}) |\n")
+    w(f"| Heap | {_cell(_fmt_heap(s))} |\n")
+    w(f"| Mods | {_cell(s['mods_parsed'] or s['mod_count'] or '?')} |\n")
+    w(f"| OS | {_cell(s['os'] or '?')} |\n")
     if s["root_cause"]:
-        w(f"| Root cause | `{s['root_cause']}` |\n")
+        w(f"| Root cause | `{_cell(s['root_cause'])}` |\n")
     w("\n")
 
     if triage and triage.suspects:
         w("## Suspect mods\n\n")
         w("| Mod | Version | Confidence | Why |\n|---|---|---|---|\n")
         for sp in triage.suspects:
-            why = (sp.reasons[0] if sp.reasons else "").replace("|", "\\|")
-            w(f"| `{sp.modid}` | {sp.version or '-'} | {sp.confidence:.0%} | {why} |\n")
+            why = sp.reasons[0] if sp.reasons else ""
+            w(f"| `{_cell(sp.modid)}` | {_cell(sp.version or '-')} | "
+              f"{sp.confidence:.0%} | {_cell(why)} |\n")
         for note in triage.notes:
             w(f"\n> {note}\n")
         w("\n")

@@ -149,8 +149,11 @@ def deref_gist(gist_id: str, pat: str | None = None) -> str | None:
     req = urllib.request.Request(url, headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=25) as r:
-            d = json.load(r)
-    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError):
+            # Same ceiling as _http_get: an unbounded json.load() on a remote
+            # body is the one read in this module that had no cap.
+            d = json.loads(r.read(READ_LIMIT).decode("utf-8", errors="replace"))
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError,
+            json.JSONDecodeError):
         return None
     files = d.get("files") or {}
     best = max(files.values(), key=lambda f: f.get("size", 0), default=None)

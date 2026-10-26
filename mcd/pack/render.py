@@ -12,6 +12,7 @@ import json
 from typing import TextIO
 
 from ..model import Severity
+from ..textfmt import md_cell
 from .doctor import NOT_CHECKED, PackReport
 
 _MARK = {Severity.FATAL: "!!", Severity.ERROR: "x ", Severity.WARNING: "! ",
@@ -46,9 +47,8 @@ def render_pack_markdown(rep: PackReport, out: TextIO) -> None:
     if rep.findings:
         out.write("| severity | kind | subject | detail |\n|---|---|---|---|\n")
         for f in rep.findings:
-            detail = f.detail.replace("|", "\\|")
-            out.write(f"| {f.severity.name} | `{f.kind}` | `{f.subject}` | "
-                      f"{detail} |\n")
+            out.write(f"| {f.severity.name} | `{md_cell(f.kind)}` | "
+                      f"`{md_cell(f.subject)}` | {md_cell(f.detail)} |\n")
         out.write("\n")
     else:
         out.write("No contradictions between the installed jars.\n\n")
@@ -58,8 +58,8 @@ def render_pack_markdown(rep: PackReport, out: TextIO) -> None:
                   "so nothing is claimed either way:\n\n")
         out.write("| mod | required by | declared range | installed |\n|---|---|---|---|\n")
         for u in rep.undecided:
-            out.write(f"| `{u['modid']}` | `{u['required_by']}` | "
-                      f"`{u['range']}` | `{u['installed'] or '?'}` |\n")
+            out.write(f"| `{md_cell(u['modid'])}` | `{md_cell(u['required_by'])}` | "
+                      f"`{md_cell(u['range'])}` | `{md_cell(u['installed'] or '?')}` |\n")
         out.write("\n")
     if rep.unreadable:
         out.write("**Not checked** — jars with no manifest this tool can read:\n\n")

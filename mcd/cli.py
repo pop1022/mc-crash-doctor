@@ -20,6 +20,7 @@ import io
 import sys
 import time
 from pathlib import Path
+from typing import IO
 
 from . import __version__
 from .extract import fetch_log
@@ -59,7 +60,8 @@ def _find_reports(d: Path) -> list[Path]:
 
 
 def diagnose(path: str | None, text: str | None, *, source: str = "",
-             rules_dirs: list[str] | None = None, ruleset=None) \
+             rules_dirs: list[str] | None = None,
+             ruleset: RuleSet | None = None) \
         -> tuple[CrashReport, list[Finding], object]:
     """Parse + run rules + triage. The one call the CLI and API share.
 
@@ -80,8 +82,8 @@ def diagnose(path: str | None, text: str | None, *, source: str = "",
     return rep, findings, t
 
 
-def _emit(rep: CrashReport, findings: list[Finding], t, fmt: str,
-          out, color: bool) -> None:
+def _emit(rep: CrashReport, findings: list[Finding], t: object, fmt: str,
+          out: IO[str], color: bool) -> None:
     if fmt == "json":
         render_json(rep, findings, t, out)
     elif fmt == "markdown":
@@ -227,7 +229,8 @@ def main(argv: list[str] | None = None) -> int:
     return _exit(worst, args.exit_code)
 
 
-def _one(path: str | None, text: str, source: str, args, out, color: bool) -> int:
+def _one(path: str | None, text: str, source: str,
+         args: argparse.Namespace, out: IO[str], color: bool) -> int:
     """Single-input path: stdin and --url. Parse failures get a message, not a
     traceback -- the same contract the file loop already honours."""
     try:
@@ -241,7 +244,7 @@ def _one(path: str | None, text: str, source: str, args, out, color: bool) -> in
     return _exit(_worst(findings), args.exit_code)
 
 
-def _fmt(args) -> str:
+def _fmt(args: argparse.Namespace) -> str:
     if args.json:
         return "json"
     if args.markdown:
@@ -251,7 +254,8 @@ def _fmt(args) -> str:
     return "terminal"
 
 
-def _pack(target: str, fmt: str, out, color: bool, exit_code: bool) -> int:
+def _pack(target: str, fmt: str, out: IO[str], color: bool,
+          exit_code: bool) -> int:
     """Pack Doctor entry point; `--exit-code` maps to the worst finding."""
     from .pack.doctor import analyse
     from .pack.render import (render_pack_json, render_pack_markdown,
