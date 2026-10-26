@@ -6,6 +6,69 @@ versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- **Rules are parsed once per process, not once per report.** `RuleSet.load()`
+  cost 24.9 ms and `diagnose()` called it for every file, so 67% of a single
+  diagnosis was re-reading the same three builtin YAML files. Measured on 120
+  reports: **5.91 s -> 2.92 s**. In-process cost fell from 37.3 to ~15 ms per
+  report. The cache stores the parsed `Rule` list only; every call still gets a
+  fresh `RuleSet` with its own `errors`, so a caller cannot corrupt a shared
+  wrapper. The key is the resolved `--rules-dir` list *plus* `MCD_RULES_PATH`,
+  so a changed environment never reuses a stale set. `RuleSet.clear_cache()` is
+  there for long-lived processes that rewrite rule YAML in place.
+
+- **Platform detection scans each report once instead of twice.** `_parse_system`
+  called `detect_platform()` and `detect_launcher()` back to back, and each runs
+  the full probe sweep — the single hottest function in a diagnosis, ~300 regexes
+  over 40 KB. `detect_platform_detailed()` already returns both axes from one
+  pass. 120 reports: **2.92 s -> 2.08 s**. Combined speedup **2.84x**.
+
+  Equivalence was checked, not assumed: over all **655** corpus reports the new
+  one-pass path produces byte-identical `(loader, evidence, launcher)` tuples to
+  the old two-pass path — 655 identical, 0 different. `tests/eval_parser.py`
+  still reports platform accuracy 100.0% and version accuracy 99.4%.
+
+  Single-file latency barely moved (308 -> 275 ms) because Python interpreter
+  startup is ~250 ms of it; the gain is in batch and in-process use, which is
+  where the repeated work actually was.
+
+### Fixed
+- **A batch where every file failed exited 0.** On a machine without PyYAML the
+  engine raised per file, the loop counted it as "error parsing <file>" and
+  carried on, and the run finished with `worst == INFO` — a wholly broken run
+  was indistinguishable from a clean one to CI. The rule set is now loaded once
+  before the loop; a load failure prints one message naming the real problem and
+  returns 2. Total per-file failure also returns 2. Partial failure keeps the
+  existing contract (findings decide the code) and reports the count on stderr.
+- **`--pack` never coloured anything.** `render_pack_plain(color=...)` accepted
+  the flag and ignored it, so the CLI threaded a value through to a no-op. It now
+  paints the severity head of each finding, and only when asked — `--text`,
+  pipes and captured output stay byte-identical, which a test asserts by
+  stripping ANSI and comparing against the uncoloured render.
+- **`run_tests.sh` could report failure on a fully green suite.** pytest left
+  ~89 scratch directories in the system temp; a sandbox hook that rate-limits
+  bulk deletes then failed the cleanup and the script saw a non-zero exit at
+  100% passing. The gate now keeps its scratch tree in `tmp/` (gitignored), so
+  its verdict depends on the tests and nothing else.
+
+### Added
+- **Batch runs print a tally on stderr** —
+  `mc-crash-doctor: 120/120 diagnosed (86 with findings), 0 failed, 2.1s`.
+  stderr on purpose: `--json`/`--markdown` on stdout stay machine-readable. A
+  454-file run used to grind in silence with no way to tell progress from a hang.
+
+- **`tests/test_rule_cache.py`** — 9 tests, 0.7 s. A cache is only an
+  optimisation if it is semantically invisible, so the tests pin that instead of
+  timing: identical arguments re-use the parse (`_read` called once), two
+  different `--rules-dir` values never collide, a cached load warning still
+  surfaces on the second call, `strict=True` still raises on a cached error, a
+  changed `MCD_RULES_PATH` invalidates, and a caller cannot corrupt the shared
+  rule list by clearing its own.
+
+- **5 batch-contract tests** in `tests/test_cli_contract.py` and **2 colour
+  tests** in `tests/test_pack_doctor.py`, each with a reverse control (single
+  file gets no tally; uncoloured output gains no escape codes).
+
 ### Fixed
 - **`--rules-dir` reached `--rules` but not diagnosis.** The flag exists so a
   user can point the engine at their own YAML without editing the package.

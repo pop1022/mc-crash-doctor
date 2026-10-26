@@ -246,3 +246,45 @@ def test_cli_pack_json_and_exit_code(tmp_path, capsys):
 def test_cli_pack_missing_dir_returns_2(tmp_path, capsys):
     assert main(["--pack", str(tmp_path / "nope")]) == 2
     assert "no `mods/` directory" in capsys.readouterr().err
+
+
+# --- colour is a display flag, never a content flag -------------------------
+def test_plain_render_is_byte_identical_without_colour(tmp_path, capsys):
+    """Piped / captured output must not gain escape codes.
+
+    `color` used to be a dead parameter: the CLI passed it and the renderer
+    ignored it, so `--pack` never coloured anything. It now paints the severity
+    head only -- and only when asked.
+    """
+    root = tmp_path / "pack"
+    (root / "mods").mkdir(parents=True)
+    jar(root / "mods" / "a.jar", {"fabric.mod.json": fabric("aaa")})
+    jar(root / "mods" / "b.jar", {"fabric.mod.json": fabric("aaa")})
+
+    main(["--pack", str(root), "--text"])
+    assert "\x1b[" not in capsys.readouterr().out
+
+
+def test_colour_changes_only_the_escape_codes(tmp_path):
+    """Stripping ANSI from the coloured form must give back the plain form."""
+    import io
+
+    from mcd.pack.render import render_pack_plain
+
+    root = tmp_path / "pack"
+    (root / "mods").mkdir(parents=True)
+    jar(root / "mods" / "a.jar", {"fabric.mod.json": fabric("aaa")})
+    jar(root / "mods" / "b.jar", {"fabric.mod.json": fabric("aaa")})
+    rep = analyse(str(root))
+
+    plain, colored = io.StringIO(), io.StringIO()
+    render_pack_plain(rep, plain, color=False)
+    render_pack_plain(rep, colored, color=True)
+
+    assert "\x1b[" not in plain.getvalue()
+    assert "\x1b[" in colored.getvalue()
+    stripped = colored.getvalue()
+    for code in ("\x1b[1;31m", "\x1b[31m", "\x1b[33m", "\x1b[36m",
+                 "\x1b[2m", "\x1b[0m"):
+        stripped = stripped.replace(code, "")
+    assert stripped == plain.getvalue()

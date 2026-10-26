@@ -18,7 +18,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .platform import (detect_launcher, detect_loader_version, detect_platform,
+from .platform import (detect_loader_version, detect_platform_detailed,
                        detect_software_version, detect_version)
 from ..model import (
     CrashReport,
@@ -537,9 +537,16 @@ def _parse_system(text: str, sections: list[Section], mods: list[Mod]) -> System
     # Platform detection runs FIRST: detect_version needs the loader to pick
     # loader-specific patterns (and to reverse-derive the MC version from a
     # NeoForge build number).
-    d.loader, d.platform_evidence = detect_platform(text)
+    #
+    # One scan, two answers. `detect_platform` and `detect_launcher` each run
+    # the full probe sweep (the single hottest function in a diagnosis: ~300
+    # regexes over 40 KB), so calling both scanned every report twice. The
+    # detailed form returns both axes from one pass.
+    loader_hit, launcher_hit = detect_platform_detailed(text)
+    d.loader = loader_hit.loader if loader_hit else "vanilla"
+    d.platform_evidence = loader_hit.evidence if loader_hit else ""
     d.loader_version = detect_loader_version(text, d.loader)
-    d.launcher, _ = detect_launcher(text)
+    d.launcher = launcher_hit.loader if launcher_hit else ""
 
     d.minecraft_version = _g(MC_VER_RE)
     if not d.minecraft_version:

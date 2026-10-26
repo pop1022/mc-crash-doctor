@@ -28,7 +28,11 @@ if ! "$PY" tests/test_e2e.py; then fail=1; fi
 echo
 echo "── [4/5] pytest suite (per-file corpus + gap pinning) ──"
 if "$PY" -m pytest --version >/dev/null 2>&1; then
-  if ! "$PY" -m pytest tests/ -q; then fail=1; fi
+  # --basetemp inside the repo: pytest otherwise leaves ~80 scratch dirs in the
+  # system temp, and a sandbox/CI hook that rate-limits bulk deletes can turn a
+  # fully green run into a non-zero exit at cleanup time. Keeping the scratch
+  # tree in tmp/ (gitignored) makes the gate's result depend on the tests only.
+  if ! "$PY" -m pytest tests/ -q --basetemp=tmp/.pytest-tmp; then fail=1; fi
 else
   echo "  (pytest not installed -- skipping; pip install pytest)"
 fi

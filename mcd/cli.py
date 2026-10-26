@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import io
 import sys
+import time
 from pathlib import Path
 
 from . import __version__
@@ -58,18 +59,23 @@ def _find_reports(d: Path) -> list[Path]:
 
 
 def diagnose(path: str | None, text: str | None, *, source: str = "",
-             rules_dirs: list[str] | None = None) \
+             rules_dirs: list[str] | None = None, ruleset=None) \
         -> tuple[CrashReport, list[Finding], object]:
     """Parse + run rules + triage. The one call the CLI and API share.
 
     ``rules_dirs`` are extra YAML rule directories (CLI ``--rules-dir``). They
     must reach :meth:`RuleSet.load`; dropping them here made the flag silently
     do nothing outside ``--rules``.
+
+    ``ruleset`` lets a batch reuse one already-loaded set instead of asking the
+    caller to reload per file. A ``RuntimeError`` from loading (PyYAML missing)
+    is a property of the *environment*, not of the report being diagnosed, so a
+    batch must surface it once rather than once per file.
     """
     rep = parse_text(text, source_path=source) if text is not None \
         else parse_file(path)
-    ruleset = RuleSet.load(rules_dirs or None)
-    findings = run_rules(rep, ruleset, suspect_fn=suspects_for_rules)
+    rs = ruleset if ruleset is not None else RuleSet.load(rules_dirs or None)
+    findings = run_rules(rep, rs, suspect_fn=suspects_for_rules)
     t = triage(rep)
     return rep, findings, t
 
@@ -172,16 +178,30 @@ def main(argv: list[str] | None = None) -> int:
     batch_json = len(files) > 1 and _fmt(args) == "json"
     rendered: list[str] = []
 
+    # Load rules once for the whole batch. Per-file loading was 67% of a single
+    # diagnosis, and a missing PyYAML used to print "error parsing <file>" once
+    # per report -- blaming the reports for a broken environment.
+    try:
+        ruleset = RuleSet.load(args.rules_dir or None)
+    except RuntimeError as e:                    # PyYAML missing
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+
     worst = Severity.INFO
+    failed = 0
+    with_findings = 0
+    started = time.time()
     for f in files:
         if len(files) > 1 and not args.json:
             print(f"\n{'─' * 74}\n {f.name}\n{'─' * 74}")
         try:
-            rep, findings, t = diagnose(str(f), None,
-                                        rules_dirs=args.rules_dir)
+            rep, findings, t = diagnose(str(f), None, ruleset=ruleset)
         except Exception as e:  # noqa: BLE001
+            failed += 1
             print(f"error parsing {f}: {type(e).__name__}: {e}", file=sys.stderr)
             continue
+        if findings:
+            with_findings += 1
         if batch_json:
             buf = io.StringIO()
             render_json(rep, findings, t, buf)
@@ -192,6 +212,18 @@ def main(argv: list[str] | None = None) -> int:
 
     if batch_json:
         out.write("[" + ",".join(rendered) + "]\n")
+
+    if len(files) > 1:
+        # stderr, so --json/--markdown on stdout stay machine-readable.
+        ok = len(files) - failed
+        print(f"mc-crash-doctor: {ok}/{len(files)} diagnosed "
+              f"({with_findings} with findings), {failed} failed, "
+              f"{time.time() - started:.1f}s", file=sys.stderr)
+
+    # Every file failing is not success. Partial failures keep the old exit
+    # contract (findings decide it) and are reported on stderr instead.
+    if failed and failed == len(files):
+        return 2
     return _exit(worst, args.exit_code)
 
 

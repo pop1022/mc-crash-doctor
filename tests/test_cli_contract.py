@@ -149,3 +149,78 @@ def test_plain_txt_and_log_still_both_found(tmp_path, capsys):
     (tmp_path / "latest.log").write_text(REPORT, encoding="utf-8")
     main(["--dir", str(tmp_path), "--json"])
     assert len(json.loads(capsys.readouterr().out)) == 2
+
+
+# --- 批量：失败必须被计数，全部失败不能算成功 ---------------------------------
+def test_batch_reports_a_summary_on_stderr(tmp_path, capsys):
+    """A 454-file batch used to be silent; stderr now carries the tally.
+
+    It goes to stderr on purpose: --json/--markdown on stdout must stay
+    machine-readable.
+    """
+    _report(tmp_path, "crash-1.txt")
+    _report(tmp_path, "crash-2.txt")
+    main(["--dir", str(tmp_path), "--json"])
+    err = capsys.readouterr().err
+    assert "2/2 diagnosed" in err
+
+
+def test_single_file_gets_no_summary(tmp_path, capsys):
+    """The tally is a batch affordance; one file should not print it."""
+    main([str(_report(tmp_path)), "--text"])
+    assert "diagnosed (" not in capsys.readouterr().err
+
+
+def test_all_files_failing_is_not_success(tmp_path, capsys, monkeypatch):
+    """The regression that matters: total failure used to exit 0.
+
+    A machine with no PyYAML printed "error parsing <file>" once per report and
+    still returned 0, so CI would read a wholly broken run as a pass.
+    """
+    _report(tmp_path, "crash-1.txt")
+    _report(tmp_path, "crash-2.txt")
+
+    def boom(*a, **kw):
+        raise RuntimeError("simulated per-file failure")
+
+    monkeypatch.setattr("mcd.cli.diagnose", boom)
+    assert main(["--dir", str(tmp_path), "--json"]) == 2
+
+
+def test_partial_failure_keeps_the_findings_exit_contract(tmp_path, capsys,
+                                                          monkeypatch):
+    """Some files failing must not hijack --exit-code's meaning."""
+    _report(tmp_path, "crash-1.txt")
+    _report(tmp_path, "crash-2.txt")
+    real = diagnose
+    calls = {"n": 0}
+
+    def flaky(path, text, **kw):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("one bad file")
+        return real(path, text, **kw)
+
+    monkeypatch.setattr("mcd.cli.diagnose", flaky)
+    assert main(["--dir", str(tmp_path), "--json"]) == 0
+    assert "1 failed" in capsys.readouterr().err
+
+
+def test_missing_rule_engine_is_reported_once(tmp_path, capsys, monkeypatch):
+    """A broken environment is not a property of each report.
+
+    Before: one "error parsing <file>" line per report, exit 0.
+    After:  one line naming the real problem, exit 2.
+    """
+    _report(tmp_path, "crash-1.txt")
+    _report(tmp_path, "crash-2.txt")
+    _report(tmp_path, "crash-3.txt")
+
+    def no_yaml(cls, *a, **kw):
+        raise RuntimeError("PyYAML is required")
+
+    monkeypatch.setattr("mcd.cli.RuleSet.load", classmethod(no_yaml))
+    assert main(["--dir", str(tmp_path), "--json"]) == 2
+    err = capsys.readouterr().err
+    assert err.count("error:") == 1, "the environment error must not repeat per file"
+    assert "PyYAML" in err

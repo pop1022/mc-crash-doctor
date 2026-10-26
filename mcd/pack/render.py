@@ -17,6 +17,21 @@ from .doctor import NOT_CHECKED, PackReport
 _MARK = {Severity.FATAL: "!!", Severity.ERROR: "x ", Severity.WARNING: "! ",
          Severity.HINT: "- ", Severity.INFO: "  "}
 
+# ANSI rather than rich: Pack Doctor runs with no optional dependencies, and a
+# severity colour is the kind of thing that should not need one. Only emitted
+# when the caller passes color=True, which the CLI derives from `isatty()` and
+# `--no-color`, so captured/piped output is byte-identical to before.
+_ANSI = {Severity.FATAL: "\x1b[1;31m", Severity.ERROR: "\x1b[31m",
+         Severity.WARNING: "\x1b[33m", Severity.HINT: "\x1b[36m",
+         Severity.INFO: "\x1b[2m"}
+_RESET = "\x1b[0m"
+
+
+def _paint(text: str, sev: Severity, color: bool) -> str:
+    if not color:
+        return text
+    return f"{_ANSI.get(sev, '')}{text}{_RESET}"
+
 
 def render_pack_json(rep: PackReport, out: TextIO) -> None:
     json.dump(rep.to_dict(), out, indent=2, ensure_ascii=False)
@@ -58,6 +73,8 @@ def render_pack_markdown(rep: PackReport, out: TextIO) -> None:
 
 
 def render_pack_plain(rep: PackReport, out: TextIO, *, color: bool = False) -> None:
+    """Terminal form. ``color`` paints only the severity head of each finding;
+    every other line is unchanged so the two forms stay diff-able."""
     head = f"Pack Doctor: {rep.mods_dir}"
     out.write(head + "\n" + "=" * len(head) + "\n")
     out.write(f"{rep.jars} jars, {rep.declared_mods} declared mods")
@@ -71,7 +88,8 @@ def render_pack_plain(rep: PackReport, out: TextIO, *, color: bool = False) -> N
 
     if rep.findings:
         for f in rep.findings:
-            out.write(f"{_MARK.get(f.severity, '  ')} {f.subject}\n")
+            head = f"{_MARK.get(f.severity, '  ')} {f.subject}"
+            out.write(_paint(head, f.severity, color) + "\n")
             out.write(f"    {f.detail}\n")
             if f.evidence:
                 out.write(f"    evidence: {', '.join(f.evidence)}\n")
