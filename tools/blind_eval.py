@@ -131,10 +131,21 @@ def _verdict_index() -> dict[str, dict]:
     p = os.path.join(ROOT, "corpus", "index.jsonl")
     if not os.path.exists(p):
         return idx
-    for line in open(p, encoding="utf-8"):
-        d = json.loads(line)
-        idx[f"{d['repo'].split('/')[-1]}/{d['number']}"] = d
+    with open(p, encoding="utf-8") as fh:
+        for line in fh:
+            d = json.loads(line)
+            idx[f"{d['repo'].split('/')[-1]}/{d['number']}"] = d
     return idx
+
+
+def _names_repo(x: str | None, want: str) -> bool:
+    """Slug match: mekanism ~ mekanismgenerators, tconstruct ~ tic.
+
+    Module-level rather than a closure over the loop variable so the binding is
+    explicit: ``want`` is the repo's mod slug for *this* report, not whichever
+    one the loop happened to be on when the function was defined.
+    """
+    return bool(x) and (x == want or x.startswith(want) or want.startswith(x))
 
 
 def evaluate(files: list[str]) -> dict:
@@ -195,10 +206,6 @@ def evaluate(files: list[str]) -> dict:
             m["diag"] += int(diag)
             want = REPO_MOD[short]
             top = t.suspects[0].modid if t.suspects else None
-            # slug match: mekanism ~ mekanismgenerators, tconstruct ~ tic
-            def _is_repo(x):
-                return bool(x) and (x == want or x.startswith(want)
-                                    or want.startswith(x))
             sample = {"report": f"{short}/{issue}", "verdict": verdict,
                       "top_suspect": top, "repo_mod": want,
                       "url": rec.get("url", "")}
@@ -208,7 +215,7 @@ def evaluate(files: list[str]) -> dict:
                 m["bug_n"] += 1
                 if top is None:
                     m["bug_nopick"] += 1
-                elif _is_repo(top):
+                elif _names_repo(top, want):
                     m["bug_hit"] += 1
                 else:
                     m["bug_miss"] += 1
@@ -221,7 +228,7 @@ def evaluate(files: list[str]) -> dict:
                 m["else_n"] += 1
                 if top is None:
                     m["else_nopick"] += 1
-                elif _is_repo(top):
+                elif _names_repo(top, want):
                     m["else_wrongrepo"] += 1
                     if len(out["misattribution_samples"]) < 8:
                         out["misattribution_samples"].append(sample)
@@ -233,7 +240,7 @@ def evaluate(files: list[str]) -> dict:
             elif verdict in VERDICT_AMBIGUOUS:
                 # known_issue/outdated: direction unclear, report only
                 m["ambig_n"] += 1
-                if _is_repo(top):
+                if _names_repo(top, want):
                     m["ambig_repo"] += 1
         elif short in LOADER_REPOS:
             out["loader_repo"]["n"] += 1

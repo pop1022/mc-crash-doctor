@@ -6,7 +6,51 @@ versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- **`--rules-dir` reached `--rules` but not diagnosis.** The flag exists so a
+  user can point the engine at their own YAML without editing the package.
+  It was passed to the `--rules` listing and dropped everywhere else:
+  `diagnose()` called `RuleSet.load()` with no arguments, so a custom rule
+  showed up in `--rules` and then silently never ran. Measured before the fix:
+  a probe rule matched the report, `RuleSet.load([dir])` fired it (42 rules,
+  hit on), and `mcd --rules-dir dir report.txt` still printed `FINDINGS (0)`.
+  `diagnose()` now takes `rules_dirs=` and all three input paths (file, stdin,
+  `--url`) pass it through. `action.py` and library callers are unaffected —
+  the parameter is keyword-only with a `None` default.
+- **A missing `--rules-dir` was swallowed.** `RuleSet.load()` skipped a
+  non-existent directory without a word unless `MCD_RULES_PATH` was set, so a
+  typo meant "diagnose with builtin rules only" while the user believed their
+  own rules were in play. The CLI now rejects it up front (`--rules-dir is not
+  a directory: …`, exit 2) and the engine records it in `errors` for callers
+  that load rules directly.
+- **`--json --dir` did not produce JSON.** Batch mode wrote one top-level
+  object per report back to back, so `json.load()` failed with `Extra data` on
+  every batch with more than one file — the exact output a CI would parse.
+  A batch (more than one file) now emits a single array; a single input still
+  emits a single object, so existing single-file consumers keep working.
+- **`--dir` diagnosed most crash reports twice.** `REPORT_GLOBS` is
+  `("crash-*.txt", "*.log", "*.txt")` and a real report matches both
+  `crash-*.txt` and `*.txt`; the enumeration appended without dedupe. A
+  two-report batch rendered four diagnoses — doubled runtime, doubled finding
+  counts, and a doubled chance of `--exit-code` tripping in CI. Found by the
+  new contract test asserting the obvious (`len(out) == 2`), which returned 4.
+- **Unclosed file handles in six tool scripts** (`blind_eval`, `build_compat_edges`,
+  `coverage_report`, `rule_lifecycle`, `stamp_provenance` ×2, `version_strata`).
+  CPython closes them on refcount, Windows does not guarantee it for the write
+  path in `stamp_provenance`, where a still-open handle blocks a later
+  re-read of the file it just rewrote. All now use `with`.
+- **`tools/blind_eval.py` bound the repo slug through a closure over the loop
+  variable.** It happened to work because the function is called in the same
+  iteration it is defined, which is exactly the kind of thing that survives
+  until someone keeps the callable. Now a module-level `_names_repo(x, want)`.
+
 ### Added
+- **`tests/test_cli_contract.py`** — 11 tests, 0.6 s, covering the five fixes
+  above. Each bug gets a forward assertion and a reverse control: the probe
+  rule must fire with `--rules-dir` *and not* without it; batch JSON must be an
+  array *and* a single file must stay an object; dedupe must not drop a
+  `latest.log` that only matches the non-overlapping glob.
+
 - **`tools/suggest_rules.py` — candidate rule *review*, not rule generation**
   (ROADMAP 1E.3). Two halves, and the split is the point:
 

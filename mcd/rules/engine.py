@@ -146,8 +146,9 @@ class RuleSet:
         for d in dirs:
             d = Path(d)
             if not d.is_dir():
-                if env and str(d) in env:
-                    errors.append(f"{d}: directory does not exist")
+                # Never silent: a directory the caller asked for that is not
+                # there means their rules did NOT load. Warning beats guessing.
+                errors.append(f"{d}: directory does not exist")
                 continue
             for f in sorted(d.glob("*.yaml")) + sorted(d.glob("*.yml")):
                 try:

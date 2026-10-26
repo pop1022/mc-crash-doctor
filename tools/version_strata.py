@@ -258,7 +258,8 @@ def main() -> int:
     md = render_md(res)
     if args.check:
         try:
-            current = open(OUT_MD, encoding="utf-8").read()
+            with open(OUT_MD, encoding="utf-8") as fh:
+                current = fh.read()
         except FileNotFoundError:
             print("corpus/VERSION_STRATA.md missing -- run without --check",
                   file=sys.stderr)

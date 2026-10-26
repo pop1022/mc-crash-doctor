@@ -88,7 +88,6 @@ OUT_JSON = Path("corpus/MODRINTH_MAPPING.json")
 # corpus/MODRINTH_MAPPING.md was obtained.
 from mcd.metadata.jars import (            # noqa: E402
     LOADER_ARTIFACTS,
-    RUNTIME_LIBS,
     is_runtime_lib,
     jar_stem,
     mixin_stem,

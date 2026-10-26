@@ -52,7 +52,6 @@ import argparse
 import glob
 import json
 import os
-import re
 import sys
 import time
 from collections import Counter, defaultdict
@@ -316,7 +315,8 @@ def main(argv: list[str] | None = None) -> int:
                 parse_error_examples.append(f"{os.path.relpath(path, GITHUB)}: {exc}")
             continue
         try:
-            text = open(path, encoding="utf-8", errors="replace").read()
+            with open(path, encoding="utf-8", errors="replace") as fh:
+                text = fh.read()
         except OSError:
             text = ""
         bucket = classify(text, rep)

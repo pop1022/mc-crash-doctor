@@ -188,7 +188,8 @@ def main() -> int:
         if not name.endswith((".yaml", ".yml")):
             continue
         path = os.path.join(BUILTIN, name)
-        text = open(path, encoding="utf-8").read()
+        with open(path, encoding="utf-8") as fh:
+            text = fh.read()
         # detect indent: '- id:' at col 0 (memory-performance) or col 2
         id_indent = "" if re.search(r"^- id:", text, re.M) else "  "
         fld = id_indent + "  "
@@ -216,7 +217,8 @@ def main() -> int:
             if args.dry_run:
                 print(f"would update {name}")
             else:
-                open(path, "w", encoding="utf-8", newline="").write(new)
+                with open(path, "w", encoding="utf-8", newline="") as fh:
+                    fh.write(new)
                 print(f"stamped {name}")
         elif changed:
             print(f"unchanged {name}")

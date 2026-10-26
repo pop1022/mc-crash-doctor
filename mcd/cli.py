@@ -7,11 +7,16 @@
     mc-crash-doctor --dir <path>        # batch every report in a directory
     mc-crash-doctor --pack <dir>        # check a mods/ dir without a crash
     mc-crash-doctor --rules             # list the rule set
+
+``--json`` on a single input writes one object; on a batch (more than one
+file) it writes a JSON array, so the output stays ``json.load()``-able.
+``--rules-dir`` is honoured by diagnosis, not just by ``--rules``.
 """
 
 from __future__ import annotations
 
 import argparse
+import io
 import sys
 from pathlib import Path
 
@@ -30,24 +35,40 @@ REPORT_GLOBS = ("crash-*.txt", "*.log", "*.txt")
 
 
 def _find_reports(d: Path) -> list[Path]:
+    """Every report under `d`, each file once.
+
+    REPORT_GLOBS overlaps on purpose: ``crash-*.txt`` is the conventional name,
+    ``*.txt`` catches everything else. A file that matches both (i.e. most real
+    crash reports) must still be counted once -- otherwise a batch run reports
+    twice the findings it has and ``--exit-code`` is twice as likely to trip.
+    """
     out: list[Path] = []
     sub = [d / "crash-reports", d / "logs", d]
     for base in sub:
         if not base.is_dir():
             continue
+        seen: dict[Path, None] = {}
         for g in REPORT_GLOBS:
-            out.extend(sorted(base.glob(g)))
+            for p in sorted(base.glob(g)):
+                seen.setdefault(p, None)
+        out = list(seen)
         if out:
             break  # crash-reports/ wins over a bare directory listing
     return out
 
 
-def diagnose(path: str | None, text: str | None, *, source: str = "") \
+def diagnose(path: str | None, text: str | None, *, source: str = "",
+             rules_dirs: list[str] | None = None) \
         -> tuple[CrashReport, list[Finding], object]:
-    """Parse + run rules + triage. The one call the CLI and API share."""
+    """Parse + run rules + triage. The one call the CLI and API share.
+
+    ``rules_dirs`` are extra YAML rule directories (CLI ``--rules-dir``). They
+    must reach :meth:`RuleSet.load`; dropping them here made the flag silently
+    do nothing outside ``--rules``.
+    """
     rep = parse_text(text, source_path=source) if text is not None \
         else parse_file(path)
-    ruleset = RuleSet.load()
+    ruleset = RuleSet.load(rules_dirs or None)
     findings = run_rules(rep, ruleset, suspect_fn=suspects_for_rules)
     t = triage(rep)
     return rep, findings, t
@@ -96,6 +117,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
     args = ap.parse_args(argv)
 
+    # An explicitly requested rule directory that does not exist is a typo, not
+    # a preference: fail loudly instead of diagnosing with builtin rules only
+    # while the user believes their own rules are in play.
+    for d in args.rules_dir:
+        if not Path(d).is_dir():
+            ap.error(f"--rules-dir is not a directory: {d}")
+
     if args.rules:
         rs = RuleSet.load(args.rules_dir)
         print(f"{len(rs.rules)} rules loaded:")
@@ -114,18 +142,14 @@ def main(argv: list[str] | None = None) -> int:
     # --- resolve input ---
     if args.stdin:
         text = sys.stdin.read()
-        rep, findings, t = diagnose(None, text, source="<stdin>")
-        _emit(rep, findings, t, _fmt(args), out, color)
-        return _exit(_worst(findings), args.exit_code)
+        return _one(None, text, "<stdin>", args, out, color)
 
     if args.url:
         text = fetch_log(args.url)
         if text is None:
             print(f"error: could not fetch {args.url}", file=sys.stderr)
             return 2
-        rep, findings, t = diagnose(None, text, source=args.url)
-        _emit(rep, findings, t, _fmt(args), out, color)
-        return _exit(_worst(findings), args.exit_code)
+        return _one(None, text, args.url, args, out, color)
 
     target = args.dir or args.path
     if not target:
@@ -143,19 +167,46 @@ def main(argv: list[str] | None = None) -> int:
               file=sys.stderr)
         return 2
 
+    # --json on a batch must stay parseable by json.load(). Concatenated
+    # top-level objects ("Extra data") are not, so emit an array instead.
+    batch_json = len(files) > 1 and _fmt(args) == "json"
+    rendered: list[str] = []
+
     worst = Severity.INFO
-    for i, f in enumerate(files):
+    for f in files:
         if len(files) > 1 and not args.json:
             print(f"\n{'─' * 74}\n {f.name}\n{'─' * 74}")
         try:
-            rep, findings, t = diagnose(str(f), None)
+            rep, findings, t = diagnose(str(f), None,
+                                        rules_dirs=args.rules_dir)
         except Exception as e:  # noqa: BLE001
             print(f"error parsing {f}: {type(e).__name__}: {e}", file=sys.stderr)
             continue
-        _emit(rep, findings, t, _fmt(args), out, color)
+        if batch_json:
+            buf = io.StringIO()
+            render_json(rep, findings, t, buf)
+            rendered.append(buf.getvalue())
+        else:
+            _emit(rep, findings, t, _fmt(args), out, color)
         worst = max(worst, _worst(findings))
 
+    if batch_json:
+        out.write("[" + ",".join(rendered) + "]\n")
     return _exit(worst, args.exit_code)
+
+
+def _one(path: str | None, text: str, source: str, args, out, color: bool) -> int:
+    """Single-input path: stdin and --url. Parse failures get a message, not a
+    traceback -- the same contract the file loop already honours."""
+    try:
+        rep, findings, t = diagnose(path, text, source=source,
+                                    rules_dirs=args.rules_dir)
+    except Exception as e:  # noqa: BLE001
+        print(f"error parsing {source}: {type(e).__name__}: {e}",
+              file=sys.stderr)
+        return 2
+    _emit(rep, findings, t, _fmt(args), out, color)
+    return _exit(_worst(findings), args.exit_code)
 
 
 def _fmt(args) -> str:

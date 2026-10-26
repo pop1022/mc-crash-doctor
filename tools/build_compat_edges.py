@@ -137,13 +137,14 @@ def load_index() -> dict[str, dict]:
     idx: dict[str, dict] = {}
     if not os.path.exists(INDEX):
         return idx
-    for line in open(INDEX, encoding="utf-8"):
-        line = line.strip()
-        if not line:
-            continue
-        d = json.loads(line)
-        key = f"{d['repo'].split('/')[-1]}/{d['number']}"
-        idx[key] = d
+    with open(INDEX, encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            d = json.loads(line)
+            key = f"{d['repo'].split('/')[-1]}/{d['number']}"
+            idx[key] = d
     return idx
 
 

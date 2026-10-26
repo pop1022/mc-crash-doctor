@@ -79,7 +79,8 @@ def corpus_digest(files: list[str] | None = None) -> str:
     for p in files:
         h.update(os.path.relpath(p, ROOT).replace(os.sep, "/").encode("utf-8"))
         h.update(b"\0")
-        h.update(open(p, "rb").read())
+        with open(p, "rb") as fh:
+            h.update(fh.read())
         h.update(b"\0")
     return h.hexdigest()[:16]
 
