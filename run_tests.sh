@@ -13,20 +13,20 @@ echo " mc-crash-doctor test suite"
 echo "════════════════════════════════════════════════"
 
 echo
-echo "── [1/6] redaction (privacy boundary) ──"
+echo "── [1/7] redaction (privacy boundary) ──"
 if ! "$PY" tests/test_redaction.py; then fail=1; fi
 
 echo
-echo "── [2/6] parser accuracy vs upstream expectations ──"
+echo "── [2/7] parser accuracy vs upstream expectations ──"
 if ! "$PY" tests/eval_parser.py --strict; then fail=1; fi
 
 echo
-echo "── [3/6] end-to-end + ground truth ──"
+echo "── [3/7] end-to-end + ground truth ──"
 # Ground-truth reports ship in-repo, so this runs on any machine / in CI.
 if ! "$PY" tests/test_e2e.py; then fail=1; fi
 
 echo
-echo "── [4/6] pytest suite (per-file corpus + gap pinning) ──"
+echo "── [4/7] pytest suite (per-file corpus + gap pinning) ──"
 if "$PY" -m pytest --version >/dev/null 2>&1; then
   # --basetemp inside the repo: pytest otherwise leaves ~80 scratch dirs in the
   # system temp, and a sandbox/CI hook that rate-limits bulk deletes can turn a
@@ -38,13 +38,18 @@ else
 fi
 
 echo
-echo "── [5/6] import + CLI smoke ──"
-if ! "$PY" -c "import mcd; assert mcd.__version__; mcd.RuleSet.load()"; then fail=1; fi
-if ! "$PY" -m mcd --rules >/dev/null 2>&1; then fail=1; fi
-echo "  ✓ import mcd + rule load + CLI --rules"
+echo "── [5/7] import + CLI smoke ──"
+# The tick used to print unconditionally, so a failing import still showed a
+# green check above a red gate summary. Both checks now guard it.
+if "$PY" -c "import mcd; assert mcd.__version__; mcd.RuleSet.load()" \
+   && "$PY" -m mcd --rules >/dev/null 2>&1; then
+  echo "  ✓ import mcd + rule load + CLI --rules"
+else
+  fail=1
+fi
 
 echo
-echo "── [6/6] lint (correctness rules only) ──"
+echo "── [6/7] lint (correctness rules only) ──"
 # Optional tool: the gate must not fail because a contributor has no ruff.
 # Config lives in pyproject.toml under [tool.ruff]; select = F, E9, B.
 if "$PY" -m ruff --version >/dev/null 2>&1; then
@@ -53,6 +58,17 @@ elif command -v ruff >/dev/null 2>&1; then
   if ! ruff check mcd/ tools/ tests/; then fail=1; fi
 else
   echo "  (ruff not installed -- skipping; pip install ruff)"
+fi
+
+echo
+echo "── [7/7] docs quote the numbers in corpus/*.json ──"
+# Prose is not compiled: ROADMAP once cited 45.8% while its own later section
+# said 50.8%, and README advertised two shipped features as in-progress for a
+# quarter. This gate recomputes each ratio from its JSON source and fails if the
+# doc stopped matching -- it cannot catch a wrong sentence, only a stale number,
+# which is the drift that actually happened.
+if ! "$PY" -m pytest tests/test_doc_numbers.py -q --basetemp=tmp/.pytest-tmp; then
+  fail=1
 fi
 
 echo

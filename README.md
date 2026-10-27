@@ -256,8 +256,8 @@ python tests/debug_platform.py --file <log>   # why did it detect X?
 
 ## Roadmap
 
-- [~] Web UI — paste, pick a file or drop one, and get a verdict in the browser, no install. Chinese by default with an EN toggle (the diagnosis text itself comes from the YAML rules). Runs client-side under Pyodide and is verified end-to-end against a real browser; the public URL is pending one-time Pages enablement (see ROADMAP 0.2).
-- [~] GitHub Action — auto-diagnose crash reports posted to issues (`action.yml` + `diagnose-issue.yml` are in place; awaiting a live-issue dogfood run, ROADMAP 1C.1)
+- [x] Web UI — paste, pick a file or drop one, and get a verdict in the browser, no install. Chinese by default with an EN toggle (the diagnosis text itself comes from the YAML rules). Runs client-side under Pyodide; 34 end-to-end checks pass against a real browser, and it is live at https://pop1022.github.io/mc-crash-doctor/ (ROADMAP 0.2).
+- [x] GitHub Action — auto-diagnose crash reports posted to issues (`action.yml` + `diagnose-issue.yml`). Dogfooded on a real issue; the run also exposed a rule bug the test suite could not (ROADMAP 1C.1).
 - [ ] Mod graph from the Modrinth API (75k mods) — known-conflict and version-compat lookup
 - [ ] Weak-supervised classifier trained on maintainer labels, to rank suspects when rules are inconclusive
 - [ ] Client-side log tailing (watch `latest.log` live)

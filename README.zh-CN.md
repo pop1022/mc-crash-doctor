@@ -244,8 +244,8 @@ python tests/debug_platform.py --file <log>   # 为什么判成了 X？
 
 ## 路线图
 
-- [~] 网页版——浏览器里粘贴、选文件或拖放，直接给出结论，无需安装。界面默认中文，可一键切英文（诊断正文仍来自 YAML 规则）。基于 Pyodide 全在本地跑，已用真实浏览器端到端验证；公网地址待一次性启用 Pages（见 ROADMAP 0.2）。
-- [~] GitHub Action——自动诊断 issue 里贴的崩溃报告（`action.yml` + `diagnose-issue.yml` 已就位，待真 issue 试跑，ROADMAP 1C.1）
+- [x] 网页版——浏览器里粘贴、选文件或拖放，直接给出结论，无需安装。界面默认中文，可一键切英文（诊断正文仍来自 YAML 规则）。基于 Pyodide 全在本地跑；真实浏览器端到端 34 项全过，已上线 https://pop1022.github.io/mc-crash-doctor/ （见 ROADMAP 0.2）。
+- [x] GitHub Action——自动诊断 issue 里贴的崩溃报告（`action.yml` + `diagnose-issue.yml`）。已在真实 issue 上 dogfood 通过，并在那次跑批里抓到一个测试套件抓不到的规则缺陷（ROADMAP 1C.1）
 - [ ] 基于 Modrinth API（7.5 万模组）的模组关系图——已知冲突与版本兼容查询
 - [ ] 用维护者标签做弱监督分类器，在规则无法定论时给嫌疑模组排序
 - [ ] 客户端日志实时跟踪（监听 `latest.log`）
