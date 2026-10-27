@@ -181,15 +181,6 @@ PROBES: list[Probe] = [
     Probe("bukkit", T2, _p(r"\bbukkit\b")),
 ]
 
-# Families that collapse to the same coarse label (used by the eval harness).
-FAMILY: dict[str, str] = {
-    "paper": "bukkit", "spigot": "bukkit", "craftbukkit": "bukkit",
-    "purpur": "bukkit", "folia": "bukkit", "glowstone": "bukkit",
-    "mohist": "hybrid", "magma": "hybrid", "arclight": "hybrid",
-    "catserver": "hybrid",
-}
-
-
 @dataclass
 class PlatformHit:
     loader: str
@@ -256,22 +247,6 @@ def detect_platform_detailed(text: str) -> tuple[PlatformHit | None, PlatformHit
     loader_hits = [h for h in hits if h.axis == "loader"]
     launcher_hits = [h for h in hits if h.axis == "launcher"]
     return _best(loader_hits), _best(launcher_hits)
-
-
-def detect_platform(text: str) -> tuple[str, str]:
-    """Return ``(loader_id, evidence)``; ``("vanilla", "")`` when nothing fires."""
-    hit, _ = detect_platform_detailed(text)
-    if hit is None:
-        return "vanilla", ""
-    return hit.loader, hit.evidence
-
-
-def detect_launcher(text: str) -> tuple[str, str]:
-    """Return ``(launcher_id, evidence)``; ``("", "")`` when not launcher-wrapped."""
-    _, hit = detect_platform_detailed(text)
-    if hit is None:
-        return "", ""
-    return hit.loader, hit.evidence
 
 
 # --- version extraction -----------------------------------------------------

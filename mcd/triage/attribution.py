@@ -162,11 +162,6 @@ def _index_mods(rep: CrashReport) -> tuple[dict[str, Mod], dict[str, Mod], dict[
     return by_id, by_jar, {}
 
 
-_JAR_NOISE = re.compile(
-    r"^(?:\[?[^\]]*\]?\s*)?|[-_]?(?:mc|forge|neoforge|fabric|quilt|universal|"
-    r"client|server|all|release|snapshot)[-_]?\d*[\w.\-]*$", re.I)
-
-
 def _norm_jar(name: str) -> str:
     """Reduce a jar filename to a comparable stem: 'create-1.20.1-0.5.1.jar' -> 'create'."""
     n = name
