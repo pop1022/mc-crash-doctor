@@ -166,6 +166,78 @@ def test_unparseable_range_becomes_undecided_not_ok(tmp_path):
     assert "undecided" in rep.summary_line()
 
 
+def test_a_second_unreadable_range_is_also_listed(tmp_path):
+    """One `undecided` per (requirer, dependency), not one per run.
+
+    Forge allows a comma-separated *union* of ranges -- `[1.20,1.21),[1.22,1.23)`
+    is legal in the wild and is not parsed here. It has to surface exactly like
+    `banana-runtime` does: the failure is "we did not understand this", not "we
+    did not look".
+    """
+    root = pack(tmp_path, {
+        "sodium.jar": {"fabric.mod.json": fabric("sodium", "0.5.8")},
+        "a.jar": {"fabric.mod.json": fabric(
+            "moda", "1.0", depends={"sodium": "banana-runtime"})},
+        "b.jar": {"fabric.mod.json": fabric(
+            "modb", "1.0", depends={"sodium": "[1.20,1.21),[1.22,1.23)"})},
+    })
+    rep = analyse(root)
+    assert rep.findings == []
+    assert len(rep.undecided) == 2
+    assert {u["required_by"] for u in rep.undecided} == {"moda", "modb"}
+    assert {u["range"] for u in rep.undecided} == {
+        "banana-runtime", "[1.20,1.21),[1.22,1.23)"}
+
+
+def test_duplicate_jars_suppress_the_version_check_by_design(tmp_path):
+    """Two jars declaring one mod makes the range check impossible: doctor.py
+    skips it (`len({j.name for j, _ in target}) > 1`) because it cannot know
+    which version the loader will actually pick, and comparing against a guess
+    would add noise on top of the duplicate finding that already explains it.
+
+    The trade is pinned here so it stays visible: the declared range *is*
+    dropped, and dropped without an `undecided` entry either. If that ever
+    becomes the wrong call, this is the test that has to change first.
+    """
+    root = pack(tmp_path, {
+        "sodium-a.jar": {"fabric.mod.json": fabric("sodium", "0.5.8")},
+        "sodium-b.jar": {"fabric.mod.json": fabric("sodium", "0.4.0")},
+        "create.jar": {"fabric.mod.json": fabric(
+            "create", "1.0", depends={"sodium": "[0.5.0,0.6)"})},
+    })
+    rep = analyse(root)
+    assert [f.kind for f in rep.findings] == ["pack.duplicate-mod"]
+    assert rep.undecided == []
+
+
+def test_not_checked_names_exactly_the_known_gaps():
+    """The old assertion was `assert data["not_checked"]` -- true for any
+    non-empty list, so implementing client-only-on-server and forgetting to
+    delete the entry would leave the tool telling every user it cannot see
+    something it now sees, and no test would notice.
+
+    Pinning the exact text forces the constant and this test to move in the same
+    commit: any change to what we admit not checking becomes a deliberate edit
+    in two places, which is the point.
+    """
+    from mcd.pack.doctor import NOT_CHECKED
+
+    assert len(NOT_CHECKED) == 2, NOT_CHECKED
+    assert "client-only mod installed on a server" in NOT_CHECKED[0]
+    assert "environment" in NOT_CHECKED[0]
+    assert "nested jars" in NOT_CHECKED[1]
+
+
+def test_json_not_checked_is_the_constant_not_a_copy(tmp_path):
+    """`to_dict` must publish the same list the renderer prints; a divergence
+    would make the JSON and the text report contradict each other."""
+    from mcd.pack.doctor import NOT_CHECKED
+
+    root = pack(tmp_path, {"sodium.jar": {
+        "fabric.mod.json": fabric("sodium", "0.5.8")}})
+    assert analyse(root).to_dict()["not_checked"] == list(NOT_CHECKED)
+
+
 def test_jar_without_a_known_manifest_is_listed_not_skipped(tmp_path):
     root = pack(tmp_path, {
         "guava-32.1.2-jre.jar": {"META-INF/MANIFEST.MF": "Manifest-Version: 1.0\n"},
