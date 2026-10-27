@@ -1,0 +1,524 @@
+{
+  "corpus": 454,
+  "uncovered": 117,
+  "granularities": {
+    "signature (shipped)": {
+      "clusters": 107,
+      "singletons": 100,
+      "top1": 4,
+      "top5": 13,
+      "top10": 20,
+      "top10_share": 0.17094017094017094,
+      "per_rule": 1.0934579439252337,
+      "rules_to_25pct": 20,
+      "rules_to_50pct": 49
+    },
+    "kind": {
+      "clusters": 48,
+      "singletons": 30,
+      "top1": 12,
+      "top5": 47,
+      "top10": 71,
+      "top10_share": 0.6068376068376068,
+      "per_rule": 2.4375,
+      "rules_to_25pct": 3,
+      "rules_to_50pct": 7
+    },
+    "kind+bucket": {
+      "clusters": 60,
+      "singletons": 38,
+      "top1": 6,
+      "top5": 30,
+      "top10": 52,
+      "top10_share": 0.4444444444444444,
+      "per_rule": 1.95,
+      "rules_to_25pct": 5,
+      "rules_to_50pct": 13
+    },
+    "kind+bucket+site": {
+      "clusters": 64,
+      "singletons": 43,
+      "top1": 6,
+      "top5": 29,
+      "top10": 50,
+      "top10_share": 0.42735042735042733,
+      "per_rule": 1.828125,
+      "rules_to_25pct": 6,
+      "rules_to_50pct": 14
+    },
+    "kind+template": {
+      "clusters": 106,
+      "singletons": 101,
+      "top1": 5,
+      "top5": 16,
+      "top10": 21,
+      "top10_share": 0.1794871794871795,
+      "per_rule": 1.1037735849056605,
+      "rules_to_25pct": 19,
+      "rules_to_50pct": 48
+    }
+  },
+  "writable_clusters": [
+    {
+      "key": "java.lang.Throwable | Manually triggered debug crash",
+      "size": 5,
+      "descriptions": 1,
+      "members": [
+        "CaffeineMC__sodium/3473",
+        "CaffeineMC__sodium/3505",
+        "CaffeineMC__sodium/3627",
+        "CaffeineMC__sodium/3873",
+        "CaffeineMC__sodium/3915"
+      ]
+    },
+    {
+      "key": "java.lang.ClassNotFoundException | <fqcn>",
+      "size": 5,
+      "descriptions": 1,
+      "members": [
+        "FabricMC__fabric-loader/1034",
+        "FabricMC__fabric-loader/821",
+        "Shadows-of-Fire__Placebo/38",
+        "Snownee__Jade/613",
+        "TheIllusiveC4__Curios/391"
+      ]
+    },
+    {
+      "key": "org.spongepowered.asm.mixin.throwables.ClassAlreadyLoadedException | <fqcn> was already classloaded",
+      "size": 2,
+      "descriptions": 1,
+      "members": [
+        "embeddedt__ModernFix/533",
+        "embeddedt__ModernFix/534"
+      ]
+    },
+    {
+      "key": "java.lang.RuntimeException | Minecraft game provider couldn't locate the game! The",
+      "size": 2,
+      "descriptions": 1,
+      "members": [
+        "FabricMC__fabric-loader/1032",
+        "FabricMC__fabric-loader/714"
+      ]
+    },
+    {
+      "key": "java.lang.ClassCastException | Cannot coerce loader value to a String",
+      "size": 2,
+      "descriptions": 1,
+      "members": [
+        "QuiltMC__quilt-loader/368",
+        "QuiltMC__quilt-loader/415"
+      ]
+    }
+  ],
+  "candidates": {
+    "missing-class": {
+      "why": "a class a mod needs is absent -> wrong MC/loader build, or a missing dependency jar",
+      "gain": [
+        "FabricMC__fabric-loader/1034",
+        "FabricMC__fabric-loader/821",
+        "FabricMC__fabric-loader/900",
+        "Shadows-of-Fire__Placebo/38",
+        "Snownee__Jade/613",
+        "TheIllusiveC4__Curios/391"
+      ],
+      "collision": [
+        "embeddedt__ModernFix/535",
+        "FabricMC__fabric-api/4491",
+        "FabricMC__fabric-api/4704",
+        "FabricMC__fabric-loader/1026",
+        "FabricMC__fabric-loader/1027",
+        "FabricMC__fabric-loader/1100",
+        "FabricMC__fabric-loader/637",
+        "FabricMC__fabric-loader/668",
+        "FabricMC__fabric-loader/711",
+        "FabricMC__fabric-loader/799",
+        "FabricMC__fabric-loader/825",
+        "FabricMC__fabric-loader/827",
+        "FabricMC__fabric-loader/882",
+        "FabricMC__fabric-loader/902",
+        "McJtyMods__RFTools/2015",
+        "mekanism__Mekanism/8238",
+        "mekanism__Mekanism/8483",
+        "mekanism__Mekanism/8508",
+        "Shadows-of-Fire__Placebo/71",
+        "Snownee__Jade/432",
+        "Snownee__Jade/495",
+        "Snownee__Jade/584",
+        "Snownee__Jade/610",
+        "Snownee__Jade/622",
+        "Snownee__Jade/637",
+        "Snownee__Jade/741",
+        "TeamTwilight__twilightforest/2392",
+        "TeamTwilight__twilightforest/2564",
+        "TheIllusiveC4__Curios/414",
+        "TheIllusiveC4__Curios/608"
+      ]
+    },
+    "game-provider": {
+      "why": "the launcher pointed the loader at a game directory it cannot read",
+      "gain": [
+        "FabricMC__fabric-loader/1032",
+        "FabricMC__fabric-loader/1093",
+        "FabricMC__fabric-loader/714"
+      ],
+      "collision": []
+    },
+    "class-already-loaded": {
+      "why": "two jars ship the same mixin target class -> duplicate or renamed jar",
+      "gain": [
+        "embeddedt__ModernFix/533",
+        "embeddedt__ModernFix/534"
+      ],
+      "collision": []
+    },
+    "quilt-coerce": {
+      "why": "Quilt could not parse a loader version constraint in a mod's metadata",
+      "gain": [
+        "QuiltMC__quilt-loader/368",
+        "QuiltMC__quilt-loader/415"
+      ],
+      "collision": []
+    },
+    "debug-crash": {
+      "why": "a human pressed the debug-crash key -- not a fault; kept to show what the shipped draft actually buys",
+      "gain": [
+        "CaffeineMC__sodium/3473",
+        "CaffeineMC__sodium/3505",
+        "CaffeineMC__sodium/3627",
+        "CaffeineMC__sodium/3873",
+        "CaffeineMC__sodium/3915"
+      ],
+      "collision": []
+    }
+  },
+  "loader_stratum": {
+    "blind_files": 218,
+    "files": 75,
+    "undiagnosed": 32,
+    "families": {
+      "java.lang.ClassNotFoundException | <fqcn>": [
+        "corpus/github/FabricMC__fabric-loader/1034.crash.txt",
+        "corpus/github/FabricMC__fabric-loader/821.crash.txt"
+      ],
+      "java.lang.RuntimeException | Minecraft game provider couldn't locate the game! The": [
+        "corpus/github/FabricMC__fabric-loader/1093.crash.txt",
+        "corpus/github/FabricMC__fabric-loader/714.crash.txt"
+      ],
+      "java.lang.NullPointerException | Cannot invoke <q> because <q> is null": [
+        "corpus/github/FabricMC__fabric-loader/877.crash.txt",
+        "corpus/github/FabricMC__fabric-loader/947.crash.txt"
+      ]
+    },
+    "rows": [
+      {
+        "file": "corpus/github/FabricMC__fabric-api/4622.crash.txt",
+        "repo": "FabricMC__fabric-api",
+        "kind": "java.io.IOException",
+        "message": "Packet play/clientbound/minecraft:level_particles (class_2675) was larger than I",
+        "bucket": "other",
+        "description": "Packet handling error",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-api/4669.crash.txt",
+        "repo": "FabricMC__fabric-api",
+        "kind": "java.lang.IllegalArgumentException",
+        "message": "Data for attachment 'worldgendevtools:feature_positions' was too big (32768 byte",
+        "bucket": "other",
+        "description": "Exception chunk generation/loading",
+        "site": "no-frames"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-api/4738.crash.txt",
+        "repo": "FabricMC__fabric-api",
+        "kind": "java.lang.ClassCastException",
+        "message": "class net.minecraft.client.renderer.RenderType$CompositeRenderType cannot be cas",
+        "bucket": "other",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-api/4753.crash.txt",
+        "repo": "FabricMC__fabric-api",
+        "kind": "net.fabricmc.fabric.impl.registry.sync.RemapException",
+        "message": "Received 4 registry entries that are unknown to this client.",
+        "bucket": "mod-bug",
+        "description": "",
+        "site": "mod"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-api/4986.crash.txt",
+        "repo": "FabricMC__fabric-api",
+        "kind": "java.io.IOException",
+        "message": "the jar file F:\\Modded MC\\curseforge\\minecraft\\Instances\\Prominence II Hasturian",
+        "bucket": "other",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-loader/1034.crash.txt",
+        "repo": "FabricMC__fabric-loader",
+        "kind": "java.lang.ClassNotFoundException",
+        "message": "net.minecraft.client.Minecraft",
+        "bucket": "mod-loading",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-loader/1080.crash.txt",
+        "repo": "FabricMC__fabric-loader",
+        "kind": "java.nio.file.AccessDeniedException",
+        "message": "<HOME>\\AppData\\Roaming.minecraft\\<INSTANCE>\\org\\ow2\\asm\\asm\\9.8\\asm-9.8.jar",
+        "bucket": "other",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-loader/1093.crash.txt",
+        "repo": "FabricMC__fabric-loader",
+        "kind": "java.lang.RuntimeException",
+        "message": "Minecraft game provider couldn't locate the game! The game may be absent from th",
+        "bucket": "other",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-loader/1135.crash.txt",
+        "repo": "FabricMC__fabric-loader",
+        "kind": "java.lang.IllegalArgumentException",
+        "message": "The specified resource 'fabric-biome-api-v1.mixins.json' was invalid or could no",
+        "bucket": "mixin",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-loader/1153.crash.txt",
+        "repo": "FabricMC__fabric-loader",
+        "kind": "java.lang.IllegalArgumentException",
+        "message": "Malformed \\uxxxx encoding.",
+        "bucket": "other",
+        "description": "Initializing game",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-loader/620.crash.txt",
+        "repo": "FabricMC__fabric-loader",
+        "kind": "java.lang.IllegalArgumentException",
+        "message": "The specified resource 'omega-config.mixins.json' was invalid or could not be re",
+        "bucket": "mixin",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-loader/714.crash.txt",
+        "repo": "FabricMC__fabric-loader",
+        "kind": "java.lang.RuntimeException",
+        "message": "Minecraft game provider couldn't locate the game! The game may be absent from th",
+        "bucket": "other",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-loader/750.crash.txt",
+        "repo": "FabricMC__fabric-loader",
+        "kind": "java.lang.IllegalArgumentException",
+        "message": "The specified resource 'fabric-crash-report-info-v1.mixins.json' was invalid or",
+        "bucket": "mixin",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-loader/778.crash.txt",
+        "repo": "FabricMC__fabric-loader",
+        "kind": "java.lang.RuntimeException",
+        "message": "Non-unique Mixin config name mixins.reach-entity-attributes.json used by the mod",
+        "bucket": "other",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-loader/783.crash.txt",
+        "repo": "FabricMC__fabric-loader",
+        "kind": "java.lang.IllegalStateException",
+        "message": "trying to load net.fabricmc.loader.impl.FabricLoaderImpl from target class loade",
+        "bucket": "mod-loading",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-loader/805.crash.txt",
+        "repo": "FabricMC__fabric-loader",
+        "kind": "java.nio.file.NoSuchFileException",
+        "message": "<HOME>\\AppData\\Roaming\\.minecraft\\<INSTANCE>\\iris-reserved\\1.19.4",
+        "bucket": "other",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-loader/821.crash.txt",
+        "repo": "FabricMC__fabric-loader",
+        "kind": "java.lang.ClassNotFoundException",
+        "message": "net.fabricmc.loader.impl.launch.knot.KnotClient",
+        "bucket": "mod-loading",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-loader/835.crash.txt",
+        "repo": "FabricMC__fabric-loader",
+        "kind": "org.gradle.api.plugins.UnknownPluginException",
+        "message": "Plugin [id: 'fabric-loom', version: '1.3-SNAPSHOT'] was not found in any of the",
+        "bucket": "mod-bug",
+        "description": "",
+        "site": "mod"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-loader/877.crash.txt",
+        "repo": "FabricMC__fabric-loader",
+        "kind": "java.lang.NullPointerException",
+        "message": "Cannot invoke \"net.minecraft.class_2680.method_26204()\" because \"$$10\" is null",
+        "bucket": "other",
+        "description": "Unexpected error",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-loader/883.crash.txt",
+        "repo": "FabricMC__fabric-loader",
+        "kind": "java.lang.RuntimeException",
+        "message": "broken shader file",
+        "bucket": "mod-bug",
+        "description": "",
+        "site": "mod"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-loader/905.crash.txt",
+        "repo": "FabricMC__fabric-loader",
+        "kind": "java.lang.RuntimeException",
+        "message": "Unfixable conflicts",
+        "bucket": "mod-bug",
+        "description": "",
+        "site": "mod"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-loader/913.crash.txt",
+        "repo": "FabricMC__fabric-loader",
+        "kind": "java.lang.IllegalArgumentException",
+        "message": "Invalid UUID string",
+        "bucket": "mod-loading",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-loader/939.crash.txt",
+        "repo": "FabricMC__fabric-loader",
+        "kind": "net.fabricmc.loader.impl.lib.accesswidener.AccessWidenerFormatException",
+        "message": "line 1: Namespace (named) does not match current runtime namespace (intermediary",
+        "bucket": "other",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-loader/947.crash.txt",
+        "repo": "FabricMC__fabric-loader",
+        "kind": "java.lang.NullPointerException",
+        "message": "Cannot invoke \"net.minecraft.class_3222.method_5682()\" because \"player\" is null",
+        "bucket": "mod-bug",
+        "description": "Ticking player",
+        "site": "mod"
+      },
+      {
+        "file": "corpus/github/FabricMC__fabric-loader/987.crash.txt",
+        "repo": "FabricMC__fabric-loader",
+        "kind": "java.lang.AssertionError",
+        "message": "",
+        "bucket": "other",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/QuiltMC__quilt-loader/224.crash.txt",
+        "repo": "QuiltMC__quilt-loader",
+        "kind": "java.lang.Error",
+        "message": "Why would you set the warning level multiple times?",
+        "bucket": "other",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/QuiltMC__quilt-loader/368.crash.txt",
+        "repo": "QuiltMC__quilt-loader",
+        "kind": "java.lang.ClassCastException",
+        "message": "Cannot coerce loader value to a String",
+        "bucket": "other",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/QuiltMC__quilt-loader/379.crash.txt",
+        "repo": "QuiltMC__quilt-loader",
+        "kind": "io.netty.handler.codec.DecoderException",
+        "message": "Unknown serializer type 111",
+        "bucket": "other",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/QuiltMC__quilt-loader/400.crash.txt",
+        "repo": "QuiltMC__quilt-loader",
+        "kind": "java.lang.Error",
+        "message": "Invalid java.home value? 'D:' for vm 'OpenJDK 64-Bit Server VM'",
+        "bucket": "other",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/QuiltMC__quilt-loader/463.crash.txt",
+        "repo": "QuiltMC__quilt-loader",
+        "kind": "java.io.FileNotFoundException",
+        "message": "<HOME>\\AppData\\Roaming\\gdlauncher_carbon\\data\\instances\\quilt%201.16.5\\instance\\",
+        "bucket": "other",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/QuiltMC__quilt-loader/474.crash.txt",
+        "repo": "QuiltMC__quilt-loader",
+        "kind": "java.lang.StringIndexOutOfBoundsException",
+        "message": "Range [16, 13) out of bounds for length 45",
+        "bucket": "other",
+        "description": "",
+        "site": "platform"
+      },
+      {
+        "file": "corpus/github/QuiltMC__quilt-loader/482.crash.txt",
+        "repo": "QuiltMC__quilt-loader",
+        "kind": "java.lang.ArrayIndexOutOfBoundsException",
+        "message": "Index -1 out of bounds for length 2",
+        "bucket": "other",
+        "description": "",
+        "site": "platform"
+      }
+    ],
+    "kind_histogram": {
+      "java.io.IOException": 2,
+      "java.lang.IllegalArgumentException": 6,
+      "java.lang.ClassCastException": 2,
+      "net.fabricmc.fabric.impl.registry.sync.RemapException": 1,
+      "java.lang.ClassNotFoundException": 2,
+      "java.nio.file.AccessDeniedException": 1,
+      "java.lang.RuntimeException": 5,
+      "java.lang.IllegalStateException": 1,
+      "java.nio.file.NoSuchFileException": 1,
+      "org.gradle.api.plugins.UnknownPluginException": 1,
+      "java.lang.NullPointerException": 2,
+      "net.fabricmc.loader.impl.lib.accesswidener.AccessWidenerFormatException": 1,
+      "java.lang.AssertionError": 1,
+      "java.lang.Error": 2,
+      "io.netty.handler.codec.DecoderException": 1,
+      "java.io.FileNotFoundException": 1,
+      "java.lang.StringIndexOutOfBoundsException": 1,
+      "java.lang.ArrayIndexOutOfBoundsException": 1
+    }
+  }
+}
