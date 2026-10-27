@@ -52,6 +52,16 @@ LIFECYCLE_STATES = frozenset({
     "draft", "experimental", "verified", "stable", "deprecated", "retired",
 })
 
+#: Every top-level rule key `Rule.from_dict` reads. Anything else in a rule
+#: mapping is ignored in silence, which is how `fix:` (for `fixes:`) ships a
+#: diagnosis with no repair steps and no error. Same role as WHEN_KEYS, one
+#: level up -- see `_config_warnings`.
+RULE_KEYS = frozenset({
+    "id", "title", "severity", "priority", "when", "explanation", "fixes",
+    "suspects_from", "confidence", "tags", "refs", "once", "lifecycle_status",
+    "provenance",
+})
+
 _COMPARATORS = {
     "lt": lambda a, b: a < b,
     "le": lambda a, b: a <= b,
@@ -210,6 +220,13 @@ class RuleSet:
                     errors.append(f"{f.name}: missing top-level 'rules:' key")
                     continue
                 for rd in doc.get("rules") or []:
+                    if not isinstance(rd, dict):
+                        # `- just a string` under `rules:` used to escape the
+                        # per-rule handler below (AttributeError is not in its
+                        # except tuple) and take down the whole load.
+                        errors.append(f"{f.name}: rule entry is not a mapping")
+                        continue
+                    errors.extend(_config_warnings(f.name, rd))
                     try:
                         r = Rule.from_dict(rd, source=str(f))
                     except (KeyError, TypeError, ValueError) as e:
@@ -299,13 +316,19 @@ def _compare(spec: dict | int | float | None, value: float | None) -> bool:
 
 #: Every `when` key `evaluate_rule` actually honours.
 #:
-#: Unknown keys are silently ignored -- there is no schema and no warning, so
-#: `exception_msgg:` (a typo) produces a rule that never fires and reports
-#: nothing wrong. That is the same failure shape as the frame parser dropping
-#: half the stack without raising (ROADMAP 1E.5). `WHEN_KEYS` exists so a test
-#: can walk the shipped packs and refuse a key the engine does not read.
-#: User-supplied packs are deliberately NOT hard-failed at load: breaking a
-#: working rule directory to catch a typo is the wrong trade.
+#: Unknown keys are silently ignored -- there is no schema. That is the same
+#: failure shape as the frame parser dropping half the stack without raising
+#: (ROADMAP 1E.5). `WHEN_KEYS` exists so a test can walk the shipped packs and
+#: refuse a key the engine does not read, and so `_config_warnings` can tell a
+#: rule author what load ignored.
+#:
+#: Correction, measured on tmp/unknown_key_probe.py: an earlier version of this
+#: note claimed a typo "produces a rule that never fires". That is the harmless
+#: half. A `when` block whose keys are ALL unknown keeps `w` non-empty, so it
+#: passes the emptiness check at the top of `evaluate_rule` with no conditions
+#: left to fail -- the rule becomes a catch-all. A rule written to match
+#: `exceptions: [OutOfMemoryError]` fired on 4/4 synthetic fixtures, including
+#: ones with no OOM in them. Silent, and a false positive on every report.
 WHEN_KEYS = frozenset({
     # regex conditions (positive)
     "description", "exception", "exception_msg", "exception_any", "caused_by",
@@ -319,10 +342,48 @@ WHEN_KEYS = frozenset({
 })
 
 
+def _config_warnings(fname: str, rd: dict[str, Any]) -> list[str]:
+    """Warn about rule keys that the loader or the engine will not read.
+
+    Warn, never raise: breaking a user's working rule directory to catch a typo
+    is the wrong trade (see WHEN_KEYS). These land in `RuleSet.errors`, which
+    the CLI prints to stderr, and `--strict` still promotes them to a failure --
+    which is what strict is for.
+
+    Builtin packs cannot regress through this path: tests/test_rule_metadata.py
+    already fails on an unknown `when` key, and the top-level sibling of that
+    assertion lives in tests/test_rule_config_warnings.py.
+    """
+    rid = rd.get("id", "?")
+    out: list[str] = []
+    unknown = sorted(set(rd) - RULE_KEYS)
+    if unknown:
+        out.append(f"{fname}: rule {rid!r}: unknown key(s) {unknown} "
+                   f"-- not read by the loader")
+    when = rd.get("when")
+    if isinstance(when, dict) and when:
+        unknown_when = sorted(set(when) - WHEN_KEYS)
+        if unknown_when:
+            tail = ("the other conditions still apply"
+                    if set(when) & WHEN_KEYS
+                    else "nothing is left to match on, so it matches EVERY report")
+            out.append(f"{fname}: rule {rid!r}: unknown condition(s) "
+                       f"{unknown_when} -- ignored by the engine; {tail}")
+    return out
+
+
 def evaluate_rule(rule: Rule, ctx: MatchCtx) -> dict[str, re.Match] | None:
     """Return capture dict if the rule matches, else None."""
     w = rule.when
-    if not w:
+    # A `when` block containing no key the engine reads matches nothing, exactly
+    # like an empty one. Without the second half of this test, `exceptions:`
+    # (typo for `exception:`) leaves a non-empty dict with no conditions in it,
+    # so the emptiness check passes and there is nothing left to fail -- the
+    # rule becomes a catch-all. Measured before the fix: such a rule fired on
+    # 4/4 synthetic fixtures, including reports with no OOM in them, and said
+    # nothing. `_config_warnings` names the typo at load time; this stops it
+    # from also producing a finding.
+    if not w or not (w.keys() & WHEN_KEYS):
         return None
     caps: dict[str, re.Match] = {}
 
