@@ -478,6 +478,44 @@ versions follow [SemVer](https://semver.org/).
   row is already under `corpus/github/`. Idempotent; preserves field order;
   refuses to clear a non-empty field.
 
+### Fixed
+- **A misspelled `when:` key turned a rule into a catch-all.** There is no rules
+  schema, so `Rule.from_dict` reads the keys it knows and ignores the rest
+  silently. That is harmless when the typo sits next to a valid condition and
+  catastrophic when it is the only one: `exceptions:` (for `exception:`) leaves
+  a non-empty `when` dict with no conditions in it, which passes the emptiness
+  check at the top of `evaluate_rule` with nothing left to fail. Measured: a
+  rule written to match `OutOfMemoryError` fired on **4/4** synthetic fixtures,
+  including a GL crash. Two fixes at the two layers where the mistake does
+  damage: `RULE_KEYS` + `_config_warnings()` name the rule and the key at load
+  time (`RuleSet.errors`, printed by the CLI; `--strict` still promotes them),
+  and `evaluate_rule` now refuses a `when` with no recognised key, exactly like
+  an empty one — a stderr warning does not help a library caller, who never
+  sees it. Same sweep caught `fix:` for `fixes:` (rule fires with zero repair
+  steps) and `explaination:` (empty explanation). 12 tests in
+  `tests/test_rule_config_warnings.py`, including the control that the correctly
+  spelled rule still fires and that a *partial* typo keeps the valid conditions.
+- **`- just a string` under `rules:` aborted the whole load.** The per-rule
+  handler caught `KeyError/TypeError/ValueError`, and the resulting
+  `AttributeError` escaped it (and the error message built inside the handler
+  would have raised too). One malformed entry now costs one warning.
+
+### Removed
+- **Four definitions nothing referenced** (`tmp/deadcode_scan.py`: 296
+  module-scope defs, references counted as Name/Attribute/import/arg/keyword
+  sites): `triage/attribution._JAR_NOISE` — an abandoned regex superseded by
+  `_norm_jar`'s inline passes, whose own alternation starts with an empty branch
+  and therefore matched every string; `parser/platform.FAMILY` — its comment
+  claimed the eval harness used it, and the harness computes family labels
+  itself; `parser/platform.detect_platform` / `detect_launcher` — wrappers over
+  `detect_platform_detailed` with no callers since `report.py` moved to the
+  one-pass version. Zero-reference defs: 4 → 0.
+- **Build residue from the working tree** — `build/` (a full duplicate of `mcd/`
+  that every grep and symbol scan had to filter out by hand), `egg-info/`,
+  `.pytest_cache/`, all `__pycache__/`. None of it was tracked; all of it is
+  recreated by `python -m build`, which this round's wheel rebuild demonstrated
+  by recreating `build/` and `egg-info/` minutes after the delete.
+
 ### Changed
 - **The "write more rules" plan was measured and stopped** (ROADMAP 1E.3,
   risk R4). The premise of 1E.3 was that the bottleneck is the cost of writing a
