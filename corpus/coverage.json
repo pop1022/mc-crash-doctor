@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-10-25T14:55:36+0800",
+  "generated_at": "2026-10-27T17:59:21+0800",
   "files_scanned": 454,
   "parse_errors": 0,
   "parse_error_examples": [],
   "totals": {
     "n": 454,
-    "diagnosed": 337,
-    "rate": 0.7423,
-    "uncovered": 117
+    "diagnosed": 344,
+    "rate": 0.7577,
+    "uncovered": 110
   },
   "buckets": {
     "watchdog": {
@@ -48,8 +48,8 @@
     },
     "other": {
       "n": 175,
-      "diagnosed": 97,
-      "severe": 95,
+      "diagnosed": 104,
+      "severe": 102,
       "verdict_known": 44
     }
   },
@@ -86,24 +86,9 @@
       "bucket": "mixin"
     },
     {
-      "signature": "java.lang.RuntimeException: An exception occurred when launching the server!",
-      "count": 2,
-      "bucket": "other"
-    },
-    {
-      "signature": "java.lang.RuntimeException: Minecraft game provider couldn't locate the game! The game may be absent from th",
-      "count": 2,
-      "bucket": "other"
-    },
-    {
       "signature": "net.fabricmc.loader.impl.FormattedException: java.lang.RuntimeException: Could not execute entrypoint stage 'preLaunch' due t",
       "count": 2,
       "bucket": "mod-loading"
-    },
-    {
-      "signature": "java.lang.ClassCastException: Cannot coerce loader value to a String",
-      "count": 2,
-      "bucket": "other"
     },
     {
       "signature": "com.mojang.text2speech.Narrator$InitializeException: Failed to load library flite",
@@ -196,6 +181,11 @@
       "bucket": "other"
     },
     {
+      "signature": "java.lang.RuntimeException: An exception occurred when launching the server!",
+      "count": 1,
+      "bucket": "other"
+    },
+    {
       "signature": "java.lang.ClassNotFoundException: net.minecraft.client.Minecraft",
       "count": 1,
       "bucket": "mod-loading"
@@ -224,12 +214,22 @@
       "signature": "java.lang.RuntimeException: Error creating Mixin config fabric-crash-report-info-v1.mixins.json for mod fabr",
       "count": 1,
       "bucket": "mixin"
+    },
+    {
+      "signature": "java.lang.RuntimeException: Non-unique Mixin config name mixins.reach-entity-attributes.json used by the mod",
+      "count": 1,
+      "bucket": "other"
+    },
+    {
+      "signature": "java.lang.RuntimeException: Could not create directory <HOME>\\AppData\\Roaming\\.minecraft\\<INSTANCE>\\iris-res",
+      "count": 1,
+      "bucket": "other"
     }
   ],
   "uncovered_verdicts": {
-    "(none)": 97,
-    "user_error_or_config": 19,
+    "(none)": 91,
+    "user_error_or_config": 18,
     "bug_in_this_mod": 1
   },
-  "elapsed_seconds": 36.0
+  "elapsed_seconds": 24.0
 }

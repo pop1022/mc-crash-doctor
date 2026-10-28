@@ -6,6 +6,32 @@ versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Three rules, chosen by measurement rather than by reading the tail.**
+  `loader.game-provider-missing` (the launcher handed the loader a directory
+  with no game behind it), `mixin.class-already-loaded` (two jars transform the
+  same class in one launch) and `quilt.version-constraint-unreadable` (Quilt
+  cannot parse a mod's loader constraint). They come from the five clusters
+  `docs/DECISION-coverage.md` identified as homogeneous enough to be one honest
+  rule each; before writing them, each was measured as a predicate over all 454
+  reports: gain 3 / 2 / 2, collision 0 on already-diagnosed reports.
+
+  Corpus diagnosis rate **337/454 = 74.2% -> 344/454 = 75.8%**, uncovered
+  117 -> 110. Two of the seven reports were already in the dev split, one is
+  now diagnosed in blind; the other four are pinned into dev as provenance,
+  which is what `pinned_paths()` exists for. So the quotable number is the
+  corpus one, not the blind delta:
+  blind 155/218 -> 156/216 (72%) is half structural (two undiagnosed reports
+  left the set), and BLIND_EVAL.md now says so in the table header.
+
+- **`tools/coverage_granularity.py`** -- re-clusters the uncovered set at five
+  granularities and applies the test the raw count was missing (same kind, same
+  message template, one description). It also measures each candidate rule the
+  way a rule would fire: `gain` vs `collision`. That distinction is why no
+  generic `missing-class` rule was written: gain 6, collision 30, and 24 of the
+  30 are already answered by `mod.coremod-missing`.
+
+
 ### Changed
 - **Rules are parsed once per process, not once per report.** `RuleSet.load()`
   cost 24.9 ms and `diagnose()` called it for every file, so 67% of a single

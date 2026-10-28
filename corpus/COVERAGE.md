@@ -5,15 +5,15 @@
 > 分类只看报告的**输入属性**（异常类型、描述文本、加载器、最深一层抛出点），
 > 不看命中了哪条规则——否则「未覆盖的类别」会按定义不存在。
 
-生成时间：2026-10-25T14:55:36+0800　·　扫描 454 份　·　耗时 36.0s
+生成时间：2026-10-27T17:59:21+0800　·　扫描 454 份　·　耗时 24.0s
 
 ## 一、总体
 
-**诊断率 74.2%**（337/454），未覆盖 117 份，解析失败 0 份。
+**诊断率 75.8%**（344/454），未覆盖 110 份，解析失败 0 份。
 
-未覆盖绝对数最大：`other` 78 份、`mod-bug` 16 份、`mod-loading` 11 份（合计 105/117）。
+未覆盖绝对数最大：`other` 71 份、`mod-bug` 16 份、`mod-loading` 11 份（合计 98/110）。
 
-诊断率最低：`other` 55%（175 份）、`native` 57%（7 份）。**下一条规则应当从这两处来。**
+诊断率最低：`native` 57%（7 份）、`other` 59%（175 份）。**下一条规则应当从这两处来。**
 
 ## 二、按失败模式
 
@@ -27,7 +27,7 @@
 | `plugin` 服务端插件（Bukkit 系） | 0 | 0 | — | 0 | 0 |
 | `world-data` 世界数据 / 区块 / 实体 tick | 21 | 20 | 95% | 20 | 3 |
 | `mod-bug` 根因抛在模组自身代码里 | 91 | 75 | 82% | 74 | 12 |
-| `other` 其他 / 未分类 | 175 | 97 | 55% | 95 | 44 |
+| `other` 其他 / 未分类 | 175 | 104 | 59% | 102 | 44 |
 
 ### 空桶：不是规则缺陷，是语料里没有这一类
 
@@ -53,10 +53,7 @@
 |---|---:|---|
 | `java.lang.Throwable: Manually triggered debug crash` | 4 | `other` |
 | `java.lang.reflect.InvocationTargetException` | 3 | `mixin` |
-| `java.lang.RuntimeException: An exception occurred when launching the server!` | 2 | `other` |
-| `java.lang.RuntimeException: Minecraft game provider couldn't locate the game! The game may be absent from th` | 2 | `other` |
 | `net.fabricmc.loader.impl.FormattedException: java.lang.RuntimeException: Could not execute entrypoint stage 'preLaunch' due t` | 2 | `mod-loading` |
-| `java.lang.ClassCastException: Cannot coerce loader value to a String` | 2 | `other` |
 | `com.mojang.text2speech.Narrator$InitializeException: Failed to load library flite` | 2 | `native` |
 | `org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: @Shadow field val$p_434753_ was not located in the target class net.minecraft.cl` | 1 | `mixin` |
 | `java.lang.NullPointerException: Cannot invoke "net.caffeinemc.mods.sodium.client.render.chunk.translucent_sortin` | 1 | `mod-bug` |
@@ -71,6 +68,9 @@
 | `java.lang.ArrayIndexOutOfBoundsException: Index 4 out of bounds for length 4` | 1 | `mod-bug` |
 | `io.netty.handler.codec.DecoderException: java.io.IOException: Packet play/clientbound/minecraft:level_particles (class_26` | 1 | `other` |
 | `java.lang.IllegalArgumentException: Data for attachment 'worldgendevtools:feature_positions' was too big (32768 byte` | 1 | `other` |
+| `java.lang.ClassCastException: class net.minecraft.client.renderer.RenderType$CompositeRenderType cannot be cas` | 1 | `other` |
+| `net.fabricmc.fabric.impl.registry.sync.RemapException: Received 4 registry entries that are unknown to this client.` | 1 | `mod-bug` |
+| `java.lang.RuntimeException: error remapping game jars [F:\Modded MC\curseforge\minecraft\Install\versions\fa` | 1 | `other` |
 
 ## 四、未覆盖报告是否本来就无解？
 
@@ -79,11 +79,11 @@
 
 | 维护者结论 | 数量 |
 |---|---:|
-| `(none)` | 97 |
-| `user_error_or_config` | 19 |
+| `(none)` | 91 |
+| `user_error_or_config` | 18 |
 | `bug_in_this_mod` | 1 |
 
-**这项检查对 83% 的缺口没有结论**：97/117 份未覆盖报告的 issue 本身没有任何维护者标签。所以不能读成「缺口本来就无解」——只能说对剩下的 20 份，维护者认为它们有明确原因，其中 `user_error_or_config` 与 `bug_in_this_mod` 是规则应该能命中的。
+**这项检查对 83% 的缺口没有结论**：91/110 份未覆盖报告的 issue 本身没有任何维护者标签。所以不能读成「缺口本来就无解」——只能说对剩下的 19 份，维护者认为它们有明确原因，其中 `user_error_or_config` 与 `bug_in_this_mod` 是规则应该能命中的。
 
 ## 五、方法
 

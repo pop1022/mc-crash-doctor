@@ -6,17 +6,17 @@
     "known_issue/outdated_version": "ambiguous, reported not scored"
   },
   "split": {
-    "dev": 236,
-    "blind": 218
+    "dev": 238,
+    "blind": 216
   },
   "blind": {
-    "n": 218,
+    "n": 216,
     "parse_errors": 0,
-    "diagnosed": 155,
-    "root_cause": 217,
+    "diagnosed": 156,
+    "root_cause": 215,
     "by_verdict": {
       "(none)": [
-        159,
+        157,
         111
       ],
       "bug_in_this_mod": [
@@ -45,7 +45,7 @@
       ],
       "user_error_or_config": [
         42,
-        28
+        29
       ]
     },
     "mod_repo": {
@@ -63,25 +63,25 @@
       "ambig_repo": 2
     },
     "loader_repo": {
-      "n": 75,
-      "diag": 43
+      "n": 73,
+      "diag": 44
     }
   },
   "ci95": {
     "method": "Wilson score interval, z=1.959963984540054",
     "min_quotable_n": 30,
     "diagnosed": {
-      "k": 155,
-      "n": 218,
-      "rate": 0.7110091743119266,
-      "lo": 0.6476,
-      "hi": 0.7671
+      "k": 156,
+      "n": 216,
+      "rate": 0.7222222222222222,
+      "lo": 0.659,
+      "hi": 0.7777
     },
     "root_cause": {
-      "k": 217,
-      "n": 218,
-      "rate": 0.9954128440366973,
-      "lo": 0.9745,
+      "k": 215,
+      "n": 216,
+      "rate": 0.9953703703703703,
+      "lo": 0.9742,
       "hi": 0.9992
     },
     "mod_repo_diagnosed": {
@@ -92,11 +92,11 @@
       "hi": 0.8429
     },
     "loader_repo_diagnosed": {
-      "k": 43,
-      "n": 75,
-      "rate": 0.5733333333333334,
-      "lo": 0.4605,
-      "hi": 0.679
+      "k": 44,
+      "n": 73,
+      "rate": 0.6027397260273972,
+      "lo": 0.4881,
+      "hi": 0.7071
     },
     "blame_error": {
       "k": 1,
@@ -108,10 +108,10 @@
     "by_verdict_diagnosed": {
       "(none)": {
         "k": 111,
-        "n": 159,
-        "rate": 0.6981132075471698,
-        "lo": 0.6228,
-        "hi": 0.7641
+        "n": 157,
+        "rate": 0.7070063694267515,
+        "lo": 0.6316,
+        "hi": 0.7726
       },
       "bug_in_this_mod": {
         "k": 3,
@@ -156,11 +156,11 @@
         "hi": 1.0
       },
       "user_error_or_config": {
-        "k": 28,
+        "k": 29,
         "n": 42,
-        "rate": 0.6666666666666666,
-        "lo": 0.5155,
-        "hi": 0.7899
+        "rate": 0.6904761904761905,
+        "lo": 0.5397,
+        "hi": 0.8093
       }
     },
     "quotable_as_rate": {
@@ -192,29 +192,5 @@
       "repo_mod": "tconstruct",
       "url": "https://github.com/SlimeKnights/TinkersConstruct/issues/5590"
     }
-  ],
-  "dev": {
-    "n": 236,
-    "diagnosed": 182,
-    "bug_hit": 2,
-    "bug_n": 4,
-    "blame_errors": 1,
-    "scored": 6,
-    "ci": {
-      "diagnosed": {
-        "k": 182,
-        "n": 236,
-        "rate": 0.7711864406779662,
-        "lo": 0.7135,
-        "hi": 0.8202
-      },
-      "blame_error": {
-        "k": 1,
-        "n": 6,
-        "rate": 0.16666666666666666,
-        "lo": 0.0301,
-        "hi": 0.5635
-      }
-    }
-  }
+  ]
 }

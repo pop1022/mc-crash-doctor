@@ -114,16 +114,46 @@ def test_granularity_numbers_in_decision_doc():
     ]
     miss = _missing("docs/DECISION-coverage.md", needles)
     assert not miss, f"docs/DECISION-coverage.md does not cite {miss}"
-    # the two numbers the decision turns on
-    for cand, gain, collision in (("missing-class", 6, 30),
-                                  ("game-provider", 3, 0),
-                                  ("class-already-loaded", 2, 0),
-                                  ("quilt-coerce", 2, 0)):
+
+    # The decision turned on these. Three were implemented on 2026-10-27, so the
+    # invariant flipped: a shipped candidate must now have nothing left to gain,
+    # and its rule must exist. If a rule is deleted, the rule-id lookup fails and
+    # the gain reappears -- both make this test red.
+    from mcd.rules.engine import RuleSet
+
+    ids = set(RuleSet.load().ids())
+    shipped = {"game-provider": "loader.game-provider-missing",
+               "class-already-loaded": "mixin.class-already-loaded",
+               "quilt-coerce": "quilt.version-constraint-unreadable"}
+    for cand, rule_id in shipped.items():
         row = d["candidates"][cand]
-        assert len(row["gain"]) == gain, f"{cand}: gain moved"
-        assert len(row["collision"]) == collision, f"{cand}: collision moved"
+        assert rule_id in ids, f"{cand}: rule {rule_id} is not in the shipped pack"
+        assert len(row["gain"]) == 0, (
+            f"{cand}: {len(row['gain'])} reports are still undiagnosed -- the rule "
+            f"stopped covering them")
+    # not written on purpose: 30 collisions buys 6 reports
+    row = d["candidates"]["missing-class"]
+    assert len(row["gain"]) == 6 and len(row["collision"]) == 30, (
+        "missing-class changed; re-read why it was rejected before touching this")
     assert sum(1 for c in d["writable_clusters"]
                if c["descriptions"] == 1) >= 1
+
+
+# --- corpus/rule-lifecycle.json --------------------------------------------
+def test_rule_count_in_docs():
+    """Adding a rule changes two numbers every summary quotes. AUDIT is the
+    snapshot a successor reads first, so it must not say 41 when the packs hold
+    44 -- that is the same class of drift as the stale match rate."""
+    lc = _json("corpus/rule-lifecycle.json")
+    rules = lc["rules"]
+    total = len(rules)
+    verified = sum(1 for v in rules.values()
+                   if v.get("lifecycle_status") == "verified")
+    miss = _missing("docs/AUDIT-2026-10-27.md",
+                    [f"{total} 条规则", f"{verified} verified"])
+    assert not miss, (
+        f"docs/AUDIT-2026-10-27.md does not cite {miss} "
+        f"(rule-lifecycle.json: {total} rules, {verified} verified)")
 
 
 # --- the drift that started this file --------------------------------------

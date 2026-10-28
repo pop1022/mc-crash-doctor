@@ -6,6 +6,25 @@
 >
 > 复现：`python tools/coverage_granularity.py --json` → `corpus/coverage-granularity.json`
 
+## 落地结果（2026-10-27，本节后写）
+
+三条规则已写进 `mcd/rules/builtin/mod-loading.yaml`：`loader.game-provider-missing`、
+`mixin.class-already-loaded`、`quilt.version-constraint-unreadable`。
+
+| 指标 | 写之前 | 写之后 |
+|---|---|---|
+| 未覆盖 | 117 | **110** |
+| 语料诊断率 | 337/454 = 74.2% | **344/454 = 75.8%** |
+| 签名聚类 | 107 簇 / 100 单例 / 1.09 份每规则 | **103 簇 / 99 单例 / 1.07** |
+| kind+template 聚类 | 106 簇 / 101 单例 / 1.10 份每规则 | **102 簇 / 100 单例 / 1.08 份/规则** |
+| 盲测 | 155/218 = 71.1%，加载器仓 43/75 = 57.3% | **156/216 = 72.2%，加载器仓 44/73 = 60.3%** |
+
+**盲测那两个数不要当成绩读。** 三条规则各钉了一份来源报告作为 provenance，
+`pinned_paths()` 会把这些报告强制划入 dev，所以盲测集从 218 缩到 216；
+其中只有 1 份（fabric-loader/1093）原本在盲测里且现在被诊断出来。也就是说
+72.2% 里有一半是"移走了两份未诊断样本"的结构效应。可引用的成绩是语料那条：
+**74.2% → 75.8%，且这 454 份一份没少。**
+
 ## 结论
 
 1. **长尾确实枯竭了。** 但 `RULE_CANDIDATES.md` 的 1.09 份/规则**不是**聚类粒度造成的——
@@ -63,7 +82,11 @@
 
 ## 候选规则的真实收益（454 份全语料，按"异常链中任一条命中"计）
 
-| 候选 | gain（未覆盖 → 覆盖） | collision（已覆盖 → 再报一次） |
+> 下表是实现**之前**的测量。实现之后，前三条的 gain 与 collision 都是 0——
+> 它们已经变成规则本身，`tools/coverage_granularity.py` 里用 rule-id 区分，
+> 否则一条已实现的候选会被自己的 finding 记成"撞车"。
+
+| 候选 | gain（实现前：未覆盖 → 覆盖） | collision（实现前：已覆盖 → 再报一次） |
 |---|---:|---:|
 | `missing-class` | 6 | **30** |
 | `game-provider` | 3 | 0 |

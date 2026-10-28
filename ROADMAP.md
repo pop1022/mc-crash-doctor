@@ -357,8 +357,8 @@
     `other` 113 / 43%，`oom` 与 `plugin` 为 0（见下）。
     > **历史口径（2026-10-21），已作废。** 上面这些桶级数字不要引用：它们是
     > 1E.5 修帧解析之前的分桶结果。**唯一可引用的覆盖率数字来自
-    > `corpus/COVERAGE.md`（`corpus/coverage.json`）：74.2%（337/454），
-    > 未覆盖 117 份。** 1E.5 修掉 `TRANSFORMER/` 与 JPMS 前缀后，
+    > `corpus/COVERAGE.md`（`corpus/coverage.json`）：75.8%（344/454），
+    > 未覆盖 110 份。** 1E.5 修掉 `TRANSFORMER/` 与 JPMS 前缀后，
     > `_is_platform_frame` 才真正认得出原版帧，62 份报告从 `mod-bug` 移进
     > `other`；两份数字的差不是矛盾，是解析器修好之后的重分类。
     > `tests/test_doc_numbers.py` 会保证这两份文档不再各说一套。
@@ -522,7 +522,8 @@
     `test_rule_metadata.py` 全部守卫；每条草稿带 `generated_by: {model, date}`；
     `id` 必须以 `candidate.` 开头；`lifecycle_status` 必须是 `draft`；
     fixture 必须真实存在；**在语料上一份报告都不命中的草稿直接拒收**。
-  - **先量后写，于是写不动了**：117 份未覆盖 / 107 个签名聚类 / 100 个是单例
+  - **先量后写，于是写不动了**：当时 117 份未覆盖 / 107 个签名聚类 / 100 个是单例
+    （2026-10-27 追加：按同样口径已降到 103 簇，因为写掉了 3 条规则——见下）
     / 平均一条规则 **1.09 份**报告 / top-10 只占 **17%**。R4 的停手判据是
     top-10 < 30%，**判据触发**：写规则不再是瓶颈，再写 100 条窄规则也买不到
     100 份报告的信任。
@@ -530,7 +531,7 @@
     （5 份报告，`Description: Manually triggered debug crash`，即用户按 F3+C
     故意生成的报告；这 5 份分别是屏幕闪烁、纹理渗透、FPS 掉帧、卡死、视频设置
     打不开——崩溃报告里根本没有它们要报的症状）。实测把未覆盖从 117 降到 112、
-    诊断率 74.2% → **75.3%**（`MCD_RULES_PATH=corpus/rule-drafts` 跑出来的，
+    诊断率（当时基线 74.2%）→ **75.3%**（`MCD_RULES_PATH=corpus/rule-drafts` 跑出来的，
     不是估算）。另外 116 份的结论是**给结构化输出、交给人**，不是继续堆规则。
   - 产出：`corpus/RULE_CANDIDATES.md`（107 个聚类的清单 + 建议 `when` 骨架 +
     单例标注）、`corpus/rule-candidates.json`、`corpus/rule-drafts/`、
@@ -651,8 +652,8 @@
    `https://pop1022.github.io/mc-crash-doctor/`（读回验证过页面标题与输入框在
    真实 HTML 里，不是 404）。Phase 0 不再是阻塞项。
 2. **1D.4 已完成**：`corpus/COVERAGE.md` 回答"下一条规则写什么"。全语料
-   454 份诊断率 **74.2%**（337/454），未覆盖 **117** 份——且集中处已经变了：
-   `other` 独占 78 份（67%），`mod-bug` 只剩 16 份（1E.5 修好帧解析后，
+   454 份诊断率 **75.8%**（344/454），未覆盖 **110** 份——且集中处已经变了：
+   `other` 独占 71 份（41% 未覆盖），`mod-bug` 只剩 16 份（1E.5 修好帧解析后，
    62 份从 `mod-bug` 移进了 `other`，因为原版帧终于认得出来了）。
    下一个规则的靶子是 `other`，不是 `mod-bug`。顺带修掉三个采集缺陷：
    34 行重复记录、`mod_ids` 死字段（0 → 106 份 / 3,080 个 id）、`jars` 无分类。

@@ -2,9 +2,11 @@
 
 WHY A GUARD AND NOT A REGENERATION
   The pack is a generated artifact (ROADMAP 1E.3) and it makes one load-bearing
-  claim in its third line: *117 of 454 reports are uncovered, 107 clusters,
-  top-10 = 17%, therefore R4 fires and writing rules is no longer the
-  bottleneck.* Every follow-up decision quotes those numbers.
+  claim in its third line: how many of the 454 reports are uncovered, how many
+  clusters they form, and whether R4 fires. Every follow-up decision quotes
+  those numbers. They move whenever a rule is added -- 117/107/17% before the
+  three rules of 2026-10-27, 110/103/15% after -- which is exactly why this file
+  checks them against the JSON instead of restating them.
 
   The failure mode is not "the pack is wrong" -- it is **the corpus moving and
   the pack not following**. Add a rule, regenerate `coverage.json` (which the

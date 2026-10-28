@@ -1,20 +1,20 @@
 {
   "summary": {
     "total_reports": 454,
-    "uncovered": 117,
-    "clusters": 107,
-    "singletons": 100,
-    "singleton_reports": 100,
-    "reports_per_rule": 1.09,
+    "uncovered": 110,
+    "clusters": 103,
+    "singletons": 99,
+    "singleton_reports": 99,
+    "reports_per_rule": 1.07,
     "top_n": 10,
-    "top_n_reports": 20,
-    "top_n_share": 0.1709,
+    "top_n_reports": 17,
+    "top_n_share": 0.1545,
     "r4_threshold": 0.3,
     "r4_fires": true,
     "verdicts": {
-      "reusable": 6,
+      "reusable": 3,
       "needs_generalisation": 1,
-      "singleton": 87,
+      "singleton": 86,
       "singleton+overfit": 13
     }
   },
@@ -94,76 +94,6 @@
       "reports": [
         "Snownee__Jade/423",
         "Snownee__Jade/543"
-      ]
-    },
-    {
-      "signature": "java.lang.ClassCastException: Cannot coerce loader value to a String",
-      "size": 2,
-      "bucket": "other",
-      "kinds": [
-        "java.lang.ClassCastException"
-      ],
-      "description": [],
-      "overfit": [],
-      "verdict": "reusable",
-      "when": {
-        "exception": [
-          "^java\\.lang\\.ClassCastException$"
-        ],
-        "exception_msg": [
-          "Cannot\\ coerce\\ loader\\ value\\ to\\ a\\ String"
-        ]
-      },
-      "reports": [
-        "QuiltMC__quilt-loader/368",
-        "QuiltMC__quilt-loader/415"
-      ]
-    },
-    {
-      "signature": "java.lang.RuntimeException: An exception occurred when launching the server!",
-      "size": 2,
-      "bucket": "other",
-      "kinds": [
-        "java.lang.RuntimeException",
-        "java.nio.file.FileSystemException"
-      ],
-      "description": [],
-      "overfit": [],
-      "verdict": "reusable",
-      "when": {
-        "exception": [
-          "^(java\\.lang\\.RuntimeException|java\\.nio\\.file\\.FileSystemException)$"
-        ],
-        "exception_msg": [
-          "An\\ exception\\ occurred\\ when\\ launching\\ the\\ server!"
-        ]
-      },
-      "reports": [
-        "FabricMC__fabric-loader/1022",
-        "FabricMC__fabric-loader/1093"
-      ]
-    },
-    {
-      "signature": "java.lang.RuntimeException: Minecraft game provider couldn't locate the game! The game may be absent from th",
-      "size": 2,
-      "bucket": "other",
-      "kinds": [
-        "java.lang.RuntimeException"
-      ],
-      "description": [],
-      "overfit": [],
-      "verdict": "reusable",
-      "when": {
-        "exception": [
-          "^java\\.lang\\.RuntimeException$"
-        ],
-        "exception_msg": [
-          "Minecraft\\ game\\ provider\\ couldn't\\ locate\\ the\\ game!\\ The\\ game\\ may\\ be\\ absent\\ from\\ th"
-        ]
-      },
-      "reports": [
-        "FabricMC__fabric-loader/1032",
-        "FabricMC__fabric-loader/714"
       ]
     },
     {
@@ -1333,6 +1263,28 @@
       ]
     },
     {
+      "signature": "java.lang.RuntimeException: An exception occurred when launching the server!",
+      "size": 1,
+      "bucket": "other",
+      "kinds": [
+        "java.nio.file.FileSystemException"
+      ],
+      "description": [],
+      "overfit": [],
+      "verdict": "singleton",
+      "when": {
+        "exception": [
+          "^java\\.nio\\.file\\.FileSystemException$"
+        ],
+        "exception_msg": [
+          "An\\ exception\\ occurred\\ when\\ launching\\ the\\ server!"
+        ]
+      },
+      "reports": [
+        "FabricMC__fabric-loader/1022"
+      ]
+    },
+    {
       "signature": "java.lang.RuntimeException: Could not create directory <HOME>\\AppData\\Roaming\\.minecraft\\<INSTANCE>\\iris-res",
       "size": 1,
       "bucket": "other",
@@ -2375,50 +2327,6 @@
       },
       "reports": [
         "TheIllusiveC4__Curios/410"
-      ]
-    },
-    {
-      "signature": "org.spongepowered.asm.mixin.throwables.ClassAlreadyLoadedException: net.minecraft.server.world.ServerChunkLoadingManager was already classloaded",
-      "size": 1,
-      "bucket": "other",
-      "kinds": [
-        "org.spongepowered.asm.mixin.throwables.ClassAlreadyLoadedException"
-      ],
-      "description": [],
-      "overfit": [],
-      "verdict": "singleton",
-      "when": {
-        "exception": [
-          "^org\\.spongepowered\\.asm\\.mixin\\.throwables\\.ClassAlreadyLoadedException$"
-        ],
-        "exception_msg": [
-          "net\\.minecraft\\.server\\.world\\.ServerChunkLoadingManager\\ was\\ already\\ classloaded"
-        ]
-      },
-      "reports": [
-        "embeddedt__ModernFix/533"
-      ]
-    },
-    {
-      "signature": "org.spongepowered.asm.mixin.throwables.ClassAlreadyLoadedException: net.minecraft.world.World was already classloaded",
-      "size": 1,
-      "bucket": "other",
-      "kinds": [
-        "org.spongepowered.asm.mixin.throwables.ClassAlreadyLoadedException"
-      ],
-      "description": [],
-      "overfit": [],
-      "verdict": "singleton",
-      "when": {
-        "exception": [
-          "^org\\.spongepowered\\.asm\\.mixin\\.throwables\\.ClassAlreadyLoadedException$"
-        ],
-        "exception_msg": [
-          "net\\.minecraft\\.world\\.World\\ was\\ already\\ classloaded"
-        ]
-      },
-      "reports": [
-        "embeddedt__ModernFix/534"
       ]
     },
     {

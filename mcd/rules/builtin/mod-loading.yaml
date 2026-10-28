@@ -405,3 +405,87 @@ rules:
       - quilt-loader/497
       - harvested:quilt-loader/497
     lifecycle_status: verified
+
+  # --- three families found by tools/coverage_granularity.py (A2, 2026-10-27) --
+  # The uncovered tail is exhausted: 117 reports collapse to 5 clusters that are
+  # homogeneous enough to be one rule. These are three of them, each measured
+  # before writing: gain 3/2/2 on the 454 corpus, collision 0 on already-
+  # diagnosed reports. One report per rule is pinned as provenance, which also
+  # moves it into the dev split -- the other members stay blind, so the effect is
+  # measured on reports the rules were not written from.
+
+  - id: loader.game-provider-missing
+    title: "The loader could not find the game itself"
+    severity: fatal
+    priority: 9
+    confidence: 0.9
+    tags: [launcher, load-time, fabric, quilt]
+    when:
+      exception_msg:
+        - "game provider couldn't locate the game"
+    explanation: >-
+      The launcher started the mod loader, but the loader found no Minecraft
+      installation behind it: the working directory points at an empty or
+      half-installed instance. This is a launcher/instance problem, not a mod
+      problem -- no mod version will fix it, and the stack trace above the
+      message is only the loader noticing.
+    fixes:
+      - "Point the launcher at an instance that has a `versions/<mc-version>/` folder with the vanilla jar, or reinstall that instance."
+      - "If you started it by hand, run from the instance directory (the one containing `mods/`), not from the launcher's root folder."
+      - "In Prism/MultiMC: Edit Instance -> Version -> re-download the game files."
+    suspects_from: []
+    provenance:
+      fixtures:
+      - fabric-loader/714
+    lifecycle_status: verified
+
+  - id: mixin.class-already-loaded
+    title: "A class was already loaded when mixin tried to patch it"
+    severity: error
+    priority: 12
+    confidence: 0.85
+    tags: [mixin, load-time, duplicate]
+    when:
+      exception:
+        - "ClassAlreadyLoadedException"
+    explanation: >-
+      Mixin found its target class already loaded when it tried to apply a
+      patch, so it refused. In practice this means two things tried to transform
+      the same class in one launch: usually the same mod installed twice (a
+      normal jar plus a `-dev`/`-api`/`-universal` copy, or two versions), or a
+      mod shipping a patched copy of a Minecraft class next to the real one.
+    fixes:
+      - "Keep exactly one jar per mod in `mods/` -- look for a second copy with a different suffix or version."
+      - "If the class named after the colon is a Minecraft class, look for a patched-game jar (for example `minecraft-client-patched-*.jar`) sitting next to the normal game files."
+      - "Do not expect the log to update: mixin state is per-launch, so remove the duplicate and restart rather than re-reading this crash."
+    suspects_from: []
+    provenance:
+      fixtures:
+      - ModernFix/533
+    lifecycle_status: verified
+
+  - id: quilt.version-constraint-unreadable
+    title: "Quilt could not read a mod's loader version constraint"
+    severity: error
+    priority: 12
+    confidence: 0.85
+    tags: [quilt, metadata, load-time]
+    when:
+      exception:
+        - "ClassCastException"
+      exception_msg:
+        - "Cannot coerce loader value to a String"
+    explanation: >-
+      A mod declares its loader dependency with a value type Quilt's metadata
+      reader does not accept -- an object where the schema expects a string.
+      Quilt stops instead of guessing which version you meant, so nothing loads
+      even though the mod itself may be fine on another loader.
+    fixes:
+      - "Update that mod: the fix is almost always newer metadata (the author needs to emit a plain string)."
+      - "If the mod works on Fabric, run the pack on Fabric -- this metadata shape targets Fabric's schema."
+      - "Report the mod id from the log to its author; it is a one-line change on their side."
+    suspects_from: []
+    provenance:
+      fixtures:
+      - quilt-loader/368
+    lifecycle_status: verified

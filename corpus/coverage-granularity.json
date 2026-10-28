@@ -1,61 +1,61 @@
 {
   "corpus": 454,
-  "uncovered": 117,
+  "uncovered": 110,
   "granularities": {
     "signature (shipped)": {
-      "clusters": 107,
-      "singletons": 100,
+      "clusters": 103,
+      "singletons": 99,
       "top1": 4,
-      "top5": 13,
-      "top10": 20,
-      "top10_share": 0.17094017094017094,
-      "per_rule": 1.0934579439252337,
-      "rules_to_25pct": 20,
-      "rules_to_50pct": 49
+      "top5": 12,
+      "top10": 17,
+      "top10_share": 0.15454545454545454,
+      "per_rule": 1.0679611650485437,
+      "rules_to_25pct": 21,
+      "rules_to_50pct": 48
     },
     "kind": {
-      "clusters": 48,
+      "clusters": 47,
       "singletons": 30,
       "top1": 12,
-      "top5": 47,
-      "top10": 71,
-      "top10_share": 0.6068376068376068,
-      "per_rule": 2.4375,
+      "top5": 44,
+      "top10": 66,
+      "top10_share": 0.6,
+      "per_rule": 2.3404255319148937,
       "rules_to_25pct": 3,
       "rules_to_50pct": 7
     },
     "kind+bucket": {
-      "clusters": 60,
-      "singletons": 38,
+      "clusters": 59,
+      "singletons": 39,
       "top1": 6,
       "top5": 30,
-      "top10": 52,
-      "top10_share": 0.4444444444444444,
-      "per_rule": 1.95,
+      "top10": 50,
+      "top10_share": 0.45454545454545453,
+      "per_rule": 1.8644067796610169,
       "rules_to_25pct": 5,
-      "rules_to_50pct": 13
+      "rules_to_50pct": 12
     },
     "kind+bucket+site": {
-      "clusters": 64,
-      "singletons": 43,
+      "clusters": 63,
+      "singletons": 44,
       "top1": 6,
       "top5": 29,
-      "top10": 50,
-      "top10_share": 0.42735042735042733,
-      "per_rule": 1.828125,
-      "rules_to_25pct": 6,
+      "top10": 48,
+      "top10_share": 0.43636363636363634,
+      "per_rule": 1.746031746031746,
+      "rules_to_25pct": 5,
       "rules_to_50pct": 14
     },
     "kind+template": {
-      "clusters": 106,
-      "singletons": 101,
+      "clusters": 102,
+      "singletons": 100,
       "top1": 5,
-      "top5": 16,
-      "top10": 21,
-      "top10_share": 0.1794871794871795,
-      "per_rule": 1.1037735849056605,
-      "rules_to_25pct": 19,
-      "rules_to_50pct": 48
+      "top5": 13,
+      "top10": 18,
+      "top10_share": 0.16363636363636364,
+      "per_rule": 1.0784313725490196,
+      "rules_to_25pct": 20,
+      "rules_to_50pct": 47
     }
   },
   "writable_clusters": [
@@ -81,33 +81,6 @@
         "Shadows-of-Fire__Placebo/38",
         "Snownee__Jade/613",
         "TheIllusiveC4__Curios/391"
-      ]
-    },
-    {
-      "key": "org.spongepowered.asm.mixin.throwables.ClassAlreadyLoadedException | <fqcn> was already classloaded",
-      "size": 2,
-      "descriptions": 1,
-      "members": [
-        "embeddedt__ModernFix/533",
-        "embeddedt__ModernFix/534"
-      ]
-    },
-    {
-      "key": "java.lang.RuntimeException | Minecraft game provider couldn't locate the game! The",
-      "size": 2,
-      "descriptions": 1,
-      "members": [
-        "FabricMC__fabric-loader/1032",
-        "FabricMC__fabric-loader/714"
-      ]
-    },
-    {
-      "key": "java.lang.ClassCastException | Cannot coerce loader value to a String",
-      "size": 2,
-      "descriptions": 1,
-      "members": [
-        "QuiltMC__quilt-loader/368",
-        "QuiltMC__quilt-loader/415"
       ]
     }
   ],
@@ -157,27 +130,17 @@
     },
     "game-provider": {
       "why": "the launcher pointed the loader at a game directory it cannot read",
-      "gain": [
-        "FabricMC__fabric-loader/1032",
-        "FabricMC__fabric-loader/1093",
-        "FabricMC__fabric-loader/714"
-      ],
+      "gain": [],
       "collision": []
     },
     "class-already-loaded": {
       "why": "two jars ship the same mixin target class -> duplicate or renamed jar",
-      "gain": [
-        "embeddedt__ModernFix/533",
-        "embeddedt__ModernFix/534"
-      ],
+      "gain": [],
       "collision": []
     },
     "quilt-coerce": {
       "why": "Quilt could not parse a loader version constraint in a mod's metadata",
-      "gain": [
-        "QuiltMC__quilt-loader/368",
-        "QuiltMC__quilt-loader/415"
-      ],
+      "gain": [],
       "collision": []
     },
     "debug-crash": {
@@ -193,17 +156,13 @@
     }
   },
   "loader_stratum": {
-    "blind_files": 218,
-    "files": 75,
-    "undiagnosed": 32,
+    "blind_files": 216,
+    "files": 73,
+    "undiagnosed": 29,
     "families": {
       "java.lang.ClassNotFoundException | <fqcn>": [
         "corpus/github/FabricMC__fabric-loader/1034.crash.txt",
         "corpus/github/FabricMC__fabric-loader/821.crash.txt"
-      ],
-      "java.lang.RuntimeException | Minecraft game provider couldn't locate the game! The": [
-        "corpus/github/FabricMC__fabric-loader/1093.crash.txt",
-        "corpus/github/FabricMC__fabric-loader/714.crash.txt"
       ],
       "java.lang.NullPointerException | Cannot invoke <q> because <q> is null": [
         "corpus/github/FabricMC__fabric-loader/877.crash.txt",
@@ -275,15 +234,6 @@
         "site": "platform"
       },
       {
-        "file": "corpus/github/FabricMC__fabric-loader/1093.crash.txt",
-        "repo": "FabricMC__fabric-loader",
-        "kind": "java.lang.RuntimeException",
-        "message": "Minecraft game provider couldn't locate the game! The game may be absent from th",
-        "bucket": "other",
-        "description": "",
-        "site": "platform"
-      },
-      {
         "file": "corpus/github/FabricMC__fabric-loader/1135.crash.txt",
         "repo": "FabricMC__fabric-loader",
         "kind": "java.lang.IllegalArgumentException",
@@ -307,15 +257,6 @@
         "kind": "java.lang.IllegalArgumentException",
         "message": "The specified resource 'omega-config.mixins.json' was invalid or could not be re",
         "bucket": "mixin",
-        "description": "",
-        "site": "platform"
-      },
-      {
-        "file": "corpus/github/FabricMC__fabric-loader/714.crash.txt",
-        "repo": "FabricMC__fabric-loader",
-        "kind": "java.lang.RuntimeException",
-        "message": "Minecraft game provider couldn't locate the game! The game may be absent from th",
-        "bucket": "other",
         "description": "",
         "site": "platform"
       },
@@ -446,15 +387,6 @@
         "site": "platform"
       },
       {
-        "file": "corpus/github/QuiltMC__quilt-loader/368.crash.txt",
-        "repo": "QuiltMC__quilt-loader",
-        "kind": "java.lang.ClassCastException",
-        "message": "Cannot coerce loader value to a String",
-        "bucket": "other",
-        "description": "",
-        "site": "platform"
-      },
-      {
         "file": "corpus/github/QuiltMC__quilt-loader/379.crash.txt",
         "repo": "QuiltMC__quilt-loader",
         "kind": "io.netty.handler.codec.DecoderException",
@@ -503,11 +435,11 @@
     "kind_histogram": {
       "java.io.IOException": 2,
       "java.lang.IllegalArgumentException": 6,
-      "java.lang.ClassCastException": 2,
+      "java.lang.ClassCastException": 1,
       "net.fabricmc.fabric.impl.registry.sync.RemapException": 1,
       "java.lang.ClassNotFoundException": 2,
       "java.nio.file.AccessDeniedException": 1,
-      "java.lang.RuntimeException": 5,
+      "java.lang.RuntimeException": 3,
       "java.lang.IllegalStateException": 1,
       "java.nio.file.NoSuchFileException": 1,
       "org.gradle.api.plugins.UnknownPluginException": 1,

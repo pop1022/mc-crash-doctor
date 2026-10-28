@@ -32,7 +32,10 @@ Rules applied throughout:
 **Split** (deterministic, reproducible): every report cited in a rule's
 `provenance.fixtures` is forced into the **dev** set — a rule is never
 "blind-tested" on the report that motivated it. Remaining reports are split
-by `sha256("repo/issue") % 10 < 5` → **blind 218 / dev 236**.
+by `sha256("repo/issue") % 10 < 5` → **blind 216 / dev 238**.
+> 2026-10-27: three reports cited as rule provenance are pinned into dev by
+> construction, so the blind set shrank by 2. Every number below is on that
+> reduced set; do not compare them to an older run without noting n.
 
 **Attribution scoring is direction-aware**, driven by the maintainer's
 weak-supervision verdict (harvested from issue labels):
@@ -53,15 +56,15 @@ two-mod interaction written in opposite order could name different top
 suspects — which made "top-1 is the repo's mod" partly an artefact of prose
 ordering. See `tests/test_invariance.py`.
 
-## Results (blind set, n=218)
+## Results (blind set, n=216)
 
 | metric | value | 95% CI | quotable as a rate? |
 |---|---|---|---|
 | parse errors | 0 | — | yes (it is a count) |
-| diagnosed (≥1 finding) | 155/218 (71%) | [65%, 77%] | yes |
-| root cause extracted | 217/218 (99%) | [97%, 100%] | yes |
+| diagnosed (≥1 finding) | 156/216 (72%) | [66%, 78%] | yes |
+| root cause extracted | 215/216 (100%) | [97%, 100%] | yes |
 | mod repos diagnosed | 112/143 (78%) | [71%, 84%] | yes |
-| loader repos diagnosed | 43/75 (57%) | [46%, 68%] | yes |
+| loader repos diagnosed | 44/73 (60%) | [49%, 71%] | yes |
 | **blame-error rate** | **1/7 scored** | **[3%, 51%]** | **NO — n=7** |
 
 The blame-error row is the one that matters for trust, and it is the one we

@@ -109,28 +109,40 @@ def economics(sizes: list[int], total: int) -> dict:
     }
 
 
-#: Candidate rules, as predicates over a report's exception signatures.
-#: `gain` = currently-undiagnosed reports it would diagnose;
-#: `collision` = already-diagnosed reports it would ALSO fire on, i.e. a second
-#: finding that competes with an existing rule instead of adding coverage.
-CANDIDATES: list[tuple[str, str, object]] = [
+#: Candidate rules: label, why it is a real failure mode, predicate over a
+#: report's exception signatures, and -- once written -- the rule id that
+#: implements it.
+#:
+#: `gain`      reports it would diagnose that nothing diagnoses today
+#: `collision` reports it would ALSO fire on that some *other* rule already
+#:             explains: a second finding competing with an existing one
+#:
+#: The rule-id column matters: without it an implemented candidate looks like it
+#: collides with everything, because the finding covering those reports is its
+#: own. With it, a shipped candidate reads gain 0 / collision 0 -- done.
+CANDIDATES: list[tuple[str, str, object, str | None]] = [
     ("missing-class",
      "a class a mod needs is absent -> wrong MC/loader build, or a missing "
      "dependency jar",
-     lambda s: any(x.startswith("java.lang.ClassNotFoundException") for x in s)),
+     lambda s: any(x.startswith("java.lang.ClassNotFoundException") for x in s),
+     None),
     ("game-provider",
      "the launcher pointed the loader at a game directory it cannot read",
-     lambda s: any("game provider couldn't locate the game" in x for x in s)),
+     lambda s: any("game provider couldn't locate the game" in x for x in s),
+     "loader.game-provider-missing"),
     ("class-already-loaded",
      "two jars ship the same mixin target class -> duplicate or renamed jar",
-     lambda s: any("ClassAlreadyLoadedException" in x for x in s)),
+     lambda s: any("ClassAlreadyLoadedException" in x for x in s),
+     "mixin.class-already-loaded"),
     ("quilt-coerce",
      "Quilt could not parse a loader version constraint in a mod's metadata",
-     lambda s: any("Cannot coerce loader value to a String" in x for x in s)),
+     lambda s: any("Cannot coerce loader value to a String" in x for x in s),
+     "quilt.version-constraint-unreadable"),
     ("debug-crash",
      "a human pressed the debug-crash key -- not a fault; kept to show what the "
      "shipped draft actually buys",
-     lambda s: any("Manually triggered debug crash" in x for x in s)),
+     lambda s: any("Manually triggered debug crash" in x for x in s),
+     None),
 ]
 
 
@@ -141,7 +153,7 @@ def main(argv: list[str] | None = None) -> int:
 
     uncovered: list[dict] = []
     candidate_rows = {label: {"gain": [], "collision": []}
-                      for label, _why, _p in CANDIDATES}
+                      for label, _why, _p, _rid in CANDIDATES}
     for path in files:
         try:
             rep = parse_file(path)
@@ -150,14 +162,19 @@ def main(argv: list[str] | None = None) -> int:
         found = run_rules(rep, ruleset)
         sigs = [b.signature for b in rep.exceptions]
         rel = f"{path.parent.name}/{path.name.replace('.crash.txt', '')}"
-        for label, _why, pred in CANDIDATES:
+        for label, _why, pred, rule_id in CANDIDATES:
             try:
                 hit = bool(pred(sigs))
             except Exception:  # noqa: BLE001
                 hit = False
-            if hit:
-                bucket = "collision" if found else "gain"
-                candidate_rows[label][bucket].append(rel)
+            if not hit:
+                continue
+            explained_elsewhere = [i for i in (f.rule_id for f in found)
+                                   if i != rule_id]
+            if not found:
+                candidate_rows[label]["gain"].append(rel)
+            elif explained_elsewhere:
+                candidate_rows[label]["collision"].append(rel)
         if found:
             continue
         block = rep.exceptions[-1] if rep.exceptions else None
@@ -222,7 +239,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  [{w['size']} 份 / {w['descriptions']} 种描述] {w['key'][:80]}")
 
     print(f"\n{'candidate':22s} {'gain':>5s} {'collision':>10s}")
-    for label, _why, _p in CANDIDATES:
+    for label, _why, _p, _rid in CANDIDATES:
         row = candidate_rows[label]
         print(f"{label:22s} {len(row['gain']):5d} {len(row['collision']):10d}")
 
@@ -267,7 +284,7 @@ def main(argv: list[str] | None = None) -> int:
                 label: {"why": why,
                         "gain": candidate_rows[label]["gain"],
                         "collision": candidate_rows[label]["collision"]}
-                for label, why, _p in CANDIDATES},
+                for label, why, _p, _rid in CANDIDATES},
             "loader_stratum": {
                 "blind_files": len(blind),
                 "files": len(loader_files),
