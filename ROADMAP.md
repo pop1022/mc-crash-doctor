@@ -582,15 +582,15 @@
   （需 `x-api-key` + 审批 + 商用协议，门槛高故延后）。
   **前提**：先把 1D.2b 的匹配率拉起来——当前 50.8% 意味着仍有半个整合包不可见
   （1D.2b 之后 45.8% → 50.8%，`corpus/MODRINTH_MAPPING.json` 的 `match_rate`）。
-- [~] **2.2 Pack Doctor MVP**（5/6：只剩客户端模组误装）：扫描 `mods/` + `manifest.json`，输出**具体
+- [x] **2.2 Pack Doctor MVP**（6/6；2026-10-28 真实包验证后收尾）：扫描 `mods/` + `manifest.json`，输出**具体
   findings**（重复/缺前置/混用/版本不匹配/客户端模组误装）。
   **不做健康分数**（见 VISION §2.2 工程意见），只做可追溯条目。
   直接消费 **1D.1 的本地 jar 清单**（已完成，无需网络）+ 1D.2 的版本约束，
   **必须实现 Maven 区间语义**（`[1.20,1.21)` 含端点区分、裸 `1.20` 是软下限
   而非精确锁定、`[1.20]` 才是恰好——见 RESEARCH §3.5A）。
   **硬要求**：认不出清单的 jar 必须显式列出，不许静默跳过。
-  - **状态（2026-10-25）：本条要求的五类已实现四类，另外多做一个计划外的
-    `pack.declared-conflict`（所以下面列出的是 5 个 finding 类型，不是 5/5）。**
+  - **状态（2026-10-28）：本条要求的五类已全部实现，另外多做一个计划外的
+    `pack.declared-conflict`（所以一共是 6 个 finding 类型）。**
     `mcd/pack/`（`version.py` + `doctor.py` + `render.py`）+ `--pack DIR`。
     已实现：`pack.duplicate-mod` / `pack.missing-dependency` /
     `pack.mixed-loaders` / `pack.version-mismatch` / `pack.declared-conflict`
@@ -599,9 +599,17 @@
     `~`/`^`/`x`/空格合取）。**认不出的区间返回 `None` 并作为 `undecided`
     逐条打印，认不出的 jar 作为 `unreadable` 逐条打印**——这两条是硬要求，
     不是附加功能。
-  - **还剩一项：客户端模组误装。** `mcd/metadata/manifest.py` 目前不读
-    Fabric 的 `environment` 字段，所以检查不了；报告里明写"NOT CHECKED"
-    而不是猜。补这一步要动 reader + 它那 28 个测试，留作下一步。
+  - **[x] 客户端模组误装（2026-10-28 完成）。** `manifest.py` 读 Fabric 根部的
+    `environment` 与 Quilt 的 `minecraft.environment`，`--pack DIR --side
+    server|client` 据此产出 `pack.wrong-side-mod`（双向：客户端包装服务端 mod
+    同样报）。`--side` 同时让 `side=CLIENT/SERVER` 的依赖要求按侧生效 ——
+    实测同一个服务端包：`--side server` 不报 `fusion`/`melody`（正确），
+    `--side client` 会报这两条缺失（也正确）。没给 `--side` 时这两问仍然
+    留在 `not_checked` 里，不猜。
+    诚实标注：本机四个真实包（241/189/159/355 jar）里的 Fabric mod **全部**
+    声明 `environment: "*"`，所以这个 finding 目前没有真实命中样本，只有测试
+    覆盖；Forge/NeoForge 的清单格式根本没有 per-mod 侧别字段，这条检查对它们
+    天然无效。
   - **状态（2026-10-27）：第一次在真实整合包上验证，一次抓出 5 个缺陷。**
     样本：本机 355 jar / 588 MB 的 NeoForge 1.21.1 服务器包（它自己的
     `latest.log` 有 `Done (4.723s)!`，即包是能跑的）。修复前 **35 条 finding，

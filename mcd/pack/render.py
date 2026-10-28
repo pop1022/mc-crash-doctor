@@ -13,7 +13,7 @@ from typing import TextIO
 
 from ..model import Severity
 from ..textfmt import md_cell
-from .doctor import NOT_CHECKED, PackReport
+from .doctor import PackReport
 
 _MARK = {Severity.FATAL: "!!", Severity.ERROR: "x ", Severity.WARNING: "! ",
          Severity.HINT: "- ", Severity.INFO: "  "}
@@ -67,7 +67,7 @@ def render_pack_markdown(rep: PackReport, out: TextIO) -> None:
             out.write(f"- `{u['jar']}` — {u['reason']}\n")
         out.write("\n")
     out.write("<details><summary>What this check does not cover</summary>\n\n")
-    for line in NOT_CHECKED:
+    for line in rep.not_checked():
         out.write(f"- {line}\n")
     out.write("\n</details>\n")
 
@@ -108,4 +108,4 @@ def render_pack_plain(rep: PackReport, out: TextIO, *, color: bool = False) -> N
         for u in rep.unreadable:
             out.write(f"  ? {u['jar']}: {u['reason']}\n")
 
-    out.write("\nnot covered: " + "; ".join(NOT_CHECKED) + "\n")
+    out.write("\nnot covered: " + "; ".join(rep.not_checked()) + "\n")

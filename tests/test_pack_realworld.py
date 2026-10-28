@@ -207,3 +207,102 @@ def test_both_side_requirement_is_still_reported(tmp_path):
     })
     find = analyse(root).by_kind("pack.missing-dependency")
     assert len(find) == 1 and find[0].subject == "fusion"
+
+
+# --- 6. `--side`: what the directory cannot say ----------------------------
+def test_client_only_mod_on_a_server_is_reported(tmp_path):
+    """Fabric/Quilt declare this per mod; a server pack that has one is
+    carrying dead weight. Only checkable when the caller says which side the
+    directory is for."""
+    root = pack(tmp_path, {
+        "sodium.jar": {"fabric.mod.json": fabric("sodium", "0.5.8",
+                                                 environment="client")},
+    })
+    find = analyse(root, side="server").by_kind("pack.wrong-side-mod")
+    assert len(find) == 1
+    assert find[0].subject == "sodium"
+    assert find[0].severity.name == "WARNING"
+    assert "environment=client" in find[0].detail
+
+
+def test_server_only_mod_on_a_client_is_reported(tmp_path):
+    """The reverse direction, so the check is not one-way."""
+    root = pack(tmp_path, {
+        "chunky.jar": {"fabric.mod.json": fabric("chunky", "1.3",
+                                                 environment="server")},
+    })
+    find = analyse(root, side="client").by_kind("pack.wrong-side-mod")
+    assert len(find) == 1 and find[0].subject == "chunky"
+
+
+def test_environment_star_or_missing_is_never_a_wrong_side_finding(tmp_path):
+    """Reverse control. `*` means both sides; absent means the manifest does not
+    say -- which is every Forge/NeoForge mod. Neither may become a finding."""
+    root = pack(tmp_path, {
+        "star.jar": {"fabric.mod.json": fabric("star", "1.0", environment="*")},
+        "quiet.jar": {"fabric.mod.json": fabric("quiet", "1.0")},
+        "forge.jar": {"META-INF/mods.toml": toml("forgey", "1.0")},
+    })
+    for side in ("server", "client"):
+        rep = analyse(root, side=side)
+        assert "pack.wrong-side-mod" not in kinds(rep), (side, rep.findings)
+
+
+def test_without_side_nothing_is_claimed_about_it(tmp_path):
+    root = pack(tmp_path, {
+        "sodium.jar": {"fabric.mod.json": fabric("sodium", "0.5.8",
+                                                 environment="client")},
+    })
+    rep = analyse(root)
+    assert "pack.wrong-side-mod" not in kinds(rep)
+    assert any("environment" in line for line in rep.not_checked())
+
+
+def test_side_scoped_requirement_follows_the_side(tmp_path):
+    """`connectedglass` requires `fusion` with side="CLIENT". On a server that
+    requirement does not apply; on a client it does, and `fusion` really is
+    absent. Same directory, two correct answers."""
+    root = pack(tmp_path, {
+        "glass.jar": {"META-INF/mods.toml": toml(
+            "glass", "1.0", [("fusion", "[1.2.9,)", "required", "CLIENT")])},
+    })
+    assert "pack.missing-dependency" not in kinds(analyse(root))
+    assert "pack.missing-dependency" not in kinds(analyse(root, side="server"))
+    client = analyse(root, side="client").by_kind("pack.missing-dependency")
+    assert len(client) == 1 and client[0].subject == "fusion"
+
+
+def test_not_checked_shrinks_by_two_when_the_side_is_known(tmp_path):
+    root = pack(tmp_path, {"a.jar": {"fabric.mod.json": fabric("a", "1.0")}})
+    unknown = analyse(root).not_checked()
+    known = analyse(root, side="server").not_checked()
+    assert len(unknown) == 3 and len(known) == 1
+    assert all(item in unknown for item in known)
+
+
+def test_json_carries_the_side(tmp_path):
+    root = pack(tmp_path, {"a.jar": {"fabric.mod.json": fabric("a", "1.0")}})
+    assert analyse(root, side="server").to_dict()["side"] == "server"
+    assert analyse(root).to_dict()["side"] is None
+    assert len(analyse(root, side="server").to_dict()["not_checked"]) == 1
+
+
+def test_cli_rejects_side_without_pack(tmp_path, capsys):
+    """`--side` with a crash report would look applied and do nothing."""
+    from mcd.cli import main
+
+    report = tmp_path / "r.txt"
+    report.write_text("---- Minecraft Crash Report ----\nDescription: x\n",
+                      encoding="utf-8")
+    assert main([str(report), "--side", "client"]) == 2
+    assert "--side only applies to --pack" in capsys.readouterr().err
+
+
+def test_analyse_rejects_an_unknown_side(tmp_path):
+    root = pack(tmp_path, {"a.jar": {"fabric.mod.json": fabric("a", "1.0")}})
+    try:
+        analyse(root, side="both")
+    except ValueError as exc:
+        assert "side must be" in str(exc)
+    else:                                    # pragma: no cover
+        raise AssertionError("an unknown side must not be accepted silently")

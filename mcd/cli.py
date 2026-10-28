@@ -109,6 +109,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--pack", metavar="DIR",
                     help="Pack Doctor: check a mods/ directory against the "
                          "dependencies its jars declare (no crash report needed)")
+    ap.add_argument("--side", choices=("client", "server"),
+                    help="with --pack: which side this directory runs. Enables "
+                         "the Fabric/Quilt `environment` check and side-scoped "
+                         "dependency requirements; without it both stay listed "
+                         "as not checked")
 
     fmt = ap.add_mutually_exclusive_group()
     fmt.add_argument("--json", action="store_true", help="JSON output")
@@ -145,7 +150,12 @@ def main(argv: list[str] | None = None) -> int:
 
     # --- pack mode: a different question, so it returns before anything else
     if args.pack:
-        return _pack(args.pack, _fmt(args), out, color, args.exit_code)
+        return _pack(args.pack, _fmt(args), out, color, args.exit_code, args.side)
+    if args.side:
+        # Silently ignoring it would make `--side client` look applied when the
+        # run was a crash diagnosis, which never reads it.
+        print("error: --side only applies to --pack", file=sys.stderr)
+        return 2
 
     # --- resolve input ---
     if args.stdin:
@@ -255,14 +265,14 @@ def _fmt(args: argparse.Namespace) -> str:
 
 
 def _pack(target: str, fmt: str, out: IO[str], color: bool,
-          exit_code: bool) -> int:
+          exit_code: bool, side: str | None = None) -> int:
     """Pack Doctor entry point; `--exit-code` maps to the worst finding."""
     from .pack.doctor import analyse
     from .pack.render import (render_pack_json, render_pack_markdown,
                               render_pack_plain)
 
     try:
-        rep = analyse(target)
+        rep = analyse(target, side=side)
     except FileNotFoundError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2

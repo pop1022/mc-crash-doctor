@@ -6,7 +6,28 @@ versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **`--pack DIR --side server|client`**, and with it the last of the five finding
+  families ROADMAP 2.2 asks for. `manifest.py` now reads Fabric's root
+  `environment` and Quilt's `minecraft.environment`; a mod that declares the
+  other side becomes `pack.wrong-side-mod` (both directions). `--side` also makes
+  `side=CLIENT/SERVER` dependency requirements apply instead of being skipped.
+
+  Measured on the real 355-jar server pack, same directory, two correct answers:
+  `--side server` -> 1 finding (the mixed-loader one), `--side client` -> 3
+  (mixed-loaders plus `fusion` and `melody`, both declared `side="CLIENT"` by
+  `connectedglass` and `fancymenu`). Without `--side` both questions stay in
+  `not_checked` -- now 3 entries instead of shrunken-by-accident, and
+  `not_checked()` is a function of the side so JSON and text agree.
+
+  Honest limit, recorded in `corpus/PACK-REALJAR.md`: all four real packs on
+  this machine have Fabric mods declaring `environment: "*"`, so
+  `pack.wrong-side-mod` has **no real hit yet** -- it is covered by 9 tests and
+  will first fire when a client pack is opened as a server one. Forge/NeoForge
+  manifests have no per-mod side field at all, so the check cannot apply to them.
+
 ### Fixed
+
 - **`--pack` on a real pack: 35 findings, 34 of them wrong.** First run of Pack
   Doctor against a real 355-jar NeoForge 1.21.1 server pack (588 MB, its own log
   says `Done (4.723s)!`). Five distinct defects, each triggered by a real

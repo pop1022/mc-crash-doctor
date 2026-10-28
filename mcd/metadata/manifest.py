@@ -127,6 +127,10 @@ class ModManifest:
     source: str                                # manifest filename inside the jar
     depends: tuple[Dependency, ...] = field(default_factory=tuple)
     provides: tuple[str, ...] = field(default_factory=tuple)
+    #: `client` / `server` / `*`, as Fabric and Quilt declare it. None means the
+    #: manifest does not say -- which is every Forge/NeoForge mod: their format
+    #: has no per-mod side field, only per-dependency `side`.
+    environment: str | None = None
 
     @property
     def hard_requirements(self) -> tuple[Dependency, ...]:
@@ -146,6 +150,7 @@ class ModManifest:
             "source": self.source,
             "depends": [d.to_dict() for d in self.depends],
             "provides": list(self.provides),
+            "environment": self.environment,
         }
 
 
@@ -447,7 +452,27 @@ def _parse_fabric_like(data: dict[str, Any], *, loader: str, source: str,
         source=source,
         depends=tuple(deps),
         provides=tuple(provides),
+        environment=_environment(data, section),
     )
+
+
+_ENVIRONMENTS = {"*": "*", "client": "client", "server": "server"}
+
+
+def _environment(data: dict[str, Any], section: dict[str, Any]) -> str | None:
+    """Fabric puts `environment` at the root; Quilt nests it under `minecraft`.
+
+    Anything we do not recognise becomes None ("the manifest does not say"), so a
+    future value can never silently mean "both sides" in a finding.
+    """
+    raw = section.get("environment")
+    if raw is None:
+        minecraft = data.get("minecraft")
+        if isinstance(minecraft, dict):
+            raw = minecraft.get("environment")
+    if not isinstance(raw, str):
+        return None
+    return _ENVIRONMENTS.get(raw.strip().lower())
 
 
 def parse_fabric_json(text: str, *, source: str = FABRIC_MANIFEST) -> list[ModManifest]:

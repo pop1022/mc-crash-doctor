@@ -106,6 +106,35 @@ Forge 允许 mod 在 `mods.toml` 里把版本写成占位符，由加载器从 j
 `tests/test_version_range.py` 追加 7 项参数化版本用例。原来的手写夹具无法覆盖这些
 形态——这正是“真实 jar 取证”这件事的价值所在。
 
+## 第六件事：`--side` 让两个问题变成可回答的（2026-10-28）
+
+`--pack DIR` 只看目录，看不出这个目录是客户端还是服务端。加 `--side
+server|client` 之后，两件事从 `not_checked` 变成真检查：
+
+1. **Fabric/Quilt 的 `environment`** → 新 finding `pack.wrong-side-mod`
+   （双向：服务端目录里的 `environment: client`，以及客户端目录里的
+   `environment: server`）。`environment: "*"` 和"没写"都不报 —— 后者是
+   Forge/NeoForge 的全部情况，它们的清单格式没有 per-mod 侧别字段。
+2. **`side=CLIENT/SERVER` 的依赖要求**按侧生效。
+
+同一个目录、两种答案，都对：
+
+| 命令 | findings |
+|---|---|
+| `--pack … --side server` | **1**（mixed-loaders） |
+| `--pack … --side client` | **3**（mixed-loaders + `fusion` + `melody` 缺失） |
+
+因为 `connectedglass` 要求 `fusion`、`fancymenu` 要求 `melody`，两条都写着
+`side = "CLIENT"`：服务端不需要它们，客户端缺了就是缺了。
+
+**诚实标注**：这个包里的 3 个 Fabric mod 全部声明 `environment: "*"`，所以
+`pack.wrong-side-mod` 在本样本上**没有命中**。本机另外三个真实包
+（241 / 189 / 159 jar）里的 Fabric mod 也全是 `"*"`。也就是说这条检查目前
+只有测试覆盖，没有真实命中样本 —— 它会在"把客户端包直接当服务端开"的场合
+第一次真正发挥作用。
+
+`not_checked` 从 3 条降到 1 条（只剩"内嵌 jar 自己的依赖"）。
+
 ## 仍然不检查
 
 1. 客户端限定模组装到服务端（`environment` 字段未读）。
@@ -113,5 +142,8 @@ Forge 允许 mod 在 `mods.toml` 里把版本写成占位符，由加载器从 j
 3. 内嵌 jar **自己**声明的依赖。
 4. 嵌套的嵌套、`mcmod.info`（1.13 以前）。
 5. 版本是否存在 / 是否最新（需要 Modrinth，即 2.1）。
+
+其中第 1、2 条在给了 `--side` 之后**不再是缺口**；不给 `--side` 时它们仍然
+出现在 `not_checked` 里，因为不知道目录朝哪一侧跑。
 
 以上都会出现在 `--pack` 输出的 `not checked` 段里，不静默。

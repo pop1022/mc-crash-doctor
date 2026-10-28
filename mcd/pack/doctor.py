@@ -52,7 +52,8 @@ from ..metadata.manifest import (ManifestError, ModManifest, nested_modids,
 from ..model import Severity
 from .version import satisfies
 
-__all__ = ["PackReport", "PackFinding", "analyse", "BUILTIN_IDS", "NOT_CHECKED"]
+__all__ = ["PackReport", "PackFinding", "analyse", "BUILTIN_IDS",
+           "NOT_CHECKED", "not_checked"]
 
 #: Ids the loader/platform always satisfies, so a `depends` on them is never a
 #: missing dependency. Kept explicit rather than "anything without a version":
@@ -64,16 +65,31 @@ BUILTIN_IDS = frozenset({
 })
 
 #: ROADMAP 2.2 asks for five finding families; one needs a reader change.
-NOT_CHECKED = (
-    "client-only mod installed on a server (manifest reader does not read "
-    "Fabric's `environment` yet)",
-    "dependencies declared for one side only (side=CLIENT/SERVER) -- whether "
-    "they are required depends on which side this directory runs, which "
-    "`--pack` cannot know",
+#: What this checker does not look at, printed with every report so nobody has to
+#: infer it from silence. Two of the three entries disappear once the caller says
+#: which side the directory is for -- that is what `--side` buys.
+_NOT_CHECKED_ALWAYS = (
     "what a bundled jar (META-INF/jars, META-INF/jarjar) itself requires -- its "
     "mod ids are read, so it can satisfy a dependency, but its own declared "
     "dependencies are not checked",
 )
+_NOT_CHECKED_WITHOUT_SIDE = (
+    "client-only mod installed on a server (pass `--side server|client` to check "
+    "Fabric/Quilt's `environment` field)",
+    "dependencies declared for one side only (side=CLIENT/SERVER) -- whether "
+    "they are required depends on which side this directory runs",
+)
+
+
+def not_checked(side: str | None = None) -> tuple[str, ...]:
+    """The limitations for a scan of `side` (None = the side is unknown)."""
+    if side in ("client", "server"):
+        return _NOT_CHECKED_ALWAYS
+    return _NOT_CHECKED_WITHOUT_SIDE + _NOT_CHECKED_ALWAYS
+
+
+#: The default (side-unknown) list, kept as a name because the renderer used it.
+NOT_CHECKED = not_checked()
 
 
 @dataclass
@@ -103,6 +119,7 @@ class PackReport:
     unreadable: list[dict] = field(default_factory=list)
     context: dict = field(default_factory=dict)
     loaders: dict = field(default_factory=dict)
+    side: str | None = None         # client|server when the caller said so
 
     @property
     def worst(self) -> Severity:
@@ -110,6 +127,10 @@ class PackReport:
 
     def by_kind(self, kind: str) -> list[PackFinding]:
         return [f for f in self.findings if f.kind == kind]
+
+    def not_checked(self) -> tuple[str, ...]:
+        """Limitations for *this* scan: `--side` removes two of the three."""
+        return not_checked(self.side)
 
     def summary_line(self) -> str:
         return (f"{self.jars} jars, {self.declared_mods} declared mods, "
@@ -122,9 +143,10 @@ class PackReport:
             "root": self.root, "mods_dir": self.mods_dir,
             "jars": self.jars, "declared_mods": self.declared_mods,
             "context": self.context, "loaders": self.loaders,
+            "side": self.side,
             "findings": [f.to_dict() for f in self.findings],
             "undecided": self.undecided, "unreadable": self.unreadable,
-            "not_checked": list(NOT_CHECKED),
+            "not_checked": list(self.not_checked()),
         }
 
 
@@ -175,7 +197,16 @@ def _pack_context(root: Path) -> dict:
     return out
 
 
-def analyse(root: str | Path) -> PackReport:
+def analyse(root: str | Path, *, side: str | None = None) -> PackReport:
+    """Check a `mods/` directory.
+
+    `side` is what the caller knows and the directory cannot say: `server` or
+    `client`. With it, two questions become answerable -- whether a Fabric/Quilt
+    mod declares itself for the other side, and which `side=`-scoped dependency
+    requirements actually apply. Without it both stay in `not_checked`.
+    """
+    if side not in (None, "client", "server"):
+        raise ValueError(f"side must be 'client' or 'server', not {side!r}")
     base = Path(root)
     mods = _mods_dir(base)
     if mods is None:
@@ -183,7 +214,7 @@ def analyse(root: str | Path) -> PackReport:
             f"no `mods/` directory with .jar files under {base}")
 
     rep = PackReport(root=str(base), mods_dir=str(mods),
-                     context=_pack_context(base))
+                     context=_pack_context(base), side=side)
 
     by_id: dict[str, list[tuple[Path, ModManifest]]] = defaultdict(list)
     provided: dict[str, str] = {}          # provided id -> who provides it
@@ -215,6 +246,23 @@ def analyse(root: str | Path) -> PackReport:
             by_id[m.modid].append((jar, m))
             for pid in m.provides:
                 provided.setdefault(pid, m.modid)
+            # `environment` is a Fabric/Quilt field; Forge-family manifests do
+            # not have one, so this can only ever fire for fabric/quilt mods --
+            # which is exactly the population a NeoForge server pack gets wrong
+            # when somebody drops a Fabric client mod into `mods/`.
+            if (side and m.environment in ("client", "server")
+                    and m.environment != side):
+                other = "client" if side == "server" else "server"
+                rep.findings.append(PackFinding(
+                    kind="pack.wrong-side-mod",
+                    severity=Severity.WARNING,
+                    subject=m.modid,
+                    detail=(f"{m.modid} declares environment={m.environment}, but "
+                            f"this is a {side} directory: the loader skips it, so "
+                            f"it is installed and never runs"
+                            + (" (that also means the server is missing whatever "
+                               "it was installed for)" if other == "server" else "")),
+                    evidence=[jar.name]))
         for bid in bundled:
             provided.setdefault(bid, jar.name)
 
@@ -257,7 +305,8 @@ def analyse(root: str | Path) -> PackReport:
                 # on a server pack, two of the last findings were exactly this
                 # (connectedglass -> fusion, fancymenu -> melody, both
                 # side="CLIENT"). Listed in NOT_CHECKED, not silently dropped.
-                if (dep.side or "").strip().upper() in ("CLIENT", "SERVER"):
+                dep_side = (dep.side or "").strip().lower()
+                if dep_side in ("client", "server") and dep_side != side:
                     continue
                 target = by_id.get(dep.modid)
                 if target is None and dep.modid in provided:
