@@ -6,7 +6,42 @@ versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- **`--pack` on a real pack: 35 findings, 34 of them wrong.** First run of Pack
+  Doctor against a real 355-jar NeoForge 1.21.1 server pack (588 MB, its own log
+  says `Done (4.723s)!`). Five distinct defects, each triggered by a real
+  declaration and each fixed with a reverse control:
+
+  | # | what was wrong | evidence in the pack |
+  |---|---|---|
+  | 1 | `INCOMPATIBLE` treated as unconditional; the edge is version-scoped | `ae2wtlib` breaks `extendedae` only in `(,1.21-1.1.4-neoforge]`; installed is `1.21-2.2.35` |
+  | 2 | jar-in-jar providers invisible | `ae2wtlib_api` is REQUIRED by 4 mods and provided by `META-INF/jarjar/` inside `ae2wtlib.jar` (`locator: jarinjar` in the pack's own log); 47 jars bundle jars, 30 mod ids |
+  | 3 | `${file.jarVersion}` kept literally | 25 jars use the placeholder, 25/25 carry `Implementation-Version` in MANIFEST.MF |
+  | 4 | `1.21.1-93` read as a prerelease of `1.21.1` | three satisfied ranges reported as `pack.version-mismatch` |
+  | 5 | `side="CLIENT"` requirements reported missing on a server pack | `connectedglass -> fusion`, `fancymenu -> melody` |
+
+  Result: findings **35 -> 1** (the one left is real: three Fabric jars in a
+  NeoForge instance with no Connector), `undecided` **24 -> 1**, `unreadable`
+  2 -> 1. `corpus/PACK-REALJAR.md` records the evidence; no jar is committed.
+
+- **Version comparison is now two-level.** `<mc-version>-<mod-version>` is how
+  NeoForge mods version themselves, and the fix for (4) briefly made it worse:
+  flattening the suffix into the number tuple compared the MC part against the
+  mod part, turning `[1.21-87-NEOFORGE,)` against `1.21.1-93-NEOFORGE` into a
+  new false finding. The comparator now compares the MC group, then the mod
+  group, then the prerelease rank -- and a letter-led suffix is still a
+  prerelease (`1.20.1-beta < 1.20.1`).
+
+- **`BUILTIN_IDS` was missing `fabric`.** `fabric.mod.json` writes the loader as
+  `depends: {"fabric": "*"}`, so every Fabric mod claimed a missing dependency
+  on the loader itself.
+
+- **`NOT_CHECKED` grew from 2 to 3 entries** and is pinned by content, not by
+  non-emptiness: side-scoped dependencies are now listed, and the bundled-jar
+  line says what *is* read (ids) versus what is not (their own dependencies).
+
 ### Added
+
 - **Three rules, chosen by measurement rather than by reading the tail.**
   `loader.game-provider-missing` (the launcher handed the loader a directory
   with no game behind it), `mixin.class-already-loaded` (two jars transform the

@@ -55,31 +55,54 @@ _PREFIX = re.compile(r"^(.*?)\.(?:\*|[xX])$")
 _ANY = object()
 
 
-def _ver(text: str):
-    """`1.20.1` -> (1, 20, 1); `1.20.1-beta` -> ((1,20,1), prerelease_rank).
+def _nums(text: str):
+    """(numbers, trailing-nonnumeric) for a dotted version core, or (None, "")."""
+    nums: list[int] = []
+    pre = ""
+    for part in text.split("."):
+        m = re.match(r"\d+", part)
+        if not m:
+            return None, ""
+        nums.append(int(m.group(0)))
+        rest = part[m.end():]
+        if rest:
+            pre = f"{rest}-{pre}" if pre else rest
+    return (tuple(nums) if nums else None), pre
 
-    Non-numeric segments (``1.20.1a``) keep their digits and become a
-    prerelease, which is how Forge/Fabric order them: ``1.20.1a`` < ``1.20.1``.
-    Returns None when a segment has no leading digits at all -- ``latest``,
-    ``RELEASE`` -- because ordering those as numbers would be fiction.
+
+def _ver(text: str):
+    """Parse to `(mc_numbers, mod_numbers, prerelease_rank)`, or None.
+
+    Two number groups, not one, because NeoForge mods version themselves as
+    ``<mc-version>-<mod-version>``: ``1.21.1-93-NEOFORGE`` is Minecraft 1.21.1,
+    build 93. Flattening that into a single tuple compares 1.21.1 against 1.21
+    by looking at the *mod* digits -- measured on a real pack, that turned
+    ``[1.21-87-NEOFORGE,)`` against an installed ``1.21.1-93-NEOFORGE`` into a
+    false `pack.version-mismatch`, because (1,21,1,93) < (1,21,87).
+
+    A `-` followed by a DIGIT therefore starts the second group; a `-` followed
+    by anything else is a prerelease tag (``1.20.1-beta`` < ``1.20.1``), which
+    is the Forge/Fabric ordering the old code described.
     """
     s = (text or "").strip()
     if not s:
         return None
     s = s.split("+", 1)[0]                      # build metadata is not ordering
-    core, _, pre = s.partition("-")
-    nums: list[int] = []
-    for part in core.split("."):
-        m = re.match(r"\d+", part)
-        if not m:
-            return None
-        nums.append(int(m.group(0)))
-        rest = part[m.end():]
-        if rest:
-            pre = f"{rest}-{pre}" if pre else rest
-    if not nums:
+    core, _, suffix = s.partition("-")
+    mc, pre = _nums(core)
+    if mc is None:
         return None
-    return (tuple(nums), 0 if not pre else -1)
+    mod: tuple[int, ...] = ()
+    if suffix and suffix[0].isdigit():
+        mod, mod_pre = _nums(suffix)
+        if mod is None:                         # "1.2.3-4x" -- unparsable suffix
+            mod, mod_pre = (), ""
+            pre = f"{suffix}-{pre}" if pre else suffix
+        elif mod_pre:
+            pre = f"{mod_pre}-{pre}" if pre else mod_pre
+    elif suffix:
+        pre = f"{suffix}-{pre}" if pre else suffix
+    return (mc, mod, 0 if not pre else -1)
 
 
 def _pad(a: tuple[int, ...], b: tuple[int, ...]):
@@ -87,17 +110,24 @@ def _pad(a: tuple[int, ...], b: tuple[int, ...]):
     return (a + (0,) * (n - len(a)), b + (0,) * (n - len(b)))
 
 
+def _cmp(a, b) -> int:
+    am, bm = _pad(a[0], b[0])
+    if am != bm:
+        return -1 if am < bm else 1
+    ax, bx = _pad(a[1], b[1])
+    if ax != bx:
+        return -1 if ax < bx else 1
+    if a[2] != b[2]:                            # same numbers, prerelease differs
+        return -1 if a[2] < b[2] else 1
+    return 0
+
+
 def compare(left: str, right: str) -> int | None:
     """-1 / 0 / 1, or None when either side cannot be ordered numerically."""
     a, b = _ver(left), _ver(right)
     if a is None or b is None:
         return None
-    an, bn = _pad(a[0], b[0])
-    if an != bn:
-        return -1 if an < bn else 1
-    if a[1] != b[1]:                        # same numbers, prerelease differs
-        return -1 if a[1] < b[1] else 1
-    return 0
+    return _cmp(a, b)
 
 
 def _bump(v: tuple[int, ...], index: int):
@@ -106,6 +136,11 @@ def _bump(v: tuple[int, ...], index: int):
         out.append(0)
     out[index] += 1
     return tuple(out)
+
+
+def _bumped(key, index: int):
+    """Same key with one component of the MC group incremented."""
+    return (_bump(key[0], index), key[1], key[2])
 
 
 def _spec_terms(text: str):
@@ -140,7 +175,7 @@ def _spec_terms(text: str):
             if base is None:
                 return None
             terms.append((">=", base, body))
-            terms.append(("<", (_bump(base[0], len(base[0]) - 1), base[1]), body))
+            terms.append(("<", _bumped(base, len(base[0]) - 1), body))
             continue
         key = _ver(body)
         if key is None:
@@ -151,10 +186,10 @@ def _spec_terms(text: str):
             terms.append(("=", key, body))
         elif op == "~":
             terms.append((">=", key, body))
-            terms.append(("<", (_bump(key[0], 1 if len(key[0]) > 1 else 0), key[1]), body))
+            terms.append(("<", _bumped(key, 1 if len(key[0]) > 1 else 0), body))
         elif op == "^":
             terms.append((">=", key, body))
-            terms.append(("<", (_bump(key[0], 0), key[1]), body))
+            terms.append(("<", _bumped(key, 0), body))
         else:
             terms.append((op, key, body))
     return terms or None
@@ -166,14 +201,18 @@ def parse_spec(text: str):
 
 
 def _holds(op: str, have, want) -> bool:
-    a, b = _pad(have[0], want[0])
+    c = _cmp(have, want)
     if op == "=":
-        return a == b and have[1] == want[1]
-    if a != b:
-        return a > b if op in (">", ">=") else a < b
-    if have[1] != want[1]:                 # same numbers, prerelease differs
-        return have[1] < want[1] if op in ("<", "<=") else have[1] > want[1]
-    return op in (">=", "<=", "=")
+        return c == 0
+    if op == ">":
+        return c > 0
+    if op == ">=":
+        return c >= 0
+    if op == "<":
+        return c < 0
+    if op == "<=":
+        return c <= 0
+    return False
 
 
 def satisfies(version: str, spec: str) -> bool | None:

@@ -222,10 +222,11 @@ def test_not_checked_names_exactly_the_known_gaps():
     """
     from mcd.pack.doctor import NOT_CHECKED
 
-    assert len(NOT_CHECKED) == 2, NOT_CHECKED
+    assert len(NOT_CHECKED) == 3, NOT_CHECKED
     assert "client-only mod installed on a server" in NOT_CHECKED[0]
     assert "environment" in NOT_CHECKED[0]
-    assert "nested jars" in NOT_CHECKED[1]
+    assert "side=CLIENT/SERVER" in NOT_CHECKED[1]
+    assert "bundled jar" in NOT_CHECKED[2]
 
 
 def test_json_not_checked_is_the_constant_not_a_copy(tmp_path):

@@ -103,3 +103,28 @@ def test_compare_orders_versions_and_says_so_when_it_cannot():
     assert compare("1.20.1-beta", "1.20.1") == -1
     assert compare("1.20.1+build7", "1.20.1") == 0        # build metadata
     assert compare("latest", "1.20") is None
+
+
+# --- `<mc-version>-<mod-version>` -------------------------------------------
+# NeoForge mods version themselves as `<mc>-<mod>` (1.21.1-2.1.0). Reading the
+# suffix as a semver prerelease makes every build of the same Minecraft compare
+# equal, and flattening it into one tuple compares the MC part against the mod
+# part. Both were live: on a real pack they turned three satisfied ranges into
+# `pack.version-mismatch` findings.
+@pytest.mark.parametrize("have,spec,want", [
+    ("1.21.1-1.2.0", "[1.21.1-1.1.0,1.21.1-2.0.0)", True),
+    ("1.21.1-2.1.0", "[1.21.1-2,1.21.1-3)", True),
+    ("1.21.1-2.4.21", "[1.21.1-2.4.21,1.21.1-2.5.0)", True),   # inclusive lower
+    ("1.21.1-2.5.0", "[1.21.1-2.4.21,1.21.1-2.5.0)", False),   # exclusive upper
+    ("1.21.1-93-NEOFORGE", "[1.21-87-NEOFORGE,)", True),       # MC 1.21.1 > 1.21
+    ("1.21-3.16.2", "(,1.21-3.4.4]", False),                   # mod part decides
+])
+def test_mcver_modver_versions_compare_in_two_groups(have, spec, want):
+    assert satisfies(have, spec) is want
+
+
+def test_a_letter_suffix_is_still_a_prerelease():
+    """The two-group rule must not swallow the ordering it was built next to."""
+    assert compare("1.20.1-beta", "1.20.1") == -1
+    assert compare("1.20.1a", "1.20.1") == -1
+    assert satisfies("1.20.1-beta", ">=1.20.1") is False

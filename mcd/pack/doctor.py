@@ -47,7 +47,8 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from ..metadata.manifest import ManifestError, ModManifest, parse_jar
+from ..metadata.manifest import (ManifestError, ModManifest, nested_modids,
+                                parse_jar)
 from ..model import Severity
 from .version import satisfies
 
@@ -58,7 +59,7 @@ __all__ = ["PackReport", "PackFinding", "analyse", "BUILTIN_IDS", "NOT_CHECKED"]
 #: a library that is genuinely absent must still be reported.
 BUILTIN_IDS = frozenset({
     "minecraft", "java", "forge", "neoforge", "fabricloader", "fabric-loader",
-    "fabric_loader", "quilt_loader", "quilt-loader", "quilted_fabric_api",
+    "fabric", "fabric_loader", "quilt_loader", "quilt-loader", "quilted_fabric_api",
     "modlauncher", "securejarhandler", "bootstraplauncher", "fmlloader",
 })
 
@@ -66,7 +67,12 @@ BUILTIN_IDS = frozenset({
 NOT_CHECKED = (
     "client-only mod installed on a server (manifest reader does not read "
     "Fabric's `environment` yet)",
-    "nested jars at META-INF/jars/*.jar (Fabric bundles libraries there)",
+    "dependencies declared for one side only (side=CLIENT/SERVER) -- whether "
+    "they are required depends on which side this directory runs, which "
+    "`--pack` cannot know",
+    "what a bundled jar (META-INF/jars, META-INF/jarjar) itself requires -- its "
+    "mod ids are read, so it can satisfy a dependency, but its own declared "
+    "dependencies are not checked",
 )
 
 
@@ -191,7 +197,13 @@ def analyse(root: str | Path) -> PackReport:
         except ManifestError as exc:
             rep.unreadable.append({"jar": jar.name, "reason": str(exc)})
             continue
-        if not manifests:
+        # A jar can declare nothing at the top level and still provide mods:
+        # JarJar/Fabric bundle them under META-INF/jarjar|jars. Reading only the
+        # ids is enough to stop claiming a dependency is missing when it is
+        # sitting inside another mod's jar (measured: 4 findings on a pack that
+        # boots). The bundle's own dependencies are still not checked.
+        bundled = nested_modids(jar)
+        if not manifests and not bundled:
             rep.unreadable.append({
                 "jar": jar.name,
                 "reason": "no fabric.mod.json / quilt.mod.json / mods.toml "
@@ -203,6 +215,8 @@ def analyse(root: str | Path) -> PackReport:
             by_id[m.modid].append((jar, m))
             for pid in m.provides:
                 provided.setdefault(pid, m.modid)
+        for bid in bundled:
+            provided.setdefault(bid, jar.name)
 
     rep.loaders = dict(sorted(loaders.items(), key=lambda kv: -kv[1]))
 
@@ -236,6 +250,14 @@ def analyse(root: str | Path) -> PackReport:
         for jar, m in entries:
             for dep in m.hard_requirements:
                 if dep.modid in BUILTIN_IDS:
+                    continue
+                # A CLIENT/SERVER-scoped requirement only applies on that side,
+                # and `--pack DIR` cannot tell which side the directory is for.
+                # Claiming "missing" would be wrong on half the packs: measured
+                # on a server pack, two of the last findings were exactly this
+                # (connectedglass -> fusion, fancymenu -> melody, both
+                # side="CLIENT"). Listed in NOT_CHECKED, not silently dropped.
+                if (dep.side or "").strip().upper() in ("CLIENT", "SERVER"):
                     continue
                 target = by_id.get(dep.modid)
                 if target is None and dep.modid in provided:
@@ -273,20 +295,44 @@ def analyse(root: str | Path) -> PackReport:
                         evidence=[jar.name, target[0][0].name]))
 
     # --- declared negatives, both sides installed --------------------------
+    # A `breaks`/`incompatible` edge is version-scoped, and that is most of what
+    # makes it useful: ae2wtlib declares extendedae incompatible with
+    # `(,1.21-1.1.4-neoforge]`, i.e. only the old builds. Ignoring the range
+    # turned every installed copy into a conflict -- 9 of them on a 355-jar pack
+    # that boots fine ("Done (4.723s)!" in its own latest.log). So the range is
+    # now the condition, exactly like a positive dependency, and an unreadable
+    # range becomes `undecided` instead of a finding.
     for modid, entries in sorted(by_id.items()):
         for jar, m in entries:
             for dep in m.negatives:
                 if dep.modid == modid or dep.modid not in by_id:
                     continue
                 installed = by_id[dep.modid][0]
+                have = installed[1].version
+                rng = (dep.version_range or "").strip()
+                if not rng or rng == "*":
+                    hit = True                      # no range: incompatible with all
+                else:
+                    hit = satisfies(have, rng)
+                if hit is None:
+                    rep.undecided.append({
+                        "modid": dep.modid, "required_by": modid, "range": rng,
+                        "installed": have or "", "jar": jar.name,
+                        "why": f"{dep.kind}: could not compare the declared range"})
+                    continue
+                if not hit:
+                    continue
                 note = ("the loader refuses to start" if dep.hard
                         else "the author reports they misbehave together")
+                detail = (f"{modid} declares this pair {dep.kind} "
+                          f"({'breaks' if dep.hard else 'conflicts'}): {note}")
+                if rng:
+                    detail += f"; the incompatibility covers {rng}"
                 rep.findings.append(PackFinding(
                     kind="pack.declared-conflict",
                     severity=Severity.ERROR if dep.hard else Severity.WARNING,
                     subject=f"{modid} x {dep.modid}",
-                    detail=f"{modid} declares this pair {dep.kind} "
-                           f"({'breaks' if dep.hard else 'conflicts'}): {note}",
+                    detail=detail,
                     evidence=[jar.name, installed[0].name]))
 
     rep.findings.sort(key=lambda f: (-int(f.severity), f.kind, f.subject))

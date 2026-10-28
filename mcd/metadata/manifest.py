@@ -54,10 +54,11 @@ Its agreement with `tomllib` is asserted by tests on 3.11+ rather than assumed.
 
 from __future__ import annotations
 
+import io
 import json
 import re
 import zipfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -576,14 +577,120 @@ def parse_jar(path: str | Path) -> list[ModManifest]:
                     return parse_fabric_json(text, source=candidate)
                 if candidate == QUILT_MANIFEST:
                     return parse_quilt_json(text, source=candidate)
-                if candidate == NEOFORGE_MANIFEST:
-                    return parse_mods_toml(text, loader="neoforge", source=candidate)
-                return parse_mods_toml(text, loader="forge", source=candidate)
+                mods = (parse_mods_toml(text, loader="neoforge", source=candidate)
+                        if candidate == NEOFORGE_MANIFEST
+                        else parse_mods_toml(text, loader="forge", source=candidate))
+                if any(m.version == FILE_JAR_VERSION for m in mods):
+                    real = manifest_version(zf)
+                    if real:
+                        # ModManifest is frozen: substitute by rebuilding, so a
+                        # caller can never see a manifest mutate under it.
+                        mods = [replace(m, version=real)
+                                if m.version == FILE_JAR_VERSION else m
+                                for m in mods]
+                return mods
     except zipfile.BadZipFile as exc:
         raise ManifestError(f"{jar.name}: not a readable jar/zip ({exc})") from exc
     except OSError as exc:
         raise ManifestError(f"{jar.name}: {exc}") from exc
     return []
+
+
+#: Where loaders keep jars that are bundled inside another jar.
+#: Fabric/Quilt: `META-INF/jars/`; NeoForge (JarJar): `META-INF/jarjar/`.
+NESTED_DIRS: tuple[str, ...] = ("META-INF/jars/", "META-INF/jarjar/")
+
+#: Guards for `nested_modids`: a hostile or sloppy jar must not turn a 355-jar
+#: pack scan into minutes of decompression.
+NESTED_MAX_JARS = 64
+NESTED_MAX_BYTES = 96 * 1024 * 1024
+
+
+#: Forge/NeoForge let a mod write its version as this placeholder; the loader
+#: substitutes `Implementation-Version` from the jar's own MANIFEST.MF.
+FILE_JAR_VERSION = "${file.jarVersion}"
+
+
+def manifest_version(zf: zipfile.ZipFile) -> str:
+    """`Implementation-Version` from META-INF/MANIFEST.MF, or "" when absent.
+
+    Without this, every mod that uses `${file.jarVersion}` reports its version as
+    that literal string, which no range can be compared against. Measured on a
+    355-jar NeoForge pack: 25 jars use the placeholder and **25/25** carry a
+    usable Implementation-Version -- it was the single largest source of
+    `undecided` in `--pack`.
+    """
+    try:
+        raw = zf.read("META-INF/MANIFEST.MF")
+    except KeyError:
+        return ""
+    text = raw.decode("utf-8", "replace")
+    # Manifest lines wrap at 72 bytes; a leading space continues the previous one.
+    folded: list[str] = []
+    for line in text.splitlines():
+        if line.startswith(" ") and folded:
+            folded[-1] += line[1:]
+        else:
+            folded.append(line)
+    for line in folded:
+        key, _, value = line.partition(":")
+        if key.strip().lower() == "implementation-version":
+            return value.strip()
+    return ""
+
+
+def nested_modids(path: str | Path) -> list[str]:
+    """Mod ids declared by jars bundled *inside* this jar.
+
+    This exists because ignoring nested jars is not a neutral omission. A real
+    355-jar NeoForge pack (2026-10-27) declares `ae2wtlib_api` as a REQUIRED
+    dependency of four mods; it is provided by a jar-in-jar inside
+    `ae2wtlib-19.5.1.jar` -- the server's own log says
+    `parent: ae2wtlib-19.5.1.jar, locator: jarinjar`. Not looking inside meant
+    four `pack.missing-dependency` findings against a pack that boots fine.
+
+    Only the ids are read: a bundled jar's *own* dependencies are still not
+    checked, so `NOT_CHECKED` keeps saying so. Returns `[]` for a jar with no
+    nested jars, an unreadable jar, or one over the size guards.
+    """
+    jar = Path(path)
+    ids: list[str] = []
+    try:
+        with zipfile.ZipFile(jar) as zf:
+            inner = [n for n in zf.namelist()
+                     if n.startswith(NESTED_DIRS) and n.endswith(".jar")]
+            if not inner:
+                return []
+            budget = NESTED_MAX_BYTES
+            for name in inner[:NESTED_MAX_JARS]:
+                info = zf.getinfo(name)
+                budget -= info.file_size
+                if budget < 0:
+                    break
+                with zipfile.ZipFile(io.BytesIO(zf.read(name))) as zi:
+                    names = set(zi.namelist())
+                    for candidate in MANIFEST_NAMES:
+                        if candidate not in names:
+                            continue
+                        text = _decode(zi.read(candidate))
+                        try:
+                            if candidate == FABRIC_MANIFEST:
+                                mods = parse_fabric_json(text, source=candidate)
+                            elif candidate == QUILT_MANIFEST:
+                                mods = parse_quilt_json(text, source=candidate)
+                            else:
+                                mods = parse_mods_toml(
+                                    text,
+                                    loader=("neoforge" if candidate == NEOFORGE_MANIFEST
+                                            else "forge"),
+                                    source=candidate)
+                        except (ManifestError, TomlSubsetError, ValueError):
+                            mods = []
+                        ids.extend(m.modid for m in mods if m.modid)
+                        break
+    except (zipfile.BadZipFile, OSError, KeyError):
+        return []
+    return ids
 
 
 __all__ = [
@@ -592,9 +699,13 @@ __all__ = [
     "ManifestError",
     "TomlSubsetError",
     "MANIFEST_NAMES",
+    "NESTED_DIRS",
     "parse_fabric_json",
     "parse_quilt_json",
     "parse_mods_toml",
     "parse_jar",
+    "nested_modids",
+    "manifest_version",
+    "FILE_JAR_VERSION",
     "parse_toml_subset",
 ]
