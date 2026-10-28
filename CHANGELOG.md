@@ -7,6 +7,23 @@ versions follow [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **The Action can check a pack, not just a crash.** `pack:` + `pack-side:`
+  inputs, wired through `mcd.action --pack` / `--pack-side`:
+
+      - uses: pop1022/mc-crash-doctor@main
+        with: { pack: ./server, pack-side: server, fail-on: error }
+
+  Same contract as the diagnosis path -- prints the Markdown report, writes the
+  step summary, updates the idempotent comment when `--comment` and an issue
+  number are given, and maps the worst finding onto `fail-on`. `suspect` is
+  always empty here: there is no crash, so there is nobody to blame, and
+  inventing one would be worse than the empty string.
+
+  Verified locally against a real 355-jar server pack (exit 1 with
+  `--fail-on error`, 0 with `fatal`) plus 5 tests on synthetic packs.
+
+### Added
+
 - **Rules can suggest a read-only diagnostic command.** `commands:` on a rule
   becomes `Finding.commands`, printed under the fixes and in all three
   renderers, always labelled *printed, never executed*:

@@ -342,6 +342,74 @@ def _report_payload(args, ev: dict):
     return diagnose(None, src.text, source=src.label)
 
 
+def _pack_mode(args) -> int:
+    """`--pack DIR`: check a mods/ directory instead of reading a crash.
+
+    Same contract as the diagnosis path -- print, write the step summary,
+    optionally comment, map the worst finding onto `--fail-on`. What differs is
+    the question, not the plumbing.
+    """
+    from .pack.doctor import analyse
+    from .pack.render import render_pack_json, render_pack_markdown
+
+    try:
+        report = analyse(args.pack, side=args.pack_side)
+    except (FileNotFoundError, ValueError) as exc:
+        print(f"mc-crash-doctor: {exc}", file=sys.stderr)
+        write_outputs({"found": "false", "findings": "0",
+                       "worst_severity": "none", "suspect": "",
+                       "commented": "false"})
+        return 2
+
+    buf = io.StringIO()
+    if args.json:
+        render_pack_json(report, buf)
+    else:
+        render_pack_markdown(report, buf)
+    rendered = buf.getvalue()
+
+    print(rendered)
+    if args.out:
+        Path(args.out).write_text(rendered, encoding="utf-8")
+    write_summary(rendered)
+
+    worst = report.worst
+    outputs = {
+        "found": "true",
+        "findings": len(report.findings),
+        "worst_severity": worst.name.lower(),
+        # There is no crash here, so there is nobody to blame -- an empty
+        # suspect is the honest answer, not a missing feature.
+        "suspect": "",
+        "suspect_confidence": "",
+        "commented": "false",
+    }
+
+    if args.comment and args.issue:
+        body = build_comment(rendered, findings=[], triage=None)
+        repo = args.repo or os.environ.get("GITHUB_REPOSITORY") or ""
+        token = args.token or os.environ.get("GITHUB_TOKEN") or ""
+        if not (repo and token):
+            print("mc-crash-doctor: --comment needs a token and a repo "
+                  "($GITHUB_TOKEN / $GITHUB_REPOSITORY) -- skipped",
+                  file=sys.stderr)
+        else:
+            try:
+                action, cid = GitHub(token, repo).upsert_comment(
+                    int(args.issue), body)
+                outputs["commented"] = "true"
+                print(f"mc-crash-doctor: comment {action} on #{args.issue}"
+                      f"{f' (id {cid})' if cid else ''}", file=sys.stderr)
+            except GitHubError as e:
+                print(f"mc-crash-doctor: could not comment: {e}", file=sys.stderr)
+
+    write_outputs(outputs)
+    threshold = FAIL_ON[args.fail_on]
+    if threshold is not None and worst >= threshold:
+        return 1
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         prog="mcd-action",
@@ -361,8 +429,16 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--fail-on", choices=sorted(FAIL_ON), default="never",
                     help="exit 1 when a finding reaches this severity")
     ap.add_argument("--json", action="store_true", help="emit the Incident JSON")
+    ap.add_argument("--pack", metavar="DIR",
+                    help="check a mods/ directory with Pack Doctor instead of "
+                         "diagnosing a crash (no report needed)")
+    ap.add_argument("--pack-side", choices=("client", "server"), default=None,
+                    help="with --pack: which side the directory runs on")
     ap.add_argument("--out", help="also write the rendered report to this file")
     args = ap.parse_args(argv)
+
+    if args.pack:
+        return _pack_mode(args)
 
     ev = load_event(args.event)
     payload = _report_payload(args, ev)

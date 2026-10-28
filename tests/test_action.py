@@ -393,3 +393,60 @@ def test_path_input_wins_over_event(fake_api, tmp_path, monkeypatch):
     assert outputs["found"] == "true"
     assert outputs["suspect"] == "lithium"
     assert fake_api.posts() == []
+
+
+# --------------------------------------------------------------------------
+# pack mode: same contract, a different question
+# --------------------------------------------------------------------------
+def _pack_dir(tmp_path: Path, *, mixed: bool) -> Path:
+    """A two-jar mods/ dir; `mixed` adds a second loader family."""
+    import zipfile
+
+    mods = tmp_path / "mods"
+    mods.mkdir(parents=True)
+    with zipfile.ZipFile(mods / "sodium.jar", "w") as z:
+        z.writestr("fabric.mod.json", json.dumps(
+            {"schemaVersion": 1, "id": "sodium", "version": "0.5.8"}))
+    if mixed:
+        with zipfile.ZipFile(mods / "jei.jar", "w") as z:
+            z.writestr("META-INF/mods.toml",
+                       'modLoader="javafml"\n[[mods]]\nmodId="jei"\nversion="15"\n')
+    return tmp_path
+
+
+def test_pack_mode_reports_without_a_crash_report(tmp_path, capsys):
+    root = _pack_dir(tmp_path, mixed=True)
+    assert action.main(["--pack", str(root), "--json"]) == 0
+    doc = json.loads(capsys.readouterr().out)
+    assert doc["jars"] == 2
+    assert doc["findings"][0]["kind"] == "pack.mixed-loaders"
+
+
+def test_pack_mode_maps_fail_on_to_the_worst_finding(tmp_path):
+    root = _pack_dir(tmp_path, mixed=True)          # mixed-loaders is ERROR
+    assert action.main(["--pack", str(root), "--fail-on", "error"]) == 1
+    assert action.main(["--pack", str(root), "--fail-on", "fatal"]) == 0
+    assert action.main(["--pack", str(root)]) == 0
+
+
+def test_pack_mode_writes_outputs_without_a_suspect(tmp_path, monkeypatch):
+    root = _pack_dir(tmp_path, mixed=False)
+    out = tmp_path / "gh_output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+    assert action.main(["--pack", str(root)]) == 0
+    text = out.read_text(encoding="utf-8")
+    assert "found=true" in text
+    assert "suspect=\n" in text, "pack mode must not invent a suspect"
+    assert "worst_severity=info" in text
+
+
+def test_pack_mode_rejects_a_missing_directory(tmp_path, capsys):
+    assert action.main(["--pack", str(tmp_path / "nope")]) == 2
+    assert "no `mods/` directory" in capsys.readouterr().err
+
+
+def test_pack_mode_accepts_pack_side(tmp_path):
+    """`--pack-side` reaches the doctor; without it the same directory is
+    scanned side-agnostically."""
+    root = _pack_dir(tmp_path, mixed=False)
+    assert action.main(["--pack", str(root), "--pack-side", "server"]) == 0

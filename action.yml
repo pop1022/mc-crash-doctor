@@ -43,6 +43,20 @@ inputs:
       turn the run red.
     required: false
     default: "never"
+  pack:
+    description: >-
+      Path to a `mods/` directory (or a server root containing one). Runs Pack
+      Doctor instead of diagnosing a crash: it reads what each jar declares and
+      reports contradictions. No report, no network.
+    required: false
+    default: ""
+  pack-side:
+    description: >-
+      With `pack`: which side the directory runs on (client | server). Enables
+      the Fabric/Quilt `environment` check and side-scoped dependency
+      requirements; without it both are listed as not checked.
+    required: false
+    default: ""
   token:
     description: Token used to comment. Needs issues:write on the target repo.
     required: false
@@ -63,7 +77,9 @@ outputs:
     description: fatal | error | warning | hint | info | none.
     value: ${{ steps.diagnose.outputs.worst_severity }}
   suspect:
-    description: Top suspect mod id (empty when attribution resolved nothing).
+    description: >-
+      Top suspect mod id (empty when attribution resolved nothing, and always
+      empty in `pack` mode -- there is no crash and nobody to blame).
     value: ${{ steps.diagnose.outputs.suspect }}
   suspect_confidence:
     description: Confidence for the top suspect, e.g. "97%".
@@ -94,6 +110,8 @@ runs:
         INPUT_ISSUE: ${{ inputs.issue }}
         INPUT_PATH: ${{ inputs.path }}
         INPUT_URL: ${{ inputs.url }}
+        INPUT_PACK: ${{ inputs.pack }}
+        INPUT_PACK_SIDE: ${{ inputs.pack-side }}
         INPUT_COMMENT: ${{ inputs.comment }}
         INPUT_FOLLOW_LINKS: ${{ inputs.follow-links }}
         INPUT_FAIL_ON: ${{ inputs.fail-on }}
@@ -105,6 +123,8 @@ runs:
         args=()
         if [ -n "$INPUT_PATH" ]; then args+=(--path "$INPUT_PATH"); fi
         if [ -n "$INPUT_URL" ]; then args+=(--url "$INPUT_URL"); fi
+        if [ -n "$INPUT_PACK" ]; then args+=(--pack "$INPUT_PACK"); fi
+        if [ -n "$INPUT_PACK_SIDE" ]; then args+=(--pack-side "$INPUT_PACK_SIDE"); fi
         if [ -n "$INPUT_ISSUE" ]; then args+=(--issue "$INPUT_ISSUE"); fi
         if [ "$INPUT_COMMENT" = "true" ]; then args+=(--comment); fi
         if [ "$INPUT_FOLLOW_LINKS" != "true" ]; then args+=(--no-follow-links); fi
