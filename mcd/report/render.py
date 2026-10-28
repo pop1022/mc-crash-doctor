@@ -176,6 +176,12 @@ def render_markdown(rep: CrashReport, findings: list[Finding], triage,
                 for fx in f.fixes:
                     w(f"1. {fx}\n")
                 w("\n")
+            if f.commands:
+                w("**Check** — printed for you to run, never executed by this "
+                  "tool\n\n")
+                for cmd in f.commands:
+                    w(f"- `{md_cell(cmd)}`\n")
+                w("\n")
     else:
         w("## Findings\n\nNo rule matched. "
           "The report parsed cleanly but this failure mode is not covered yet — "
@@ -232,6 +238,10 @@ def render_plain(rep: CrashReport, findings: list[Finding], triage,
             for n, fx in enumerate(f.fixes, 1):
                 for j, ln in enumerate(_wrap(fx, 66)):
                     w(f"      {n}. {ln}\n" if j == 0 else f"         {ln}\n")
+        if f.commands:
+            w("    check (printed, never executed):\n")
+            for cmd in f.commands:
+                w(f"      $ {cmd}\n")
     w("\n")
 
 
@@ -322,6 +332,11 @@ def render_terminal(rep: CrashReport, findings: list[Finding], triage,
                 for n, fx in enumerate(f.fixes, 1):
                     for j, ln in enumerate(_wrap(fx, 88)):
                         con.print(f"      {n}. {ln}" if j == 0 else f"         {ln}")
+            if f.commands:
+                con.print("    [cyan]check[/cyan] [dim](printed, never "
+                          "executed)[/dim]")
+                for cmd in f.commands:
+                    con.print(f"      [dim]$ {cmd}[/dim]")
             con.print()
     else:
         con.print("[yellow]No rule matched this report.[/yellow] It parsed cleanly, "

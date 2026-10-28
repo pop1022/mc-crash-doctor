@@ -74,6 +74,8 @@ rules:
   - If the heap is already large (>=10G), suspect a leaking mod instead -- note which mod the stack points
     at.
   - Take a heap dump next time with `-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=dumps/`.
+  commands:
+  - java -XshowSettings:vm -version
   suspects_from:
   - frame_mods
   - jar
@@ -124,6 +126,8 @@ rules:
   fixes:
   - Raise `-Xmx` as for a heap OOM.
   - Do NOT paper over it with `-XX:-UseGCOverheadLimit` -- that only hides the real problem.
+  commands:
+  - java -XshowSettings:vm -version
   provenance:
     fixtures:
     - synthetic/oom-gc-overhead.txt
@@ -398,6 +402,8 @@ rules:
   - Update the GPU driver from the vendor (not Windows Update).
   - Never launch over RDP/remote desktop -- it has no GL acceleration.
   - Try `-Dorg.lwjgl.opengl.Display.allowSoftwareOpenGL=true` as a diagnostic only.
+  commands:
+  - nvidia-smi
   provenance:
     fixtures:
     - synthetic/native-gl.txt

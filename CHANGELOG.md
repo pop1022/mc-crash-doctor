@@ -7,6 +7,27 @@ versions follow [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Rules can suggest a read-only diagnostic command.** `commands:` on a rule
+  becomes `Finding.commands`, printed under the fixes and in all three
+  renderers, always labelled *printed, never executed*:
+
+      check (printed, never executed):
+        $ java -XshowSettings:vm -version
+
+  The allowlist (`java -version`, `java -XshowSettings`, `jps`, `jcmd`,
+  `nvidia-smi`) is about *advice* safety, not sandboxing -- the tool executes
+  nothing, so the question is only whether a user can ignore the suggestion
+  harmlessly. `rm -rf mods`, `java -jar x.jar` and `nvidia-smi; rm -rf mods` are
+  refused at load time with a warning that names the rule, and the command is
+  dropped rather than printed. FNV: the check runs on the normalised string, so
+  leading/trailing whitespace is not a bypass.
+
+  Three shipped rules carry one: `oom.heap` and `oom.gc-overhead` suggest
+  `java -XshowSettings:vm -version` (the fix says "raise -Xmx"; this shows what
+  it is now), `native.gl` suggests `nvidia-smi`.
+
+### Added
+
 - **`--explain`**: print the arithmetic behind the suspicion score instead of
   only its result. `triage()` gained an optional `trace` dict that records
   `(weight, reason)` per mod as the evidence is counted; `--explain` groups

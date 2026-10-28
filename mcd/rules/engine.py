@@ -59,8 +59,25 @@ LIFECYCLE_STATES = frozenset({
 RULE_KEYS = frozenset({
     "id", "title", "severity", "priority", "when", "explanation", "fixes",
     "suspects_from", "confidence", "tags", "refs", "once", "lifecycle_status",
-    "provenance",
+    "provenance", "commands",
 })
+
+#: Commands a rule may suggest. The tool never runs them: these are printed for
+#: the user to copy. So the allowlist is about *advice* safety -- a diagnostic a
+#: user can ignore harmlessly, never a step that touches their files. A rule that
+#: wants `rm mods/foo.jar` can say so in `fixes`; it cannot dress it as a command.
+SAFE_COMMAND_PREFIXES = (
+    "java -version", "java -XshowSettings", "jps", "jcmd", "nvidia-smi",
+)
+
+
+def is_safe_command(cmd: str) -> bool:
+    """True for the read-only diagnostics above, and nothing else."""
+    c = " ".join((cmd or "").split())
+    if not c:
+        return False
+    return any(c == p or c.startswith(p + " ") or c.startswith(p + ":")
+               for p in SAFE_COMMAND_PREFIXES)
 
 _COMPARATORS = {
     "lt": lambda a, b: a < b,
@@ -80,6 +97,10 @@ class Rule:
     when: dict[str, Any] = field(default_factory=dict)
     explanation: str = ""
     fixes: list[str] = field(default_factory=list)
+    #: Read-only diagnostics printed under the fixes. Filtered by
+    #: `safe_commands` at emission time; unsafe entries are also warned about at
+    #: load time, so nothing is dropped quietly.
+    commands: list[str] = field(default_factory=list)
     suspects_from: list[str] = field(default_factory=list)
     # suspects_from entries: 'mixin' | 'jar' | 'frame_mods' | 'mod:<id>'
     confidence: float = 0.7
@@ -98,6 +119,10 @@ class Rule:
     # fixture key is either "repo/issue" (harvested corpus, gitignored) or a
     # bare filename under tests/fixtures/synthetic/.
     provenance: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def safe_commands(self) -> tuple[str, ...]:
+        return tuple(c for c in self.commands if is_safe_command(c))
 
     @classmethod
     def from_dict(cls, d: dict[str, Any], source: str = "") -> "Rule":
@@ -118,6 +143,7 @@ class Rule:
             when=d.get("when", {}),
             explanation=d.get("explanation", ""),
             fixes=list(d.get("fixes", [])),
+            commands=[str(c) for c in (d.get("commands") or [])],
             suspects_from=list(d.get("suspects_from", [])),
             confidence=float(d.get("confidence", 0.7)),
             tags=list(d.get("tags", [])),
@@ -360,6 +386,17 @@ def _config_warnings(fname: str, rd: dict[str, Any]) -> list[str]:
     if unknown:
         out.append(f"{fname}: rule {rid!r}: unknown key(s) {unknown} "
                    f"-- not read by the loader")
+    raw_cmds = rd.get("commands") or []
+    if not isinstance(raw_cmds, list):
+        out.append(f"{fname}: rule {rid!r}: commands must be a list")
+    else:
+        unsafe = [c for c in raw_cmds if not is_safe_command(str(c))]
+        if unsafe:
+            out.append(
+                f"{fname}: rule {rid!r}: command(s) {unsafe} are not read-only "
+                f"diagnostics -- dropped. The tool prints commands for the user "
+                f"to run, so only {list(SAFE_COMMAND_PREFIXES)} are accepted; "
+                f"put anything else in `fixes` as prose")
     when = rd.get("when")
     if isinstance(when, dict) and when:
         unknown_when = sorted(set(when) - WHEN_KEYS)
@@ -546,6 +583,7 @@ def run_rules(rep: CrashReport, ruleset: RuleSet | None = None,
             explanation=_render(rule.explanation, ctx, caps),
             evidence=evidence,
             fixes=[_render(f, ctx, caps) for f in rule.fixes],
+            commands=[_render(c, ctx, caps) for c in rule.safe_commands],
             suspects=suspects,
             confidence=rule.confidence,
             tags=list(rule.tags),

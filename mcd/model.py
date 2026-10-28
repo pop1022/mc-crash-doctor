@@ -236,6 +236,9 @@ class Finding:
     explanation: str = ""
     evidence: list[str] = field(default_factory=list)   # quoted lines / refs
     fixes: list[str] = field(default_factory=list)      # actionable steps
+    #: Read-only diagnostics the user can run themselves. Printed, never
+    #: executed -- see rules.engine.SAFE_COMMAND_PREFIXES for what qualifies.
+    commands: list[str] = field(default_factory=list)
     suspects: list[str] = field(default_factory=list)   # mod ids or jar names
     confidence: float = 0.0                             # 0..1
     tags: list[str] = field(default_factory=list)
