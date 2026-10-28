@@ -602,7 +602,17 @@
   - **还剩一项：客户端模组误装。** `mcd/metadata/manifest.py` 目前不读
     Fabric 的 `environment` 字段，所以检查不了；报告里明写"NOT CHECKED"
     而不是猜。补这一步要动 reader + 它那 28 个测试，留作下一步。
-  - 未做且本条不要求：嵌套 jar、版本是否存在/是否最新（需要 2.1）。
+  - **状态（2026-10-27）：第一次在真实整合包上验证，一次抓出 5 个缺陷。**
+    样本：本机 355 jar / 588 MB 的 NeoForge 1.21.1 服务器包（它自己的
+    `latest.log` 有 `Done (4.723s)!`，即包是能跑的）。修复前 **35 条 finding，
+    34 条是误报**；修复后 **1 条**（真阳性：NeoForge 实例里装了 3 个纯 Fabric jar，
+    没有 Sinytra Connector），`undecided` 24 → 1。
+    修的五个：`INCOMPATIBLE` 未看版本区间、jar-in-jar 提供者不可见、
+    `${file.jarVersion}` 当字面量、`1.21.1-93` 被当预发布、`side=CLIENT` 依赖在
+    服务端包上被判缺失。证据与逐条声明见 `corpus/PACK-REALJAR.md`，
+    回归测试 `tests/test_pack_realworld.py`（10 项，全部带反向对照）。
+  - 未做且本条不要求：嵌套 jar（已完成一半：现在读**内嵌 jar 的 mod id**，
+    不再读它们自己的依赖声明）、版本是否存在/是否最新（需要 2.1）。
 - [ ] **2.3 Mod Doctor**：把 `harvest_corpus.py` 升级为持续监控 + 版本回归
   对比（"1.8.2 相比 1.8.1 新增/消失哪些崩溃"）。
   **版本回归对比不是独立功能而是必需品**：文献里的跨数据集漂移，在 MC 里
