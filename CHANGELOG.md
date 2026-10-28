@@ -7,6 +7,24 @@ versions follow [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **`--explain`**: print the arithmetic behind the suspicion score instead of
+  only its result. `triage()` gained an optional `trace` dict that records
+  `(weight, reason)` per mod as the evidence is counted; `--explain` groups
+  identical reasons into one weighted row (`x3`, not three identical lines) and
+  ends with the caveats -- a near-tie and the mod ids it could not resolve.
+
+      lithium  score 7.5  confidence 97%  (of 7.5 total evidence)
+         2.50  stack frame #32: me.jellysquid.mods.lithium...hasMethodOverride
+         2.50  stack frame #33: ...BlockStateFlags$5.test (line 114)
+
+  Off by default and **observationally pure**: `triage(rep)` and
+  `triage(rep, trace={})` return identical suspects (a test asserts it), and 24
+  renders across text/markdown were compared byte-for-byte against the previous
+  commit before this landed. Refused in combination with `--json` -- prose after
+  a JSON document makes `json.load` fail on the tool's own output.
+
+### Added
+
 - **`--pack DIR --side server|client`**, and with it the last of the five finding
   families ROADMAP 2.2 asks for. `manifest.py` now reads Fabric's root
   `environment` and Quilt's `minecraft.environment`; a mod that declares the

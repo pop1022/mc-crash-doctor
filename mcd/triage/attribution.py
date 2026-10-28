@@ -318,8 +318,16 @@ def mixin_method_modid(method: str) -> str | None:
     return None if mid in PLATFORM_LAYERS else mid
 
 
-def triage(rep: CrashReport, *, top_n: int = 5) -> TriageResult:
-    """Attribute the crash to mods, strongest evidence first."""
+def triage(rep: CrashReport, *, top_n: int = 5,
+           trace: dict[str, list[tuple[float, str]]] | None = None) -> TriageResult:
+    """Attribute the crash to mods, strongest evidence first.
+
+    `trace`, when given, receives `modid -> [(weight, reason)]` in the order the
+    evidence was counted. It exists for `--explain`: `Suspect.reasons` keeps the
+    prose but drops the weights, so a user could see *what* fired and not *how
+    much* each item contributed. Passing None (the default) costs nothing and
+    changes no result.
+    """
     by_id, by_jar, _ = _index_mods(rep)
     res = TriageResult()
     scores: dict[str, float] = defaultdict(float)
@@ -330,6 +338,8 @@ def triage(rep: CrashReport, *, top_n: int = 5) -> TriageResult:
         if not mid:
             return
         scores[mid] += weight
+        if trace is not None:
+            trace.setdefault(mid, []).append((weight, reason))
         if reason not in reasons[mid]:
             reasons[mid].append(reason)
 

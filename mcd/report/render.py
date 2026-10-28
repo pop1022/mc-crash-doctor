@@ -328,3 +328,77 @@ def render_terminal(rep: CrashReport, findings: list[Finding], triage,
                   "but this failure mode is not covered yet — please open an issue "
                   "with the report attached.")
     con.print()
+
+# --- --explain ---------------------------------------------------------------
+def _by_reason(rows) -> list[tuple[float, int, str]]:
+    """Sum the weights of identical reasons, keeping the biggest first.
+
+    The engine records one entry per hit, so "jar on the failing path" appears
+    once per frame. Ten identical rows would be accurate and unreadable; the
+    count keeps the information and drops the repetition.
+    """
+    totals: dict[str, tuple[float, int]] = {}
+    for weight, reason in rows:
+        total, count = totals.get(reason, (0.0, 0))
+        totals[reason] = (total + weight, count + 1)
+    out = [(w, n, r) for r, (w, n) in totals.items()]
+    out.sort(key=lambda item: (-item[0], item[2]))
+    return out
+
+
+def render_explain(triage, trace: dict[str, list[tuple[float, str]]],
+                   out: IO[str], *, markdown: bool = False,
+                   top_suspects: int = 3, top_signals: int = 8) -> None:
+    """Show how the suspicion score was assembled: `--explain`'s payload.
+
+    The point is auditability. A tool that says "create, 62%" and cannot show
+    the arithmetic is asking to be believed; this prints the weights so the user
+    can disagree with a specific line instead of with the whole answer.
+    """
+    suspects = list(getattr(triage, "suspects", ()) or ())
+    if not suspects:
+        out.write("\nno mod was implicated: no attribution signal fired.\n")
+        return
+    total_evidence = sum(w for rows in trace.values() for w, _ in rows) or 1.0
+
+    if markdown:
+        out.write("\n## Why these suspects\n\n")
+        out.write("Each suspect's score is the sum of the weighted signals below; "
+                  "confidence is its share of all recorded evidence, damped when "
+                  "the leader is barely ahead. Negative evidence is not a thing "
+                  "here: every row adds.\n")
+    else:
+        out.write("\n" + "=" * 74 + "\n suspicion breakdown\n" + "=" * 74 + "\n")
+        out.write("score = sum of weighted signals; confidence = share of all "
+                  "recorded evidence\n")
+
+    for s in suspects[:top_suspects]:
+        rows = _by_reason(trace.get(s.modid, ()))[:top_signals]
+        head = (f"{s.modid}  score {s.score:.1f}  confidence {s.confidence:.0%}  "
+                f"(of {total_evidence:.1f} total evidence)")
+        if markdown:
+            out.write(f"\n**{md_cell(head)}**\n\n")
+            out.write("| weight | n | signal |\n|---:|---:|---|\n")
+            for weight, count, reason in rows:
+                out.write(f"| {weight:.2f} | {count} | {md_cell(reason)} |\n")
+        else:
+            out.write(f"\n{head}\n")
+            for weight, count, reason in rows:
+                times = f" x{count}" if count > 1 else ""
+                out.write(f"  {weight:6.2f}{times:5s}  {reason}\n")
+
+    # A near-tie is not a footnote: it says the answer is "one of these two",
+    # which changes what the user should do next.
+    notes = list(getattr(triage, "notes", ()) or ())
+    unresolved = list(getattr(triage, "unresolved_modids", ()) or ())
+    if notes or unresolved:
+        if markdown:
+            out.write("\n### Caveats\n\n")
+        else:
+            out.write("\ncaveats:\n")
+        for note in notes:
+            out.write(f"- {md_cell(note)}\n" if markdown else f"  * {note}\n")
+        if unresolved:
+            joined = ", ".join(unresolved[:8])
+            out.write((f"- {md_cell('could not resolve: ' + joined)}\n" if markdown
+                       else f"  * could not resolve: {joined}\n"))

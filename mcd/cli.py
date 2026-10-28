@@ -26,8 +26,8 @@ from . import __version__
 from .extract import fetch_log
 from .model import CrashReport, Finding, Severity
 from .parser.report import parse_file, parse_text
-from .report.render import (render_json, render_markdown, render_plain,
-                           render_terminal)
+from .report.render import (render_explain, render_json, render_markdown,
+                           render_plain, render_terminal)
 from .rules.engine import RuleSet, run_rules
 from .triage.attribution import suspects_for_rules, triage
 
@@ -61,7 +61,8 @@ def _find_reports(d: Path) -> list[Path]:
 
 def diagnose(path: str | None, text: str | None, *, source: str = "",
              rules_dirs: list[str] | None = None,
-             ruleset: RuleSet | None = None) \
+             ruleset: RuleSet | None = None,
+             trace: dict | None = None) \
         -> tuple[CrashReport, list[Finding], object]:
     """Parse + run rules + triage. The one call the CLI and API share.
 
@@ -78,7 +79,7 @@ def diagnose(path: str | None, text: str | None, *, source: str = "",
         else parse_file(path)
     rs = ruleset if ruleset is not None else RuleSet.load(rules_dirs or None)
     findings = run_rules(rep, rs, suspect_fn=suspects_for_rules)
-    t = triage(rep)
+    t = triage(rep, trace=trace)
     return rep, findings, t
 
 
@@ -121,6 +122,10 @@ def main(argv: list[str] | None = None) -> int:
                      help="Markdown output (paste into an issue)")
     fmt.add_argument("--text", action="store_true", help="plain text, no colour")
 
+    ap.add_argument("--explain", action="store_true",
+                    help="also print how the suspicion score was assembled "
+                         "(weights per signal); not available with --json, "
+                         "which already carries score/confidence/reasons")
     ap.add_argument("--no-color", action="store_true")
     ap.add_argument("--rules", action="store_true", help="list the loaded rules")
     ap.add_argument("--rules-dir", action="append", default=[],
@@ -147,6 +152,14 @@ def main(argv: list[str] | None = None) -> int:
     out = sys.stdout
     color = not (args.no_color or args.json or args.markdown or args.text
                  or not out.isatty())
+
+    if args.explain and args.json:
+        # The breakdown is prose; appending it after a JSON document would make
+        # `json.load` fail on the tool's own output.
+        print("error: --explain cannot be combined with --json "
+              "(the JSON already has score, confidence and reasons)",
+              file=sys.stderr)
+        return 2
 
     # --- pack mode: a different question, so it returns before anything else
     if args.pack:
@@ -206,8 +219,10 @@ def main(argv: list[str] | None = None) -> int:
     for f in files:
         if len(files) > 1 and not args.json:
             print(f"\n{'─' * 74}\n {f.name}\n{'─' * 74}")
+        trace = {} if args.explain else None
         try:
-            rep, findings, t = diagnose(str(f), None, ruleset=ruleset)
+            rep, findings, t = diagnose(str(f), None, ruleset=ruleset,
+                                        trace=trace)
         except Exception as e:  # noqa: BLE001
             failed += 1
             print(f"error parsing {f}: {type(e).__name__}: {e}", file=sys.stderr)
@@ -219,7 +234,10 @@ def main(argv: list[str] | None = None) -> int:
             render_json(rep, findings, t, buf)
             rendered.append(buf.getvalue())
         else:
-            _emit(rep, findings, t, _fmt(args), out, color)
+            fmt = _fmt(args)
+            _emit(rep, findings, t, fmt, out, color)
+            if trace is not None:
+                render_explain(t, trace, out, markdown=(fmt == "markdown"))
         worst = max(worst, _worst(findings))
 
     if batch_json:
@@ -243,14 +261,18 @@ def _one(path: str | None, text: str, source: str,
          args: argparse.Namespace, out: IO[str], color: bool) -> int:
     """Single-input path: stdin and --url. Parse failures get a message, not a
     traceback -- the same contract the file loop already honours."""
+    trace: dict = {} if args.explain else None
     try:
         rep, findings, t = diagnose(path, text, source=source,
-                                    rules_dirs=args.rules_dir)
+                                    rules_dirs=args.rules_dir, trace=trace)
     except Exception as e:  # noqa: BLE001
         print(f"error parsing {source}: {type(e).__name__}: {e}",
               file=sys.stderr)
         return 2
-    _emit(rep, findings, t, _fmt(args), out, color)
+    fmt = _fmt(args)
+    _emit(rep, findings, t, fmt, out, color)
+    if trace is not None:
+        render_explain(t, trace, out, markdown=(fmt == "markdown"))
     return _exit(_worst(findings), args.exit_code)
 
 

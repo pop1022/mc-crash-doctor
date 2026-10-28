@@ -121,8 +121,12 @@ mc-crash-doctor report.txt --markdown
 # machine-readable
 mc-crash-doctor report.txt --json
 
-# no crash yet? check a mods/ directory against what its jars declare
-mc-crash-doctor --pack /path/to/server
+# show how the suspicion score was assembled (weights per signal)
+mc-crash-doctor report.txt --explain
+
+# no crash yet? check a mods/ directory against what its jars declare.
+# --side tells it what the directory cannot: client or server
+mc-crash-doctor --pack /path/to/server --side server
 
 # CI gate: exit 1 on any ERROR/FATAL
 mc-crash-doctor --dir ./server --exit-code
