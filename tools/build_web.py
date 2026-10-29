@@ -126,7 +126,12 @@ def main() -> int:
     subprocess.run([sys.executable, str(ROOT / "tools" / "make_web_sample.py")],
                    cwd=ROOT, check=True)
 
-    manifest = {"file": wheel.name, "source_digest": source_digest()}
+    # `bytes` lets the page notice a stale folder before booting: the CLI
+    # already learned that a wheel which is not rebuilt after a source edit
+    # imports the wrong code silently (test_manifest_source_digest_matches_mcd).
+    manifest = {"file": wheel.name, "source_digest": source_digest(),
+                "bytes": wheel.stat().st_size,
+                "sha256": hashlib.sha256(wheel.read_bytes()).hexdigest()}
     # newline="\n" on purpose: this is a committed artifact, and letting Python
     # translate to CRLF on Windows turns every rebuild on a Windows machine into
     # a whole-file diff on a repo that stores LF.

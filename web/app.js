@@ -88,12 +88,13 @@ const I18N = {
     footerTail: "· 与 CLI 同一套引擎 · 规则是 YAML，欢迎 PR",
 
     "boot.runtime": "正在启动 Python 运行时…",
+    "boot.runtimeElapsed": (v) => `正在启动 Python 运行时… ${v.s}s（首次要下 ~10 MB，只下一次）`,
     "boot.engine": "正在安装诊断引擎…",
     "boot.ready": "引擎就绪 — 粘贴崩溃报告后点「开始诊断」",
     "boot.failed": "引擎加载失败",
 
-    "bootErr": (v) => "<p><b>诊断引擎没能加载。</b>它从 CDN（jsDelivr）下载后装在这个" +
-      "标签页里，网络被拦或浏览器太旧是最常见的原因。</p>" +
+    "bootErr": (v) => "<p><b>诊断引擎没能加载。</b>运行时要从 CDN 下载后装进这个标签页，" +
+      "下面列的是试过的全部地址——被网络拦掉、或浏览器太旧，是最常见的原因。</p>" +
       `<pre>${v.msg}</pre>` +
       '<div class="row" style="margin-top:0">' +
       '<button id="retry">重试</button>' +
@@ -196,12 +197,14 @@ const I18N = {
     footerTail: "· same engine as the CLI · rules are YAML, PRs welcome",
 
     "boot.runtime": "starting the Python runtime…",
+    "boot.runtimeElapsed": (v) => `starting the Python runtime… ${v.s}s (first load pulls ~10 MB, once)`,
     "boot.engine": "installing the diagnosis engine…",
     "boot.ready": "engine ready — paste a crash report and hit Diagnose",
     "boot.failed": "engine failed to load",
 
     "bootErr": (v) => "<p><b>The diagnosis engine could not load.</b> It is fetched from " +
-      "a CDN (jsDelivr) and installed in this tab; a blocked network or an old browser is " +
+      "a CDN and installed in this tab; the list below is every address that was tried. A " +
+      "blocked network or an old browser is the usual reason. " +
       `the usual reason.</p><pre>${v.msg}</pre>` +
       '<div class="row" style="margin-top:0">' +
       '<button id="retry">Retry</button>' +
@@ -449,6 +452,94 @@ function resetProgress() {
 
 /* ------------------------------------------------------------------ boot */
 
+// Pyodide is ~10 MB of WASM and cannot be vendored into this repo, so the page
+// depends on one CDN being reachable. One is not a plan: a corporate proxy or a
+// national network can block jsDelivr while unpkg works. Try them in order and
+// report the whole list if none loads -- "engine failed" with no URL is what a
+// user cannot act on.
+// Measured, not assumed. unpkg serves pyodide.js but its wheels come back
+// without `Access-Control-Allow-Origin`, so the runtime loads and then dies
+// deeper with a CORS error the page cannot explain; cdn.pyodide.org does not
+// resolve here at all. jsDelivr's own mirrors are the same files behind
+// different hostnames, which is exactly what a blocked-main-host needs.
+const PYODIDE_CDNS = [
+  "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/",
+  "https://fastly.jsdelivr.net/pyodide/v0.26.4/full/",
+  "https://gcore.jsdelivr.net/pyodide/v0.26.4/full/",
+];
+
+const SCRIPT_TIMEOUT_MS = 20000;
+
+// `new Error("")` and DOMException-style failures both reach the catch block
+// with an empty `.message`, which produced a status line that said the engine
+// failed and a panel with nothing in it. Never show an empty reason.
+function describeError(e) {
+  if (!e) return "unknown error (open the browser console for details)";
+  const msg = (e.message || "").trim();
+  if (msg) return msg;
+  const err = (e.error && (e.error.message || "")).trim();
+  if (err) return err;
+  if (e.type) return e.type + " (open the browser console for details)";
+  const s = String(e);
+  return s && s !== "[object Object]"
+    ? s
+    : "unknown error (open the browser console for details)";
+}
+
+function loadScript(src, timeoutMs = SCRIPT_TIMEOUT_MS) {
+  return new Promise((resolve, reject) => {
+    const el = document.createElement("script");
+    let done = false;
+    const finish = (err) => {
+      if (done) return;
+      done = true;
+      el.remove();
+      err ? reject(err) : resolve();
+    };
+    el.src = src;
+    el.async = true;
+    el.onload = () => finish(null);
+    el.onerror = () => finish(new Error("could not load " + src));
+    setTimeout(() => finish(new Error("timed out after " +
+      Math.round(timeoutMs / 1000) + "s: " + src)), timeoutMs);
+    document.head.appendChild(el);
+  });
+}
+
+async function ensureRuntime() {
+  if (typeof window.loadPyodide === "function") return;
+  if (typeof WebAssembly !== "object") {
+    throw new Error("this browser has no WebAssembly support -- " +
+                    "the engine cannot run here (try a current Chrome/Edge/Firefox)");
+  }
+  const tried = [];
+  for (const base of PYODIDE_CDNS) {
+    const url = base + "pyodide.js";
+    tried.push(url);
+    try {
+      await loadScript(url);
+      if (typeof window.loadPyodide === "function") return;
+      throw new Error("script loaded but loadPyodide is missing: " + url);
+    } catch (e) {
+      console.warn("pyodide source failed:", url, e && e.message);
+    }
+  }
+  throw new Error("no Pyodide CDN reachable. Tried:\n" + tried.join("\n"));
+}
+
+// sample.js is 78 KB of real report text. Loading it on first paint delays the
+// only thing the user is waiting for (the engine); fetch it when it is asked for.
+let samplePromise = null;
+function ensureSample() {
+  if (window.MCD_SAMPLE) return Promise.resolve(window.MCD_SAMPLE);
+  if (!samplePromise) {
+    samplePromise = loadScript("sample.js")
+      .then(() => window.MCD_SAMPLE || SAMPLE)
+      .catch(() => SAMPLE);            // the built-in fallback is enough
+  }
+  return samplePromise;
+}
+
 async function boot() {
   resetProgress();
   hideNotice();
@@ -456,24 +547,55 @@ async function boot() {
   setBusy(true);
   setStatus("boot.runtime");
 
+  const startedAt = Date.now();
+  const ticker = setInterval(() => {
+    if (ready) return;
+    setStatus("boot.runtimeElapsed",
+              undefined, { s: Math.round((Date.now() - startedAt) / 1000) });
+  }, 1000);
+
   try {
+    await ensureRuntime();
     pyodide = await loadPyodide();
     step("runtime", "done");
     step("engine", "active");
     setStatus("boot.engine");
 
-    await pyodide.loadPackage(["micropip"]);
+    // PyYAML is a dependency of the wheel. Ask Pyodide for its own build of it
+    // (served from the same CDN we just proved reachable) instead of letting
+    // micropip resolve it at install time -- that path is one more network hop
+    // that can fail, and the browser cannot tell the user which hop it was.
+    await pyodide.loadPackage(["micropip", "pyyaml"]);
     await pyodide.runPythonAsync("import micropip");
 
     const manifest = await (await fetch("wheel-manifest.json")).json();
-    // micropip accepts a URL; serve the wheel from the same origin.
     const wheelUrl = new URL(manifest.file, location.href).href;
-    await pyodide.runPythonAsync(
-      `import micropip\nawait micropip.install(${JSON.stringify(wheelUrl)})`
-    );
+    if (manifest.bytes) {
+      // A stale wheel in a deployed folder is invisible until the engine
+      // imports the wrong code. The CLI already learned this the hard way
+      // (test_manifest_source_digest_matches_mcd); a HEAD is cheap.
+      const head = await fetch(wheelUrl, { method: "HEAD" });
+      const len = Number(head.headers.get("content-length") || 0);
+      if (len && len !== manifest.bytes) {
+        throw new Error(
+          "web/" + manifest.file + " is " + len + " bytes but the manifest " +
+          "says " + manifest.bytes + " -- the folder is stale, re-run " +
+          "tools/build_web.py");
+      }
+    }
+    try {
+      await pyodide.runPythonAsync(
+        "import micropip\nawait micropip.install(" +
+        JSON.stringify(wheelUrl) + ", deps=False)");
+    } catch (e) {
+      // Older Pyodide builds may not honour deps=False with a local wheel.
+      console.warn("deps=False install failed, retrying with deps:", e);
+      await pyodide.runPythonAsync(
+        "import micropip\nawait micropip.install(" + JSON.stringify(wheelUrl) + ")");
+    }
 
-    // Warm the engine once (loads PyYAML + all rule packs) so the first
-    // Diagnose click is instant.
+    // Warm the engine once (loads the rule packs) so the first Diagnose click
+    // is instant.
     await pyodide.runPythonAsync(`
 import json
 from mcd.cli import diagnose as _diagnose
@@ -489,12 +611,14 @@ def mcd_diagnose(text):
     step("engine", "done");
     step("ready", "done");
     $("progress").hidden = true;
+    clearInterval(ticker);
     ready = true;
     setBusy(false);
     setStatus("boot.ready", "ok");
   } catch (e) {
+    clearInterval(ticker);
     console.error(e);
-    BOOT_ERROR = (e && e.message) ? e.message : String(e);
+    BOOT_ERROR = describeError(e);
     step("engine", "failed");
     $("progress").hidden = true;
     setStatus("boot.failed", "err");
@@ -842,10 +966,10 @@ async function loadFile(file) {
 
 $("go").addEventListener("click", diagnose);
 
-$("sample").addEventListener("click", () => {
-  // sample.js (generated from a redacted real report by
-  // tools/make_web_sample.py) when present; tiny built-in fallback otherwise.
-  $("log").value = window.MCD_SAMPLE || SAMPLE;
+$("sample").addEventListener("click", async () => {
+  // Fetched on first use (see ensureSample): 78 KB of real report text is not
+  // worth delaying the engine boot for.
+  $("log").value = await ensureSample();
   syncClear();
   hideNotice();
   diagnose();

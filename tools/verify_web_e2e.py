@@ -167,16 +167,26 @@ def main() -> int:
     })()""")
     print(f"visibility after boot: {vis}")
 
-    # 2. sample must be the redacted real report (not the tiny fallback)
-    sample_len = cdp.js("(window.MCD_SAMPLE || '').length")
-    print(f"MCD_SAMPLE loaded: {sample_len} chars")
-    if not sample_len or sample_len < 10000:
+    # 2. click the sample button. The real 78 KB report is fetched on demand now
+    #    (it used to be a blocking <script>, which delayed the engine), so the
+    #    check moved to *after* the click. The intent is unchanged: the rendered
+    #    sample must be the redacted real report, not the tiny built-in fallback
+    #    -- a missing sample.js would otherwise hide itself.
+    cdp.js("document.getElementById('sample').click()")
+    t0 = time.time()
+    sample_len = 0
+    while time.time() - t0 < 30:
+        cdp.drain(0.5)
+        sample_len = cdp.js("(window.MCD_SAMPLE || '').length") or 0
+        if sample_len >= 10000:
+            break
+    typed = cdp.js("(document.getElementById('log').value || '').length") or 0
+    print(f"MCD_SAMPLE loaded on demand: {sample_len} chars (box has {typed})")
+    if sample_len < 10000 or typed < 10000:
         print("FAIL: sample.js missing or too small (fallback would hide a regression)")
         return 1
 
-    # 3. click the sample button
-    cdp.js("document.getElementById('sample').click()")
-    t0 = time.time()
+    # 3. wait for the diagnosis
     cards = 0
     while time.time() - t0 < DIAGNOSE_TIMEOUT:
         cdp.drain(1.0)

@@ -238,8 +238,10 @@
   </footer>
 </div>
 
-<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
-<script src="sample.js"></script>
+<!-- Pyodide and sample.js are loaded by app.js, not here: the runtime has
+     fallback CDNs, and the 78 KB sample is fetched on first use. -->
+<noscript><p style="padding:1rem;border:1px solid #c33;border-radius:8px">
+本页需要 JavaScript 才能诊断。<br>This page needs JavaScript to diagnose a report.</p></noscript>
 <script src="app.js"></script>
 </body>
 </html>
