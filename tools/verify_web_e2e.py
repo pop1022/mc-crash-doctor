@@ -34,7 +34,7 @@ import websocket  # websocket-client
 
 CDP_PORT = int(os.environ.get("MCD_CDP_PORT", "9222"))
 CDP_HTTP = f"http://127.0.0.1:{CDP_PORT}"
-PAGE = "http://127.0.0.1:8765/index.html"
+PAGE = os.environ.get("MCD_WEB_PAGE", "http://127.0.0.1:8765/index.html")
 READY_TIMEOUT = 120      # pyodide CDN boot + micropip install
 DIAGNOSE_TIMEOUT = 120   # 75 KB sample through the WASM engine
 
@@ -133,6 +133,20 @@ def main() -> int:
     cdp.send("Page.navigate", url=PAGE)
     print(f"opened {PAGE}")
 
+    # A fresh tab is still on about:blank for a moment. Reading #status too
+    # early raises a TypeError that looks exactly like a broken app, so wait
+    # for the DOM first -- and keep the reads null-safe below.
+    dom_deadline = time.time() + 20
+    while time.time() < dom_deadline:
+        cdp.drain(0.5)
+        if cdp.js("Boolean(document.getElementById('status') && "
+                  "document.getElementById('go'))"):
+            break
+    else:
+        print("FAIL: page DOM never appeared (server down?)")
+        cdp.close()
+        return 1
+
     # 1. engine boot -- gated on the button, not on a status string, so the
     # check survives a language change.
     t0 = time.time()
@@ -140,8 +154,9 @@ def main() -> int:
     enabled = False
     while time.time() - t0 < READY_TIMEOUT:
         cdp.drain(1.0)
-        status = cdp.js("document.getElementById('status').textContent") or ""
-        enabled = bool(cdp.js("!document.getElementById('go').disabled"))
+        status = cdp.js("document.getElementById('status')?.textContent || ''") or ""
+        enabled = bool(cdp.js("Boolean(document.getElementById('go') && "
+                              "!document.getElementById('go').disabled)"))
         if enabled:
             break
         if "失败" in status or "failed" in status.lower():

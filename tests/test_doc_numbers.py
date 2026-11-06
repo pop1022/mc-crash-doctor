@@ -167,3 +167,25 @@ def test_roadmap_does_not_cite_the_stale_match_rate():
     assert idx > 0, "ROADMAP lost its phase-2 heading"
     stale = [ln for ln in text[idx:].splitlines() if "当前 45.8%" in ln]
     assert not stale, f"phase 2 quotes the pre-1D.2b rate as current: {stale}"
+
+
+# --- the freeze decision and the fingerprint report ------------------------
+def test_freeze_decision_quotes_the_current_numbers():
+    """A frozen decision that still says 74.2% would be quoted by the next
+    person as if it were current. Its headline numbers must come from the same
+    JSON every other doc uses."""
+    c = _json("corpus/coverage.json")["totals"]
+    g = _json("corpus/coverage-granularity.json")
+    needles = [f"{c['diagnosed']}/{c['n']}", f"{c['rate']:.1%}",
+               str(c["uncovered"]),
+               str(g["granularities"]["signature (shipped)"]["clusters"])]
+    miss = _missing("docs/DECISION-longtail-freeze.md", needles)
+    assert not miss, f"freeze decision does not cite {miss}"
+
+
+def test_fingerprint_report_matches_its_json():
+    d = _json("corpus/crash-fingerprints.json")
+    text = _doc("corpus/CRASH-FINGERPRINTS.md")
+    assert str(d["clusters"]) in text
+    assert str(d["mixed_description_clusters"]) in text
+    assert d["mixed_description_clusters"] <= d["multi_member_clusters"]

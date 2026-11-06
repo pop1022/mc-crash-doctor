@@ -122,6 +122,10 @@ def main(argv: list[str] | None = None) -> int:
                      help="Markdown output (paste into an issue)")
     fmt.add_argument("--text", action="store_true", help="plain text, no colour")
 
+    ap.add_argument("--timeline", nargs="?", type=int, const=60, default=None,
+                    metavar="SECONDS",
+                    help="show the last SECONDS (default 60) of timestamped log "
+                         "lines before the crash instead of diagnosing")
     ap.add_argument("--explain", action="store_true",
                     help="also print how the suspicion score was assembled "
                          "(weights per signal); not available with --json, "
@@ -141,6 +145,9 @@ def main(argv: list[str] | None = None) -> int:
     for d in args.rules_dir:
         if not Path(d).is_dir():
             ap.error(f"--rules-dir is not a directory: {d}")
+
+    if args.timeline is not None:
+        return _timeline_mode(args)
 
     if args.rules:
         rs = RuleSet.load(args.rules_dir)
@@ -255,6 +262,47 @@ def main(argv: list[str] | None = None) -> int:
     if failed and failed == len(files):
         return 2
     return _exit(worst, args.exit_code)
+
+
+def _timeline_mode(args) -> int:
+    """`--timeline` is a separate question (what happened just before the
+    crash?), so it returns on its own instead of mixing prose into a diagnosis
+    or -- appending after a JSON document -- breaking json.load()."""
+    from .timeline import extract_events, render_timeline, window
+
+    if args.timeline < 1:
+        print("error: --timeline needs a positive number of seconds",
+              file=sys.stderr)
+        return 2
+    if args.json or args.pack or args.dir:
+        print("error: --timeline takes one report (not --json / --pack / --dir)",
+              file=sys.stderr)
+        return 2
+
+    if args.stdin:
+        text, source = sys.stdin.read(), "<stdin>"
+    elif args.url:
+        text = fetch_log(args.url)
+        if text is None:
+            print(f"error: could not fetch {args.url}", file=sys.stderr)
+            return 2
+        source = args.url
+    else:
+        p = Path(args.path or "")
+        if not p.is_file():
+            print(f"error: no such report file: {p}", file=sys.stderr)
+            return 2
+        try:
+            text = p.read_text(encoding="utf-8", errors="replace")
+        except OSError as e:
+            print(f"error: could not read {p}: {e}", file=sys.stderr)
+            return 2
+        source = str(p)
+
+    events, skipped = extract_events(text)
+    chosen, _ = window(events, args.timeline)
+    render_timeline(chosen, skipped, args.timeline, sys.stdout, source=source)
+    return 0
 
 
 def _one(path: str | None, text: str, source: str,

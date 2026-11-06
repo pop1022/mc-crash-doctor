@@ -1,0 +1,1868 @@
+{
+  "corpus_files": 454,
+  "reports": 454,
+  "clusters": 377,
+  "singletons": 339,
+  "mean_cluster_size": 1.204,
+  "multi_member_clusters": 38,
+  "mixed_description_clusters": 7,
+  "clusters_detail": [
+    {
+      "fingerprint": "014753faa504",
+      "size": 13,
+      "distinct_descriptions": [
+        "mouseClicked event handler"
+      ],
+      "distinct_rules": [
+        "crash.registry-load-failed",
+        "crash.runtime-mod"
+      ],
+      "distinct_loaders": [
+        "fabric"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/FabricMC__fabric-api/4862.crash.txt",
+          "description": "mouseClicked event handler",
+          "loader": "fabric",
+          "mc_version": "1.21.1",
+          "rules": [
+            "crash.registry-load-failed",
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "fabric-registry-sync-v0",
+          "root_cause": "java.lang.IllegalStateException: Failed to load registries due to above errors"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-api/4909.crash.txt",
+          "description": "mouseClicked event handler",
+          "loader": "fabric",
+          "mc_version": "1.21.1",
+          "rules": [
+            "crash.registry-load-failed",
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "fabric-registry-sync-v0",
+          "root_cause": "java.lang.IllegalStateException: Failed to load registries due to above errors"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-api/5049.crash.txt",
+          "description": "mouseClicked event handler",
+          "loader": "fabric",
+          "mc_version": "1.21.1",
+          "rules": [
+            "crash.registry-load-failed",
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "fabric-registry-sync-v0",
+          "root_cause": "java.lang.IllegalStateException: Failed to load registries due to above errors"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-api/5102.crash.txt",
+          "description": "mouseClicked event handler",
+          "loader": "fabric",
+          "mc_version": "1.21.1",
+          "rules": [
+            "crash.registry-load-failed",
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "fabric-registry-sync-v0",
+          "root_cause": "java.lang.IllegalStateException: Failed to load registries due to above errors"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-api/5147.crash.txt",
+          "description": "mouseClicked event handler",
+          "loader": "fabric",
+          "mc_version": "1.21.1",
+          "rules": [
+            "crash.registry-load-failed",
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "fabric-registry-sync-v0",
+          "root_cause": "java.lang.IllegalStateException: Failed to load registries due to above errors"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-api/5208.crash.txt",
+          "description": "mouseClicked event handler",
+          "loader": "fabric",
+          "mc_version": "1.21.1",
+          "rules": [
+            "crash.registry-load-failed",
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "fabric-registry-sync-v0",
+          "root_cause": "java.lang.IllegalStateException: Failed to load registries due to above errors"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-api/5234.crash.txt",
+          "description": "mouseClicked event handler",
+          "loader": "fabric",
+          "mc_version": "1.21.1",
+          "rules": [
+            "crash.registry-load-failed",
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "fabric-registry-sync-v0",
+          "root_cause": "java.lang.IllegalStateException: Failed to load registries due to above errors"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-api/5237.crash.txt",
+          "description": "mouseClicked event handler",
+          "loader": "fabric",
+          "mc_version": "1.21.1",
+          "rules": [
+            "crash.registry-load-failed",
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "fabric-registry-sync-v0",
+          "root_cause": "java.lang.IllegalStateException: Failed to load registries due to above errors"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-api/5269.crash.txt",
+          "description": "mouseClicked event handler",
+          "loader": "fabric",
+          "mc_version": "1.21.1",
+          "rules": [
+            "crash.registry-load-failed",
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "fabric-registry-sync-v0",
+          "root_cause": "java.lang.IllegalStateException: Failed to load registries due to above errors"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-api/5343.crash.txt",
+          "description": "mouseClicked event handler",
+          "loader": "fabric",
+          "mc_version": "1.21.1",
+          "rules": [
+            "crash.registry-load-failed",
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "fabric-registry-sync-v0",
+          "root_cause": "java.lang.IllegalStateException: Failed to load registries due to above errors"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-api/5356.crash.txt",
+          "description": "mouseClicked event handler",
+          "loader": "fabric",
+          "mc_version": "1.21.1",
+          "rules": [
+            "crash.registry-load-failed",
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "fabric-registry-sync-v0",
+          "root_cause": "java.lang.IllegalStateException: Failed to load registries due to above errors"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-api/5360.crash.txt",
+          "description": "mouseClicked event handler",
+          "loader": "fabric",
+          "mc_version": "1.21.1",
+          "rules": [
+            "crash.registry-load-failed",
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "fabric-registry-sync-v0",
+          "root_cause": "java.lang.IllegalStateException: Failed to load registries due to above errors"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-api/5407.crash.txt",
+          "description": "mouseClicked event handler",
+          "loader": "fabric",
+          "mc_version": "1.21.1",
+          "rules": [
+            "crash.registry-load-failed",
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "fabric-registry-sync-v0",
+          "root_cause": "java.lang.IllegalStateException: Failed to load registries due to above errors"
+        }
+      ]
+    },
+    {
+      "fingerprint": "6ad2fd720379",
+      "size": 12,
+      "distinct_descriptions": [
+        ""
+      ],
+      "distinct_rules": [
+        "mod.incompatible-set"
+      ],
+      "distinct_loaders": [
+        "fabric"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/CaffeineMC__sodium/3524.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.incompatible-set"
+          ],
+          "top_suspect": "",
+          "root_cause": "net.fabricmc.loader.impl.FormattedException: Some of your mods are incompatible with the game or each other!"
+        },
+        {
+          "report": "corpus/github/CaffeineMC__sodium/3813.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.incompatible-set"
+          ],
+          "top_suspect": "",
+          "root_cause": "net.fabricmc.loader.impl.FormattedException: Some of your mods are incompatible with the game or each other!"
+        },
+        {
+          "report": "corpus/github/CaffeineMC__sodium/3816.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.incompatible-set"
+          ],
+          "top_suspect": "",
+          "root_cause": "net.fabricmc.loader.impl.FormattedException: Some of your mods are incompatible with the game or each other!"
+        },
+        {
+          "report": "corpus/github/CaffeineMC__sodium/3819.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.incompatible-set"
+          ],
+          "top_suspect": "",
+          "root_cause": "net.fabricmc.loader.impl.FormattedException: Some of your mods are incompatible with the game or each other!"
+        },
+        {
+          "report": "corpus/github/CaffeineMC__sodium/3845.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.incompatible-set"
+          ],
+          "top_suspect": "",
+          "root_cause": "net.fabricmc.loader.impl.FormattedException: Some of your mods are incompatible with the game or each other!"
+        },
+        {
+          "report": "corpus/github/CaffeineMC__sodium/3861.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.incompatible-set"
+          ],
+          "top_suspect": "",
+          "root_cause": "net.fabricmc.loader.impl.FormattedException: Some of your mods are incompatible with the game or each other!"
+        },
+        {
+          "report": "corpus/github/CaffeineMC__sodium/3864.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.incompatible-set"
+          ],
+          "top_suspect": "",
+          "root_cause": "net.fabricmc.loader.impl.FormattedException: Some of your mods are incompatible with the game or each other!"
+        },
+        {
+          "report": "corpus/github/CaffeineMC__sodium/3907.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.incompatible-set"
+          ],
+          "top_suspect": "",
+          "root_cause": "net.fabricmc.loader.impl.FormattedException: Some of your mods are incompatible with the game or each other!"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-api/5197.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.incompatible-set"
+          ],
+          "top_suspect": "",
+          "root_cause": "net.fabricmc.loader.impl.FormattedException: Some of your mods are incompatible with the game or each other!"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-api/5362.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.incompatible-set"
+          ],
+          "top_suspect": "",
+          "root_cause": "net.fabricmc.loader.impl.FormattedException: Some of your mods are incompatible with the game or each other!"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/1035.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "1.17.1",
+          "rules": [
+            "mod.incompatible-set"
+          ],
+          "top_suspect": "",
+          "root_cause": "net.fabricmc.loader.impl.FormattedException: Some of your mods are incompatible with the game or each other!"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/1039.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.incompatible-set"
+          ],
+          "top_suspect": "",
+          "root_cause": "net.fabricmc.loader.impl.FormattedException: Some of your mods are incompatible with the game or each other!"
+        }
+      ]
+    },
+    {
+      "fingerprint": "ec61182395e6",
+      "size": 10,
+      "distinct_descriptions": [
+        "",
+        "Initializing game"
+      ],
+      "distinct_rules": [
+        "mod.coremod-missing"
+      ],
+      "distinct_loaders": [
+        "fabric"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/embeddedt__ModernFix/535.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.coremod-missing"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.ClassNotFoundException: net.minecraft.client.gui.tab.Tab"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-api/4491.crash.txt",
+          "description": "Initializing game",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.coremod-missing"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.ClassNotFoundException: net.fabricmc.fabric.api.client.model.loading.v1.FabricBakedModelManager"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/1027.crash.txt",
+          "description": "Initializing game",
+          "loader": "fabric",
+          "mc_version": "1.21.4",
+          "rules": [
+            "mod.coremod-missing"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.ClassNotFoundException: io.github.akashiikun.mavapi.v1.api.ModdedAxolotlVariant"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/1100.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.coremod-missing"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.ClassNotFoundException: feather.lib.sentry.Sentry"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/711.crash.txt",
+          "description": "Initializing game",
+          "loader": "fabric",
+          "mc_version": "1.19.1",
+          "rules": [
+            "mod.coremod-missing"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.ClassNotFoundException: dev.architectury.platform.Platform"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/821.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [],
+          "top_suspect": "",
+          "root_cause": "java.lang.ClassNotFoundException: net.fabricmc.loader.impl.launch.knot.KnotClient"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/827.crash.txt",
+          "description": "Initializing game",
+          "loader": "fabric",
+          "mc_version": "1.20",
+          "rules": [
+            "mod.coremod-missing"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.ClassNotFoundException: net.minecraft.network.chat.Component"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/882.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "1.20.1",
+          "rules": [
+            "mod.coremod-missing"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.ClassNotFoundException: org.objectweb.asm.ClassVisitor"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/900.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [],
+          "top_suspect": "",
+          "root_cause": "java.lang.ClassNotFoundException: kts.dev.common.A"
+        },
+        {
+          "report": "corpus/github/Snownee__Jade/622.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "1.21.6",
+          "rules": [
+            "mod.coremod-missing"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.ClassNotFoundException: net.minecraft.class_8021"
+        }
+      ]
+    },
+    {
+      "fingerprint": "41d75b0912ad",
+      "size": 4,
+      "distinct_descriptions": [
+        "Mod loading error has occurred"
+      ],
+      "distinct_rules": [
+        "mod.load-failed.fabric-entry"
+      ],
+      "distinct_loaders": [
+        "forge"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/mekanism__Mekanism/8391.crash.txt",
+          "description": "Mod loading error has occurred",
+          "loader": "forge",
+          "mc_version": "1.20.1",
+          "rules": [
+            "mod.load-failed.fabric-entry"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.Exception: Mod Loading has failed"
+        },
+        {
+          "report": "corpus/github/mekanism__Mekanism/8479.crash.txt",
+          "description": "Mod loading error has occurred",
+          "loader": "forge",
+          "mc_version": "1.20.1",
+          "rules": [
+            "mod.load-failed.fabric-entry"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.Exception: Mod Loading has failed"
+        },
+        {
+          "report": "corpus/github/TheIllusiveC4__Curios/344.crash.txt",
+          "description": "Mod loading error has occurred",
+          "loader": "forge",
+          "mc_version": "1.20.1",
+          "rules": [
+            "mod.load-failed.fabric-entry"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.Exception: Mod Loading has failed"
+        },
+        {
+          "report": "corpus/github/TheIllusiveC4__Curios/509.crash.txt",
+          "description": "Mod loading error has occurred",
+          "loader": "forge",
+          "mc_version": "1.20.1",
+          "rules": [
+            "mod.load-failed.fabric-entry"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.Exception: Mod Loading has failed"
+        }
+      ]
+    },
+    {
+      "fingerprint": "364ca0648e83",
+      "size": 3,
+      "distinct_descriptions": [
+        ""
+      ],
+      "distinct_rules": [
+        "loader.game-provider-missing"
+      ],
+      "distinct_loaders": [
+        "fabric"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/1032.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "loader.game-provider-missing"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.RuntimeException: Minecraft game provider couldn't locate the game! The game may be absent from th"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/1093.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "loader.game-provider-missing"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.RuntimeException: Minecraft game provider couldn't locate the game! The game may be absent from th"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/714.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "loader.game-provider-missing"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.RuntimeException: Minecraft game provider couldn't locate the game! The game may be absent from th"
+        }
+      ]
+    },
+    {
+      "fingerprint": "5022698ac40a",
+      "size": 3,
+      "distinct_descriptions": [
+        ""
+      ],
+      "distinct_rules": [
+        "crash.datapack-book",
+        "mod.config-invalid",
+        "net.connectivity"
+      ],
+      "distinct_loaders": [
+        "neoforge"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/TeamTwilight__twilightforest/2533.crash.txt",
+          "description": "",
+          "loader": "neoforge",
+          "mc_version": "1.21.1",
+          "rules": [
+            "crash.datapack-book",
+            "mod.config-invalid",
+            "net.connectivity"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 9 column 1 path $"
+        },
+        {
+          "report": "corpus/github/TeamTwilight__twilightforest/2541.crash.txt",
+          "description": "",
+          "loader": "neoforge",
+          "mc_version": "1.21.1",
+          "rules": [
+            "mod.config-invalid"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 9 column 1 path $"
+        },
+        {
+          "report": "corpus/github/TeamTwilight__twilightforest/2577.crash.txt",
+          "description": "",
+          "loader": "neoforge",
+          "mc_version": "1.21.1",
+          "rules": [
+            "mod.config-invalid"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 9 column 1 path $"
+        }
+      ]
+    },
+    {
+      "fingerprint": "56ed6ba004db",
+      "size": 3,
+      "distinct_descriptions": [
+        ""
+      ],
+      "distinct_rules": [
+        "mod.corrupt-jar"
+      ],
+      "distinct_loaders": [
+        "fabric"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/1110.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.corrupt-jar"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.util.zip.ZipException: zip END header not found"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/852.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "1.20.2",
+          "rules": [
+            "mod.corrupt-jar"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.util.zip.ZipException: zip END header not found"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/958.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.corrupt-jar"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.util.zip.ZipException: zip END header not found"
+        }
+      ]
+    },
+    {
+      "fingerprint": "78134c701d15",
+      "size": 3,
+      "distinct_descriptions": [
+        ""
+      ],
+      "distinct_rules": [],
+      "distinct_loaders": [
+        "fabric"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/1135.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [],
+          "top_suspect": "",
+          "root_cause": "java.lang.IllegalArgumentException: The specified resource 'fabric-biome-api-v1.mixins.json' was invalid or could no"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/620.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [],
+          "top_suspect": "",
+          "root_cause": "java.lang.IllegalArgumentException: The specified resource 'omega-config.mixins.json' was invalid or could not be re"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/750.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [],
+          "top_suspect": "",
+          "root_cause": "java.lang.IllegalArgumentException: The specified resource 'fabric-crash-report-info-v1.mixins.json' was invalid or"
+        }
+      ]
+    },
+    {
+      "fingerprint": "79a42ca3a4c1",
+      "size": 3,
+      "distinct_descriptions": [
+        "Rendering entity in world"
+      ],
+      "distinct_rules": [
+        "crash.rendering",
+        "crash.rendering-entity"
+      ],
+      "distinct_loaders": [
+        "fabric"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/FabricMC__fabric-api/4641.crash.txt",
+          "description": "Rendering entity in world",
+          "loader": "fabric",
+          "mc_version": "1.20.1",
+          "rules": [
+            "crash.rendering",
+            "crash.rendering-entity"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.NullPointerException: Cannot invoke \"net.fabricmc.fabric.api.renderer.v1.Renderer.meshBuilder()\" becau"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/859.crash.txt",
+          "description": "Rendering entity in world",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "crash.rendering",
+            "crash.rendering-entity"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.NullPointerException: Cannot invoke \"net.fabricmc.fabric.api.renderer.v1.Renderer.meshBuilder()\" becau"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/938.crash.txt",
+          "description": "Rendering entity in world",
+          "loader": "fabric",
+          "mc_version": "1.21",
+          "rules": [
+            "crash.rendering",
+            "crash.rendering-entity"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.NullPointerException: Cannot invoke \"net.fabricmc.fabric.api.renderer.v1.Renderer.meshBuilder()\" becau"
+        }
+      ]
+    },
+    {
+      "fingerprint": "8c8857805426",
+      "size": 3,
+      "distinct_descriptions": [
+        "Manually triggered debug crash"
+      ],
+      "distinct_rules": [],
+      "distinct_loaders": [
+        "fabric"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/CaffeineMC__sodium/3473.crash.txt",
+          "description": "Manually triggered debug crash",
+          "loader": "fabric",
+          "mc_version": "1.21.11",
+          "rules": [],
+          "top_suspect": "",
+          "root_cause": "java.lang.Throwable: Manually triggered debug crash"
+        },
+        {
+          "report": "corpus/github/CaffeineMC__sodium/3505.crash.txt",
+          "description": "Manually triggered debug crash",
+          "loader": "fabric",
+          "mc_version": "1.21.11",
+          "rules": [],
+          "top_suspect": "",
+          "root_cause": "java.lang.Throwable: Manually triggered debug crash"
+        },
+        {
+          "report": "corpus/github/CaffeineMC__sodium/3873.crash.txt",
+          "description": "Manually triggered debug crash",
+          "loader": "fabric",
+          "mc_version": "1.20.1",
+          "rules": [],
+          "top_suspect": "",
+          "root_cause": "java.lang.Throwable: Manually triggered debug crash"
+        }
+      ]
+    },
+    {
+      "fingerprint": "cc3c2aba3f43",
+      "size": 3,
+      "distinct_descriptions": [
+        ""
+      ],
+      "distinct_rules": [
+        "net.connectivity"
+      ],
+      "distinct_loaders": [
+        "forge"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/TeamTwilight__twilightforest/2389.crash.txt",
+          "description": "",
+          "loader": "forge",
+          "mc_version": "1.19.2",
+          "rules": [
+            "net.connectivity"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.net.UnknownHostException: api.minecraftservices.com"
+        },
+        {
+          "report": "corpus/github/TeamTwilight__twilightforest/2390.crash.txt",
+          "description": "",
+          "loader": "forge",
+          "mc_version": "1.19.2",
+          "rules": [
+            "net.connectivity"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.net.UnknownHostException: api.minecraftservices.com"
+        },
+        {
+          "report": "corpus/github/TeamTwilight__twilightforest/2391.crash.txt",
+          "description": "",
+          "loader": "forge",
+          "mc_version": "1.19.2",
+          "rules": [
+            "net.connectivity"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.net.UnknownHostException: api.minecraftservices.com"
+        }
+      ]
+    },
+    {
+      "fingerprint": "fb16d086478e",
+      "size": 3,
+      "distinct_descriptions": [
+        ""
+      ],
+      "distinct_rules": [
+        "java.class-version"
+      ],
+      "distinct_loaders": [
+        "fabric"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/641.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "java.class-version"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.UnsupportedClassVersionError: net/minecraft/bundler/Main has been compiled by a more recent version of the Jav"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/736.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "java.class-version"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.UnsupportedClassVersionError: net/minecraft/bundler/Main has been compiled by a more recent version of the Jav"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/766.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "java.class-version"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.UnsupportedClassVersionError: net/minecraft/bundler/Main has been compiled by a more recent version of the Jav"
+        }
+      ]
+    },
+    {
+      "fingerprint": "028f08acc315",
+      "size": 2,
+      "distinct_descriptions": [
+        "Narrating screen",
+        "Unexpected error"
+      ],
+      "distinct_rules": [
+        "crash.runtime-mod"
+      ],
+      "distinct_loaders": [
+        "neoforge"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/Snownee__Jade/776.crash.txt",
+          "description": "Narrating screen",
+          "loader": "neoforge",
+          "mc_version": "26.1.2",
+          "rules": [
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "jade",
+          "root_cause": "java.lang.IllegalArgumentException: TranslatableContents' arguments must be either a Component, Number, Boolean, or"
+        },
+        {
+          "report": "corpus/github/Snownee__Jade/777.crash.txt",
+          "description": "Unexpected error",
+          "loader": "neoforge",
+          "mc_version": "26.1.2",
+          "rules": [
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "jade",
+          "root_cause": "java.lang.IllegalArgumentException: TranslatableContents' arguments must be either a Component, Number, Boolean, or"
+        }
+      ]
+    },
+    {
+      "fingerprint": "17ad3c8eb238",
+      "size": 2,
+      "distinct_descriptions": [
+        "Rendering screen"
+      ],
+      "distinct_rules": [
+        "crash.rendering",
+        "crash.runtime-mod"
+      ],
+      "distinct_loaders": [
+        "neoforge"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/mekanism__Mekanism/8276.crash.txt",
+          "description": "Rendering screen",
+          "loader": "neoforge",
+          "mc_version": "1.21.1",
+          "rules": [
+            "crash.rendering",
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "mekanism",
+          "root_cause": "java.lang.IllegalArgumentException: No known containers for item mekanism:personal_barrel"
+        },
+        {
+          "report": "corpus/github/mekanism__Mekanism/8304.crash.txt",
+          "description": "Rendering screen",
+          "loader": "neoforge",
+          "mc_version": "1.21.1",
+          "rules": [
+            "crash.rendering",
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "mekanism",
+          "root_cause": "java.lang.IllegalArgumentException: No known containers for item mekanism:personal_barrel"
+        }
+      ]
+    },
+    {
+      "fingerprint": "2a2e284ef827",
+      "size": 2,
+      "distinct_descriptions": [
+        "Loading screen debug info",
+        "Ticking entity"
+      ],
+      "distinct_rules": [
+        "crash.ticking-entity",
+        "mod.load-fatal"
+      ],
+      "distinct_loaders": [
+        "forge"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/mekanism__Mekanism/8550.crash.txt",
+          "description": "Loading screen debug info",
+          "loader": "forge",
+          "mc_version": "1.7.10",
+          "rules": [
+            "mod.load-fatal"
+          ],
+          "top_suspect": "",
+          "root_cause": ""
+        },
+        {
+          "report": "corpus/github/TeamTwilight__twilightforest/2618.crash.txt",
+          "description": "Ticking entity",
+          "loader": "forge",
+          "mc_version": "1.12.2",
+          "rules": [
+            "crash.ticking-entity"
+          ],
+          "top_suspect": "",
+          "root_cause": ""
+        }
+      ]
+    },
+    {
+      "fingerprint": "318c6c560df3",
+      "size": 2,
+      "distinct_descriptions": [
+        "Rendering overlay",
+        "Unexpected error"
+      ],
+      "distinct_rules": [
+        "crash.rendering",
+        "crash.runtime-mod"
+      ],
+      "distinct_loaders": [
+        "neoforge"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/TeamTwilight__twilightforest/2517.crash.txt",
+          "description": "Unexpected error",
+          "loader": "neoforge",
+          "mc_version": "1.21.1",
+          "rules": [
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "twilightforest",
+          "root_cause": "java.lang.IllegalArgumentException: No model for layer twilightforest:knightmetal_shield#main"
+        },
+        {
+          "report": "corpus/github/TeamTwilight__twilightforest/2543.crash.txt",
+          "description": "Rendering overlay",
+          "loader": "neoforge",
+          "mc_version": "1.21.1",
+          "rules": [
+            "crash.rendering",
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "twilightforest",
+          "root_cause": "java.lang.IllegalArgumentException: No model for layer twilightforest:knightmetal_shield#main"
+        }
+      ]
+    },
+    {
+      "fingerprint": "3aabfc106bed",
+      "size": 2,
+      "distinct_descriptions": [
+        "Watching Server"
+      ],
+      "distinct_rules": [
+        "hang.watchdog"
+      ],
+      "distinct_loaders": [
+        "neoforge"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/mekanism__Mekanism/8291.crash.txt",
+          "description": "Watching Server",
+          "loader": "neoforge",
+          "mc_version": "1.21.1",
+          "rules": [
+            "hang.watchdog"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.Error: ServerHangWatchdog detected that a single server tick took 180000000.00 seconds"
+        },
+        {
+          "report": "corpus/github/mekanism__Mekanism/8389.crash.txt",
+          "description": "Watching Server",
+          "loader": "neoforge",
+          "mc_version": "1.21.1",
+          "rules": [
+            "hang.watchdog"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.Error: ServerHangWatchdog detected that a single server tick took 180000848.00 seconds"
+        }
+      ]
+    },
+    {
+      "fingerprint": "41e88ce65b8c",
+      "size": 2,
+      "distinct_descriptions": [
+        ""
+      ],
+      "distinct_rules": [],
+      "distinct_loaders": [
+        "neoforge"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/Snownee__Jade/423.crash.txt",
+          "description": "",
+          "loader": "neoforge",
+          "mc_version": "1.17.13",
+          "rules": [],
+          "top_suspect": "",
+          "root_cause": "java.lang.UnsatisfiedLinkError: Unable to load library 'flite'"
+        },
+        {
+          "report": "corpus/github/Snownee__Jade/543.crash.txt",
+          "description": "",
+          "loader": "neoforge",
+          "mc_version": "1.21.1",
+          "rules": [],
+          "top_suspect": "",
+          "root_cause": "java.lang.UnsatisfiedLinkError: Unable to load library 'flite'"
+        }
+      ]
+    },
+    {
+      "fingerprint": "476cf40303fa",
+      "size": 2,
+      "distinct_descriptions": [
+        ""
+      ],
+      "distinct_rules": [
+        "mixin.apply-failed"
+      ],
+      "distinct_loaders": [
+        "forge"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/TheIllusiveC4__Curios/321.crash.txt",
+          "description": "",
+          "loader": "forge",
+          "mc_version": "1.19.2",
+          "rules": [
+            "mixin.apply-failed"
+          ],
+          "top_suspect": "",
+          "root_cause": "org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: @Shadow field f_79899_ was not located in the "
+        },
+        {
+          "report": "corpus/github/TheIllusiveC4__Curios/322.crash.txt",
+          "description": "",
+          "loader": "forge",
+          "mc_version": "1.19.2",
+          "rules": [
+            "mixin.apply-failed"
+          ],
+          "top_suspect": "",
+          "root_cause": "org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: @Shadow field f_79899_ was not located in the "
+        }
+      ]
+    },
+    {
+      "fingerprint": "5576fd3d0d6a",
+      "size": 2,
+      "distinct_descriptions": [
+        ""
+      ],
+      "distinct_rules": [
+        "mod.corrupt-jar",
+        "mod.incompatible-set"
+      ],
+      "distinct_loaders": [
+        "fabric"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/FabricMC__fabric-api/4907.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.corrupt-jar",
+            "mod.incompatible-set"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.util.zip.ZipException: zip file is empty"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-api/5179.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.corrupt-jar",
+            "mod.incompatible-set"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.util.zip.ZipException: zip file is empty"
+        }
+      ]
+    },
+    {
+      "fingerprint": "572c5826f853",
+      "size": 2,
+      "distinct_descriptions": [
+        "Manually triggered debug crash"
+      ],
+      "distinct_rules": [],
+      "distinct_loaders": [
+        "fabric"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/CaffeineMC__sodium/3627.crash.txt",
+          "description": "Manually triggered debug crash",
+          "loader": "fabric",
+          "mc_version": "26.1.2",
+          "rules": [],
+          "top_suspect": "",
+          "root_cause": "java.lang.Throwable: Manually triggered debug crash"
+        },
+        {
+          "report": "corpus/github/CaffeineMC__sodium/3915.crash.txt",
+          "description": "Manually triggered debug crash",
+          "loader": "fabric",
+          "mc_version": "26.3",
+          "rules": [],
+          "top_suspect": "",
+          "root_cause": "java.lang.Throwable: Manually triggered debug crash"
+        }
+      ]
+    },
+    {
+      "fingerprint": "5f07375b20f5",
+      "size": 2,
+      "distinct_descriptions": [
+        ""
+      ],
+      "distinct_rules": [
+        "crash.runtime-mod",
+        "mixin.apply-failed",
+        "mixin.injection-failed"
+      ],
+      "distinct_loaders": [
+        "fabric"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/1006.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "crash.runtime-mod",
+            "mixin.apply-failed",
+            "mixin.injection-failed"
+          ],
+          "top_suspect": "fabric-registry-sync-v0",
+          "root_cause": "org.spongepowered.asm.mixin.injection.throwables.InjectionError: Critical injection failure: Constant modifier method bi"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/1007.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "crash.runtime-mod",
+            "mixin.apply-failed",
+            "mixin.injection-failed"
+          ],
+          "top_suspect": "fabric-registry-sync-v0",
+          "root_cause": "org.spongepowered.asm.mixin.injection.throwables.InjectionError: Critical injection failure: Constant modifier method bi"
+        }
+      ]
+    },
+    {
+      "fingerprint": "6a1f6ce41b69",
+      "size": 2,
+      "distinct_descriptions": [
+        "Exception in server tick loop"
+      ],
+      "distinct_rules": [
+        "mod.config-invalid",
+        "quilt.config-broken"
+      ],
+      "distinct_loaders": [
+        "forge"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/TheIllusiveC4__Curios/389.crash.txt",
+          "description": "Exception in server tick loop",
+          "loader": "forge",
+          "mc_version": "1.20.1",
+          "rules": [
+            "mod.config-invalid",
+            "quilt.config-broken"
+          ],
+          "top_suspect": "curios",
+          "root_cause": "com.electronwill.nightconfig.core.io.ParsingException: Not enough data available"
+        },
+        {
+          "report": "corpus/github/TheIllusiveC4__Curios/573.crash.txt",
+          "description": "Exception in server tick loop",
+          "loader": "forge",
+          "mc_version": "1.20.1",
+          "rules": [
+            "mod.config-invalid",
+            "quilt.config-broken"
+          ],
+          "top_suspect": "curios",
+          "root_cause": "com.electronwill.nightconfig.core.io.ParsingException: Not enough data available"
+        }
+      ]
+    },
+    {
+      "fingerprint": "749bb384a71c",
+      "size": 2,
+      "distinct_descriptions": [
+        "Exception in server tick loop",
+        "Initializing game"
+      ],
+      "distinct_rules": [
+        "crash.runtime-mod"
+      ],
+      "distinct_loaders": [
+        "forge"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/McJtyMods__RFTools/1902.crash.txt",
+          "description": "Initializing game",
+          "loader": "forge",
+          "mc_version": "1.7.10",
+          "rules": [
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "rftools",
+          "root_cause": "java.lang.RuntimeException"
+        },
+        {
+          "report": "corpus/github/McJtyMods__RFTools/1953.crash.txt",
+          "description": "Exception in server tick loop",
+          "loader": "forge",
+          "mc_version": "1.7.10",
+          "rules": [
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "rftools",
+          "root_cause": "java.lang.RuntimeException"
+        }
+      ]
+    },
+    {
+      "fingerprint": "88fde7ebcb7a",
+      "size": 2,
+      "distinct_descriptions": [
+        ""
+      ],
+      "distinct_rules": [],
+      "distinct_loaders": [
+        "forge"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/Snownee__Jade/613.crash.txt",
+          "description": "",
+          "loader": "forge",
+          "mc_version": "1.20.1",
+          "rules": [],
+          "top_suspect": "",
+          "root_cause": "java.lang.ClassNotFoundException: kotlin.jvm.internal.Lambda"
+        },
+        {
+          "report": "corpus/github/TheIllusiveC4__Curios/391.crash.txt",
+          "description": "",
+          "loader": "forge",
+          "mc_version": "1.20.1",
+          "rules": [],
+          "top_suspect": "",
+          "root_cause": "java.lang.ClassNotFoundException: net.minecraft.client.renderer.texture.AbstractTexture"
+        }
+      ]
+    },
+    {
+      "fingerprint": "89d6abb79cf0",
+      "size": 2,
+      "distinct_descriptions": [
+        "",
+        "Feature placement"
+      ],
+      "distinct_rules": [
+        "crash.runtime-mod",
+        "mod.config-invalid",
+        "mod.coremod-missing",
+        "perf.tick-timeout"
+      ],
+      "distinct_loaders": [
+        "forge"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/TeamTwilight__twilightforest/2392.crash.txt",
+          "description": "",
+          "loader": "forge",
+          "mc_version": "1.20.1",
+          "rules": [
+            "crash.runtime-mod",
+            "mod.config-invalid",
+            "mod.coremod-missing",
+            "perf.tick-timeout"
+          ],
+          "top_suspect": "twilightforest",
+          "root_cause": "java.lang.NullPointerException: Cannot invoke \"net.minecraft.world.level.block.state.BlockState.m_60717_(net.min"
+        },
+        {
+          "report": "corpus/github/TeamTwilight__twilightforest/2514.crash.txt",
+          "description": "Feature placement",
+          "loader": "forge",
+          "mc_version": "1.20.1",
+          "rules": [
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "twilightforest",
+          "root_cause": "java.lang.NullPointerException: Cannot invoke \"net.minecraft.world.level.block.state.BlockState.m_60717_(net.min"
+        }
+      ]
+    },
+    {
+      "fingerprint": "91befd6401f2",
+      "size": 2,
+      "distinct_descriptions": [
+        ""
+      ],
+      "distinct_rules": [
+        "quilt.version-constraint-unreadable"
+      ],
+      "distinct_loaders": [
+        "quilt"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/QuiltMC__quilt-loader/368.crash.txt",
+          "description": "",
+          "loader": "quilt",
+          "mc_version": "",
+          "rules": [
+            "quilt.version-constraint-unreadable"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.ClassCastException: Cannot coerce loader value to a String"
+        },
+        {
+          "report": "corpus/github/QuiltMC__quilt-loader/415.crash.txt",
+          "description": "",
+          "loader": "quilt",
+          "mc_version": "",
+          "rules": [
+            "quilt.version-constraint-unreadable"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.ClassCastException: Cannot coerce loader value to a String"
+        }
+      ]
+    },
+    {
+      "fingerprint": "93021e67d23a",
+      "size": 2,
+      "distinct_descriptions": [
+        "Mod loading error has occurred"
+      ],
+      "distinct_rules": [
+        "crash.runtime-mod",
+        "mod.load-failed.fabric-entry"
+      ],
+      "distinct_loaders": [
+        "forge"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/TheIllusiveC4__Curios/335.crash.txt",
+          "description": "Mod loading error has occurred",
+          "loader": "forge",
+          "mc_version": "1.20.1",
+          "rules": [
+            "crash.runtime-mod",
+            "mod.load-failed.fabric-entry"
+          ],
+          "top_suspect": "unionlib",
+          "root_cause": "java.lang.Exception: Mod Loading has failed"
+        },
+        {
+          "report": "corpus/github/TheIllusiveC4__Curios/370.crash.txt",
+          "description": "Mod loading error has occurred",
+          "loader": "forge",
+          "mc_version": "1.20.1",
+          "rules": [
+            "crash.runtime-mod",
+            "mod.load-failed.fabric-entry"
+          ],
+          "top_suspect": "unionlib",
+          "root_cause": "java.lang.Exception: Mod Loading has failed"
+        }
+      ]
+    },
+    {
+      "fingerprint": "970476202cea",
+      "size": 2,
+      "distinct_descriptions": [
+        ""
+      ],
+      "distinct_rules": [
+        "mixin.class-already-loaded"
+      ],
+      "distinct_loaders": [
+        "vanilla"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/embeddedt__ModernFix/533.crash.txt",
+          "description": "",
+          "loader": "vanilla",
+          "mc_version": "",
+          "rules": [
+            "mixin.class-already-loaded"
+          ],
+          "top_suspect": "",
+          "root_cause": "org.spongepowered.asm.mixin.throwables.ClassAlreadyLoadedException: net.minecraft.server.world.ServerChunkLoadingManager"
+        },
+        {
+          "report": "corpus/github/embeddedt__ModernFix/534.crash.txt",
+          "description": "",
+          "loader": "vanilla",
+          "mc_version": "",
+          "rules": [
+            "mixin.class-already-loaded"
+          ],
+          "top_suspect": "",
+          "root_cause": "org.spongepowered.asm.mixin.throwables.ClassAlreadyLoadedException: net.minecraft.world.World was already classloaded"
+        }
+      ]
+    },
+    {
+      "fingerprint": "9a9ac5dc9568",
+      "size": 2,
+      "distinct_descriptions": [
+        "",
+        "Ticking entity"
+      ],
+      "distinct_rules": [
+        "crash.runtime-mod",
+        "crash.ticking-entity"
+      ],
+      "distinct_loaders": [
+        "neoforge"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/TheIllusiveC4__Curios/598.crash.txt",
+          "description": "Ticking entity",
+          "loader": "neoforge",
+          "mc_version": "26.1.1",
+          "rules": [
+            "crash.runtime-mod",
+            "crash.ticking-entity"
+          ],
+          "top_suspect": "curios",
+          "root_cause": "java.lang.IllegalStateException: Can't access registry ResourceKey[minecraft:root / minecraft:enchantment]"
+        },
+        {
+          "report": "corpus/github/TheIllusiveC4__Curios/617.crash.txt",
+          "description": "",
+          "loader": "neoforge",
+          "mc_version": "",
+          "rules": [
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "curios",
+          "root_cause": "java.lang.IllegalStateException: Can't access registry ResourceKey[minecraft:root / minecraft:enchantment]"
+        }
+      ]
+    },
+    {
+      "fingerprint": "9fcb91f8785b",
+      "size": 2,
+      "distinct_descriptions": [
+        "Unexpected error"
+      ],
+      "distinct_rules": [
+        "mod.load-failed.neoforge"
+      ],
+      "distinct_loaders": [
+        "neoforge"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/mekanism__Mekanism/8631.crash.txt",
+          "description": "Unexpected error",
+          "loader": "neoforge",
+          "mc_version": "1.21.1",
+          "rules": [
+            "mod.load-failed.neoforge"
+          ],
+          "top_suspect": "neoforge",
+          "root_cause": "net.neoforged.fml.ModLoadingException: Loading errors encountered"
+        },
+        {
+          "report": "corpus/github/mekanism__Mekanism/8633.crash.txt",
+          "description": "Unexpected error",
+          "loader": "neoforge",
+          "mc_version": "1.21.1",
+          "rules": [
+            "mod.load-failed.neoforge"
+          ],
+          "top_suspect": "neoforge",
+          "root_cause": "net.neoforged.fml.ModLoadingException: Loading errors encountered"
+        }
+      ]
+    },
+    {
+      "fingerprint": "a6c2e2708044",
+      "size": 2,
+      "distinct_descriptions": [
+        ""
+      ],
+      "distinct_rules": [
+        "mod.incompatible-set"
+      ],
+      "distinct_loaders": [
+        "fabric"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/631.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "1.18.2",
+          "rules": [
+            "mod.incompatible-set"
+          ],
+          "top_suspect": "",
+          "root_cause": "net.fabricmc.loader.impl.FormattedException: Mod resolution encountered an incompatible mod set!"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/664.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.incompatible-set"
+          ],
+          "top_suspect": "",
+          "root_cause": "net.fabricmc.loader.impl.FormattedException: Mod resolution encountered an incompatible mod set!"
+        }
+      ]
+    },
+    {
+      "fingerprint": "ba33bd6955a4",
+      "size": 2,
+      "distinct_descriptions": [
+        ""
+      ],
+      "distinct_rules": [
+        "mod.incompatible-set"
+      ],
+      "distinct_loaders": [
+        "fabric"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/FabricMC__fabric-api/4809.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.incompatible-set"
+          ],
+          "top_suspect": "",
+          "root_cause": "net.fabricmc.loader.impl.FormattedException: Mod resolution encountered an incompatible mod set!"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/795.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "mod.incompatible-set"
+          ],
+          "top_suspect": "",
+          "root_cause": "net.fabricmc.loader.impl.FormattedException: Mod resolution encountered an incompatible mod set!"
+        }
+      ]
+    },
+    {
+      "fingerprint": "ba5963a7fdb1",
+      "size": 2,
+      "distinct_descriptions": [
+        "Initializing game"
+      ],
+      "distinct_rules": [
+        "mod.corrupt-jar"
+      ],
+      "distinct_loaders": [
+        "fabric"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/685.crash.txt",
+          "description": "Initializing game",
+          "loader": "fabric",
+          "mc_version": "1.18.2",
+          "rules": [
+            "mod.corrupt-jar"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.util.zip.ZipException: zip END header not found"
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/720.crash.txt",
+          "description": "Initializing game",
+          "loader": "fabric",
+          "mc_version": "1.19.2",
+          "rules": [
+            "mod.corrupt-jar"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.util.zip.ZipException: zip END header not found"
+        }
+      ]
+    },
+    {
+      "fingerprint": "ca32a2961f62",
+      "size": 2,
+      "distinct_descriptions": [
+        "Exception in server tick loop"
+      ],
+      "distinct_rules": [
+        "mod.config-invalid"
+      ],
+      "distinct_loaders": [
+        "mohist"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/embeddedt__ModernFix/476.crash.txt",
+          "description": "Exception in server tick loop",
+          "loader": "mohist",
+          "mc_version": "1.20.1",
+          "rules": [
+            "mod.config-invalid"
+          ],
+          "top_suspect": "smoothboot",
+          "root_cause": "com.electronwill.nightconfig.core.io.ParsingException: Invalid character '"
+        },
+        {
+          "report": "corpus/github/TheIllusiveC4__Curios/456.crash.txt",
+          "description": "Exception in server tick loop",
+          "loader": "mohist",
+          "mc_version": "1.20.1",
+          "rules": [
+            "mod.config-invalid"
+          ],
+          "top_suspect": "smoothboot",
+          "root_cause": "com.electronwill.nightconfig.core.io.ParsingException: Invalid character '"
+        }
+      ]
+    },
+    {
+      "fingerprint": "cfdcdaac283e",
+      "size": 2,
+      "distinct_descriptions": [
+        "Unexpected error"
+      ],
+      "distinct_rules": [
+        "crash.runtime-mod"
+      ],
+      "distinct_loaders": [
+        "fabric"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/FabricMC__fabric-api/5293.crash.txt",
+          "description": "Unexpected error",
+          "loader": "fabric",
+          "mc_version": "26.1",
+          "rules": [
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "fabric-renderer-api-v1",
+          "root_cause": "java.lang.UnsupportedOperationException: Attempted to retrieve active rendering plug-in before one was registered."
+        },
+        {
+          "report": "corpus/github/FabricMC__fabric-api/5295.crash.txt",
+          "description": "Unexpected error",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "fabric-renderer-api-v1",
+          "root_cause": "java.lang.UnsupportedOperationException: Attempted to retrieve active rendering plug-in before one was registered."
+        }
+      ]
+    },
+    {
+      "fingerprint": "d28736a7b9c9",
+      "size": 2,
+      "distinct_descriptions": [
+        ""
+      ],
+      "distinct_rules": [
+        "mod.coremod-missing",
+        "mod.load-failed.neoforge"
+      ],
+      "distinct_loaders": [
+        "neoforge"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/mekanism__Mekanism/8508.crash.txt",
+          "description": "",
+          "loader": "neoforge",
+          "mc_version": "1.21.1",
+          "rules": [
+            "mod.coremod-missing"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.ClassNotFoundException: mod.azure.azurelib.rewrite.animation.play_behavior.AzPlayBehaviors"
+        },
+        {
+          "report": "corpus/github/Snownee__Jade/584.crash.txt",
+          "description": "",
+          "loader": "neoforge",
+          "mc_version": "1.21.5",
+          "rules": [
+            "mod.coremod-missing",
+            "mod.load-failed.neoforge"
+          ],
+          "top_suspect": "",
+          "root_cause": "java.lang.ClassNotFoundException: org.apache.commons.compress.utils.Lists"
+        }
+      ]
+    },
+    {
+      "fingerprint": "d28c4caf7274",
+      "size": 2,
+      "distinct_descriptions": [
+        ""
+      ],
+      "distinct_rules": [
+        "crash.runtime-mod"
+      ],
+      "distinct_loaders": [
+        "fabric"
+      ],
+      "reports": [
+        {
+          "report": "corpus/github/FabricMC__fabric-loader/988.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "jade",
+          "root_cause": "java.lang.UnsupportedOperationException"
+        },
+        {
+          "report": "corpus/github/Snownee__Jade/769.crash.txt",
+          "description": "",
+          "loader": "fabric",
+          "mc_version": "",
+          "rules": [
+            "crash.runtime-mod"
+          ],
+          "top_suspect": "jade",
+          "root_cause": "java.lang.UnsupportedOperationException"
+        }
+      ]
+    }
+  ]
+}

@@ -7,6 +7,38 @@ versions follow [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Crash fingerprints (D3).** `mcd/fingerprint.py` groups reports by
+  `(loader, normalised root-cause, top suspect, top frame)`; per-report ids,
+  timestamps, paths and numbers never enter the key. `tools/crash_fingerprints.py`
+  scans the corpus and writes `corpus/CRASH-FINGERPRINTS.md` + JSON: **454 reports
+  -> 377 fingerprints, mean cluster 1.20**. R11's guard is built in: every
+  multi-member cluster prints its distinct descriptions, rule ids and loaders,
+  and **7 of 38** clusters mix descriptions -- so the grouping may be used to
+  count reports, never to silently merge conclusions. 8 tests.
+
+- **`--timeline N` (F4).** The last N seconds (default 60) of timestamped log
+  lines before the crash. Supports both `[12:34:56] [thread/INFO]:` and
+  `[17Oct2026 00:39:27.039] [main/INFO]` shapes, windows on the last event,
+  handles a midnight wrap, and reports how many lines were skipped for having
+  no timestamp instead of dropping them quietly. Separate CLI mode, so the
+  default diagnosis is byte-identical. 8 tests.
+
+- **Minimum regression for four modules that had no test file (F2).**
+  `tests/test_modules_smoke.py`: paste-id parsing, `root_cause`'s FATAL/deepest
+  preference, all three pack renderers keeping `undecided`/`unreadable`, and
+  the incident JSON's schema version across three report renderers. 8 tests.
+
+- **Decisions and release docs.** `docs/DECISION-longtail-freeze.md` freezes
+  rule-writing on the tail with measurable un-freeze conditions;
+  `docs/RETRO-2026-11.md` is the full result/risk ledger;
+  `docs/RELEASE-0.1.0.md` is the five-field pending-publisher checklist and
+  the "what may be quoted" publication policy; ROADMAP gained a `教训` section
+  naming the ordering error (real-data verification was scheduled after rule
+  work, which measurement proved backwards). Gate [7] now also checks the
+  freeze decision and the fingerprint report against their JSON.
+
+### Added
+
 - **The Action can check a pack, not just a crash.** `pack:` + `pack-side:`
   inputs, wired through `mcd.action --pack` / `--pack-side`:
 
