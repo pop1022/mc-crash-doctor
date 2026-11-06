@@ -189,3 +189,40 @@ def test_fingerprint_report_matches_its_json():
     assert str(d["clusters"]) in text
     assert str(d["mixed_description_clusters"]) in text
     assert d["mixed_description_clusters"] <= d["multi_member_clusters"]
+
+
+# --- shapes that regressed once and must not regress again ------------------
+def test_unreleased_changelog_has_one_heading_per_category():
+    """Each round of edits used to prepend a fresh `### Added`, leaving six
+    copies of the same heading. Keep a Changelog wants one section per
+    category."""
+    import re
+
+    text = _doc("CHANGELOG.md")
+    start = text.index("## [Unreleased]")
+    end = text.index("\n## [", start + 10)
+    headings = re.findall(r"^### (\w+)\s*$", text[start:end], flags=re.M)
+    dupes = {h for h in headings if headings.count(h) > 1}
+    assert not dupes, f"duplicate Unreleased sections: {sorted(dupes)}"
+    assert headings, "Unreleased has no category sections"
+
+
+def test_pat_decision_is_actually_made():
+    """The retro and release checklist both say 'branch B'. A decision file
+    with two unchecked boxes would contradict both."""
+    import re
+
+    text = _doc("docs/DECISION-pat.md")
+    marks = re.findall(r"^- \[([ x])\] \*{0,2}分支 ([AB])", text, flags=re.M)
+    chosen = [letter for mark, letter in marks if mark == "x"]
+    assert chosen == ["B"], f"expected exactly branch B chosen, got {marks}"
+    assert "quotable_as_rate.blame_error" in text
+
+
+def test_audit_keeps_its_correction_note():
+    """The dated audit's conclusion 4 was disproved by the real-pack run. Its
+    correction must stay attached to the historical numbers, not be deleted as
+    'outdated' by a future cleanup."""
+    text = _doc("docs/AUDIT-2026-10-27.md")
+    assert "后续状态（2026-11-07 补记" in text
+    assert "35 条 finding" in text and "34 条是误报" in text

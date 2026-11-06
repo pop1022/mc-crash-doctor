@@ -27,12 +27,17 @@ if ! "$PY" tests/test_e2e.py; then fail=1; fi
 
 echo
 echo "── [4/7] pytest suite (per-file corpus + gap pinning) ──"
+# A FIXED --basetemp is a trap: pytest wipes it before each run, and the suite
+# creates ~233 tmp_path dirs. On the second run that wipe is a bulk delete and
+# the environment's safe-delete guard kills the process at setup -- 98 errors
+# that have nothing to do with the tests. Unique basetemps per gate avoid the
+# wipe entirely; the scratch trees stay in tmp/ (gitignored) and can be pruned
+# by hand. Gate [7] gets its own tree so it cannot wipe gate [4]'s.
+STAMP="$(date +%Y%m%d%H%M%S)-$$"
+PYTEST_TMP_SUITE="tmp/.pytest-tmp-suite-$STAMP"
+PYTEST_TMP_DOCS="tmp/.pytest-tmp-docs-$STAMP"
 if "$PY" -m pytest --version >/dev/null 2>&1; then
-  # --basetemp inside the repo: pytest otherwise leaves ~80 scratch dirs in the
-  # system temp, and a sandbox/CI hook that rate-limits bulk deletes can turn a
-  # fully green run into a non-zero exit at cleanup time. Keeping the scratch
-  # tree in tmp/ (gitignored) makes the gate's result depend on the tests only.
-  if ! "$PY" -m pytest tests/ -q --basetemp=tmp/.pytest-tmp; then fail=1; fi
+  if ! "$PY" -m pytest tests/ -q --basetemp="$PYTEST_TMP_SUITE"; then fail=1; fi
 else
   echo "  (pytest not installed -- skipping; pip install pytest)"
 fi
@@ -67,7 +72,7 @@ echo "── [7/7] docs quote the numbers in corpus/*.json ──"
 # quarter. This gate recomputes each ratio from its JSON source and fails if the
 # doc stopped matching -- it cannot catch a wrong sentence, only a stale number,
 # which is the drift that actually happened.
-if ! "$PY" -m pytest tests/test_doc_numbers.py -q --basetemp=tmp/.pytest-tmp; then
+if ! "$PY" -m pytest tests/test_doc_numbers.py -q --basetemp="$PYTEST_TMP_DOCS"; then
   fail=1
 fi
 

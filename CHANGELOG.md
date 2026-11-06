@@ -7,6 +7,7 @@ versions follow [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+
 - **Crash fingerprints (D3).** `mcd/fingerprint.py` groups reports by
   `(loader, normalised root-cause, top suspect, top frame)`; per-report ids,
   timestamps, paths and numbers never enter the key. `tools/crash_fingerprints.py`
@@ -37,7 +38,6 @@ versions follow [SemVer](https://semver.org/).
   work, which measurement proved backwards). Gate [7] now also checks the
   freeze decision and the fingerprint report against their JSON.
 
-### Added
 
 - **The Action can check a pack, not just a crash.** `pack:` + `pack-side:`
   inputs, wired through `mcd.action --pack` / `--pack-side`:
@@ -54,7 +54,6 @@ versions follow [SemVer](https://semver.org/).
   Verified locally against a real 355-jar server pack (exit 1 with
   `--fail-on error`, 0 with `fatal`) plus 5 tests on synthetic packs.
 
-### Added
 
 - **Rules can suggest a read-only diagnostic command.** `commands:` on a rule
   becomes `Finding.commands`, printed under the fixes and in all three
@@ -75,7 +74,6 @@ versions follow [SemVer](https://semver.org/).
   `java -XshowSettings:vm -version` (the fix says "raise -Xmx"; this shows what
   it is now), `native.gl` suggests `nvidia-smi`.
 
-### Added
 
 - **`--explain`**: print the arithmetic behind the suspicion score instead of
   only its result. `triage()` gained an optional `trace` dict that records
@@ -93,7 +91,6 @@ versions follow [SemVer](https://semver.org/).
   commit before this landed. Refused in combination with `--json` -- prose after
   a JSON document makes `json.load` fail on the tool's own output.
 
-### Added
 
 - **`--pack DIR --side server|client`**, and with it the last of the five finding
   families ROADMAP 2.2 asks for. `manifest.py` now reads Fabric's root
@@ -114,42 +111,6 @@ versions follow [SemVer](https://semver.org/).
   will first fire when a client pack is opened as a server one. Forge/NeoForge
   manifests have no per-mod side field at all, so the check cannot apply to them.
 
-### Fixed
-
-- **`--pack` on a real pack: 35 findings, 34 of them wrong.** First run of Pack
-  Doctor against a real 355-jar NeoForge 1.21.1 server pack (588 MB, its own log
-  says `Done (4.723s)!`). Five distinct defects, each triggered by a real
-  declaration and each fixed with a reverse control:
-
-  | # | what was wrong | evidence in the pack |
-  |---|---|---|
-  | 1 | `INCOMPATIBLE` treated as unconditional; the edge is version-scoped | `ae2wtlib` breaks `extendedae` only in `(,1.21-1.1.4-neoforge]`; installed is `1.21-2.2.35` |
-  | 2 | jar-in-jar providers invisible | `ae2wtlib_api` is REQUIRED by 4 mods and provided by `META-INF/jarjar/` inside `ae2wtlib.jar` (`locator: jarinjar` in the pack's own log); 47 jars bundle jars, 30 mod ids |
-  | 3 | `${file.jarVersion}` kept literally | 25 jars use the placeholder, 25/25 carry `Implementation-Version` in MANIFEST.MF |
-  | 4 | `1.21.1-93` read as a prerelease of `1.21.1` | three satisfied ranges reported as `pack.version-mismatch` |
-  | 5 | `side="CLIENT"` requirements reported missing on a server pack | `connectedglass -> fusion`, `fancymenu -> melody` |
-
-  Result: findings **35 -> 1** (the one left is real: three Fabric jars in a
-  NeoForge instance with no Connector), `undecided` **24 -> 1**, `unreadable`
-  2 -> 1. `corpus/PACK-REALJAR.md` records the evidence; no jar is committed.
-
-- **Version comparison is now two-level.** `<mc-version>-<mod-version>` is how
-  NeoForge mods version themselves, and the fix for (4) briefly made it worse:
-  flattening the suffix into the number tuple compared the MC part against the
-  mod part, turning `[1.21-87-NEOFORGE,)` against `1.21.1-93-NEOFORGE` into a
-  new false finding. The comparator now compares the MC group, then the mod
-  group, then the prerelease rank -- and a letter-led suffix is still a
-  prerelease (`1.20.1-beta < 1.20.1`).
-
-- **`BUILTIN_IDS` was missing `fabric`.** `fabric.mod.json` writes the loader as
-  `depends: {"fabric": "*"}`, so every Fabric mod claimed a missing dependency
-  on the loader itself.
-
-- **`NOT_CHECKED` grew from 2 to 3 entries** and is pinned by content, not by
-  non-emptiness: side-scoped dependencies are now listed, and the bundled-jar
-  line says what *is* read (ids) versus what is not (their own dependencies).
-
-### Added
 
 - **Three rules, chosen by measurement rather than by reading the tail.**
   `loader.game-provider-missing` (the launcher handed the loader a directory
@@ -176,67 +137,6 @@ versions follow [SemVer](https://semver.org/).
   30 are already answered by `mod.coremod-missing`.
 
 
-### Changed
-- **Rules are parsed once per process, not once per report.** `RuleSet.load()`
-  cost 24.9 ms and `diagnose()` called it for every file, so 67% of a single
-  diagnosis was re-reading the same three builtin YAML files. Measured on 120
-  reports: **5.91 s -> 2.92 s**. In-process cost fell from 37.3 to ~15 ms per
-  report. The cache stores the parsed `Rule` list only; every call still gets a
-  fresh `RuleSet` with its own `errors`, so a caller cannot corrupt a shared
-  wrapper. The key is the resolved `--rules-dir` list *plus* `MCD_RULES_PATH`,
-  so a changed environment never reuses a stale set. `RuleSet.clear_cache()` is
-  there for long-lived processes that rewrite rule YAML in place.
-
-- **Platform detection scans each report once instead of twice.** `_parse_system`
-  called `detect_platform()` and `detect_launcher()` back to back, and each runs
-  the full probe sweep — the single hottest function in a diagnosis, ~300 regexes
-  over 40 KB. `detect_platform_detailed()` already returns both axes from one
-  pass. 120 reports: **2.92 s -> 2.08 s**. Combined speedup **2.84x**.
-
-  Equivalence was checked, not assumed: over all **655** corpus reports the new
-  one-pass path produces byte-identical `(loader, evidence, launcher)` tuples to
-  the old two-pass path — 655 identical, 0 different. `tests/eval_parser.py`
-  still reports platform accuracy 100.0% and version accuracy 99.4%.
-
-  Single-file latency barely moved (308 -> 275 ms) because Python interpreter
-  startup is ~250 ms of it; the gain is in batch and in-process use, which is
-  where the repeated work actually was.
-
-### Fixed
-- **`--markdown` produced a table no markdown parser could read.** The
-  `Root cause` cell took an exception signature verbatim, and a Java message
-  like `expected mask a|b but got c|d` turns a two-column table into a
-  five-column one. `--markdown` exists to be pasted into an issue, so arbitrary
-  report text is the normal input, not an edge case -- measured: one report,
-  five cells, row unparseable. All table cells in the crash-report renderer now
-  go through `md_cell()`, and the pack renderer got the same treatment for
-  `kind` / `subject` / the `undecided` columns (only `detail` was escaped).
-  Newlines are collapsed too: a multi-line message ended the row outright.
-- **`deref_gist` read a remote body with no size cap.** Every other fetch in
-  `extract.py` goes through `_http_get`, which stops at `READ_LIMIT` (8 MB);
-  this one used `json.load(r)` on the raw stream. Now capped the same way, and
-  a malformed body returns `None` instead of raising.
-- **Two unused imports, two unused loop variables** across `mcd/` and `tests/`
-  -- the residue that the new lint gate now keeps at zero.
-- **A batch where every file failed exited 0.** On a machine without PyYAML the
-  engine raised per file, the loop counted it as "error parsing <file>" and
-  carried on, and the run finished with `worst == INFO` — a wholly broken run
-  was indistinguishable from a clean one to CI. The rule set is now loaded once
-  before the loop; a load failure prints one message naming the real problem and
-  returns 2. Total per-file failure also returns 2. Partial failure keeps the
-  existing contract (findings decide the code) and reports the count on stderr.
-- **`--pack` never coloured anything.** `render_pack_plain(color=...)` accepted
-  the flag and ignored it, so the CLI threaded a value through to a no-op. It now
-  paints the severity head of each finding, and only when asked — `--text`,
-  pipes and captured output stay byte-identical, which a test asserts by
-  stripping ANSI and comparing against the uncoloured render.
-- **`run_tests.sh` could report failure on a fully green suite.** pytest left
-  ~89 scratch directories in the system temp; a sandbox hook that rate-limits
-  bulk deletes then failed the cleanup and the script saw a non-zero exit at
-  100% passing. The gate now keeps its scratch tree in `tmp/` (gitignored), so
-  its verdict depends on the tests and nothing else.
-
-### Added
 - **A lint gate as gate 6/6, plus `[tool.ruff]` in `pyproject.toml`.**
   `select = ["F", "E9", "B"]` at `target-version = "py39"` — correctness only,
   no style rules, because a diff that is 80% reformatting hides the 20% that
@@ -271,45 +171,6 @@ versions follow [SemVer](https://semver.org/).
   tests** in `tests/test_pack_doctor.py`, each with a reverse control (single
   file gets no tally; uncoloured output gains no escape codes).
 
-### Fixed
-- **`--rules-dir` reached `--rules` but not diagnosis.** The flag exists so a
-  user can point the engine at their own YAML without editing the package.
-  It was passed to the `--rules` listing and dropped everywhere else:
-  `diagnose()` called `RuleSet.load()` with no arguments, so a custom rule
-  showed up in `--rules` and then silently never ran. Measured before the fix:
-  a probe rule matched the report, `RuleSet.load([dir])` fired it (42 rules,
-  hit on), and `mcd --rules-dir dir report.txt` still printed `FINDINGS (0)`.
-  `diagnose()` now takes `rules_dirs=` and all three input paths (file, stdin,
-  `--url`) pass it through. `action.py` and library callers are unaffected —
-  the parameter is keyword-only with a `None` default.
-- **A missing `--rules-dir` was swallowed.** `RuleSet.load()` skipped a
-  non-existent directory without a word unless `MCD_RULES_PATH` was set, so a
-  typo meant "diagnose with builtin rules only" while the user believed their
-  own rules were in play. The CLI now rejects it up front (`--rules-dir is not
-  a directory: …`, exit 2) and the engine records it in `errors` for callers
-  that load rules directly.
-- **`--json --dir` did not produce JSON.** Batch mode wrote one top-level
-  object per report back to back, so `json.load()` failed with `Extra data` on
-  every batch with more than one file — the exact output a CI would parse.
-  A batch (more than one file) now emits a single array; a single input still
-  emits a single object, so existing single-file consumers keep working.
-- **`--dir` diagnosed most crash reports twice.** `REPORT_GLOBS` is
-  `("crash-*.txt", "*.log", "*.txt")` and a real report matches both
-  `crash-*.txt` and `*.txt`; the enumeration appended without dedupe. A
-  two-report batch rendered four diagnoses — doubled runtime, doubled finding
-  counts, and a doubled chance of `--exit-code` tripping in CI. Found by the
-  new contract test asserting the obvious (`len(out) == 2`), which returned 4.
-- **Unclosed file handles in six tool scripts** (`blind_eval`, `build_compat_edges`,
-  `coverage_report`, `rule_lifecycle`, `stamp_provenance` ×2, `version_strata`).
-  CPython closes them on refcount, Windows does not guarantee it for the write
-  path in `stamp_provenance`, where a still-open handle blocks a later
-  re-read of the file it just rewrote. All now use `with`.
-- **`tools/blind_eval.py` bound the repo slug through a closure over the loop
-  variable.** It happened to work because the function is called in the same
-  iteration it is defined, which is exactly the kind of thing that survives
-  until someone keeps the callable. Now a module-level `_names_repo(x, want)`.
-
-### Added
 - **`tests/test_cli_contract.py`** — 11 tests, 0.6 s, covering the five fixes
   above. Each bug gets a forward assertion and a reverse control: the probe
   rule must fire with `--rules-dir` *and not* without it; batch JSON must be an
@@ -648,45 +509,33 @@ versions follow [SemVer](https://semver.org/).
   row is already under `corpus/github/`. Idempotent; preserves field order;
   refuses to clear a non-empty field.
 
-### Fixed
-- **A misspelled `when:` key turned a rule into a catch-all.** There is no rules
-  schema, so `Rule.from_dict` reads the keys it knows and ignores the rest
-  silently. That is harmless when the typo sits next to a valid condition and
-  catastrophic when it is the only one: `exceptions:` (for `exception:`) leaves
-  a non-empty `when` dict with no conditions in it, which passes the emptiness
-  check at the top of `evaluate_rule` with nothing left to fail. Measured: a
-  rule written to match `OutOfMemoryError` fired on **4/4** synthetic fixtures,
-  including a GL crash. Two fixes at the two layers where the mistake does
-  damage: `RULE_KEYS` + `_config_warnings()` name the rule and the key at load
-  time (`RuleSet.errors`, printed by the CLI; `--strict` still promotes them),
-  and `evaluate_rule` now refuses a `when` with no recognised key, exactly like
-  an empty one — a stderr warning does not help a library caller, who never
-  sees it. Same sweep caught `fix:` for `fixes:` (rule fires with zero repair
-  steps) and `explaination:` (empty explanation). 12 tests in
-  `tests/test_rule_config_warnings.py`, including the control that the correctly
-  spelled rule still fires and that a *partial* typo keeps the valid conditions.
-- **`- just a string` under `rules:` aborted the whole load.** The per-rule
-  handler caught `KeyError/TypeError/ValueError`, and the resulting
-  `AttributeError` escaped it (and the error message built inside the handler
-  would have raised too). One malformed entry now costs one warning.
-
-### Removed
-- **Four definitions nothing referenced** (`tmp/deadcode_scan.py`: 296
-  module-scope defs, references counted as Name/Attribute/import/arg/keyword
-  sites): `triage/attribution._JAR_NOISE` — an abandoned regex superseded by
-  `_norm_jar`'s inline passes, whose own alternation starts with an empty branch
-  and therefore matched every string; `parser/platform.FAMILY` — its comment
-  claimed the eval harness used it, and the harness computes family labels
-  itself; `parser/platform.detect_platform` / `detect_launcher` — wrappers over
-  `detect_platform_detailed` with no callers since `report.py` moved to the
-  one-pass version. Zero-reference defs: 4 → 0.
-- **Build residue from the working tree** — `build/` (a full duplicate of `mcd/`
-  that every grep and symbol scan had to filter out by hand), `egg-info/`,
-  `.pytest_cache/`, all `__pycache__/`. None of it was tracked; all of it is
-  recreated by `python -m build`, which this round's wheel rebuild demonstrated
-  by recreating `build/` and `egg-info/` minutes after the delete.
-
 ### Changed
+
+- **Rules are parsed once per process, not once per report.** `RuleSet.load()`
+  cost 24.9 ms and `diagnose()` called it for every file, so 67% of a single
+  diagnosis was re-reading the same three builtin YAML files. Measured on 120
+  reports: **5.91 s -> 2.92 s**. In-process cost fell from 37.3 to ~15 ms per
+  report. The cache stores the parsed `Rule` list only; every call still gets a
+  fresh `RuleSet` with its own `errors`, so a caller cannot corrupt a shared
+  wrapper. The key is the resolved `--rules-dir` list *plus* `MCD_RULES_PATH`,
+  so a changed environment never reuses a stale set. `RuleSet.clear_cache()` is
+  there for long-lived processes that rewrite rule YAML in place.
+
+- **Platform detection scans each report once instead of twice.** `_parse_system`
+  called `detect_platform()` and `detect_launcher()` back to back, and each runs
+  the full probe sweep — the single hottest function in a diagnosis, ~300 regexes
+  over 40 KB. `detect_platform_detailed()` already returns both axes from one
+  pass. 120 reports: **2.92 s -> 2.08 s**. Combined speedup **2.84x**.
+
+  Equivalence was checked, not assumed: over all **655** corpus reports the new
+  one-pass path produces byte-identical `(loader, evidence, launcher)` tuples to
+  the old two-pass path — 655 identical, 0 different. `tests/eval_parser.py`
+  still reports platform accuracy 100.0% and version accuracy 99.4%.
+
+  Single-file latency barely moved (308 -> 275 ms) because Python interpreter
+  startup is ~250 ms of it; the gain is in batch and in-process use, which is
+  where the repeated work actually was.
+
 - **The "write more rules" plan was measured and stopped** (ROADMAP 1E.3,
   risk R4). The premise of 1E.3 was that the bottleneck is the cost of writing a
   rule. The tail says otherwise:
@@ -789,7 +638,253 @@ versions follow [SemVer](https://semver.org/).
   check must report "I cannot identify these mods" rather than skipping them
   silently; `jars` is not a mod list; and `mod_ids` is a dead field (0/488).
 
+- **The web UI is bilingual — Chinese by default, EN one click away.**
+  Every user-facing string moved into an `I18N` dictionary in `web/app.js`
+  (80 keys per language, identical key sets) and `web/index.html` carries the
+  Chinese copy inline with `data-i18n` / `data-i18n-html` /
+  `data-i18n-placeholder` hooks, so the first paint is Chinese before any
+  script runs. The toggle is persisted in `localStorage` and writes
+  `<html lang>`, `<title>` and the meta description.
+  Two details that a naive i18n pass gets wrong and this one does not:
+  **the switch relabels an already-rendered result** (labels, buttons and the
+  environment block are re-rendered from the same `LAST` Incident document —
+  no re-diagnosis, no data loss), and **an open warning is re-painted in the
+  new language** (notices store the translation KEY plus its variables, never
+  the rendered HTML). Focus is deliberately left where it was, so the toggle
+  cannot steal it mid-run.
+  Severity badges are localized too (致命/错误/警告/提示/信息), which is why
+  the E2E accepts either script.
+  English remains selectable and the CLI, the Action and the JSON/Markdown
+  output are untouched — this is a UI-layer change only.
+  `tools/verify_web_e2e.py` now runs **30 checks**: the original 19 plus
+  Chinese-by-default (`<html lang>`, status line, environment summary, copy
+  buttons), the EN round-trip (notice + status relabelled live, `aria-pressed`
+  correct, focus not stolen), switching back to Chinese re-rendering the same
+  diagnosis, no untranslated `data-i18n` node, and both packs carrying the
+  same keys.
+- **CJK typography.** The font stack now falls back through PingFang SC /
+  Hiragino Sans GB / Microsoft YaHei / Noto Sans CJK SC, body line-height went
+  1.55 → 1.62, and the uppercase + letter-spacing treatment on field labels,
+  the "start here" label and the finding labels is scoped to
+  `html[lang="en"]` — uppercase does nothing useful for Chinese and the extra
+  tracking makes the glyphs look washed out.
+- **Web UI reorganised around the verdict (P0 UX pass).** The page used to dump
+  every card in discovery order, so the one thing a user came for — "what broke
+  and what do I do" — was buried under the environment block. It now leads with
+  a verdict card: root cause as the headline, suspect chip with confidence, the
+  matching "why" reasons, the first two fixes, and an action row (copy fix /
+  copy full diagnosis / open an issue). Environment details collapse into a
+  `<details>`; findings follow the verdict as supporting evidence. Diagnosis
+  output itself is unchanged — same `build_incident()`, so the browser and the
+  CLI still emit byte-identical `schema_version 1.0` documents.
+- **Three ways in, one of them new.** Besides paste-the-log there is now a file
+  picker (`.txt/.log/.text`, 8 MB cap with a readable error) and drag-and-drop
+  onto the input area; the window-level drag guards only fire for targets
+  *outside* the drop zone, so dropping onto the textarea still works normally.
+- **Staged boot instead of a blank wait.** Loading Pyodide, installing the wheel
+  and warming the engine are shown as a three-step progress list with per-step
+  state, and a failure replaces the list with the error, a retry button, a
+  copy-error button and the `pip install` CLI fallback rather than a dead page.
+  The list hides itself once the engine is ready.
+- **Live status + focus hand-off.** `#status` is `role="status" aria-live="polite"`,
+  so boot, lookup and error messages are announced; when a diagnosis lands,
+  focus moves to the verdict heading (`tabindex="-1"`, `preventScroll` + a
+  `scrollIntoView` that respects `prefers-reduced-motion`) so keyboard and
+  screen-reader users start at the answer instead of the top of the page.
+- **Copy actions actually report back.** The copy buttons use
+  `navigator.clipboard` with an `execCommand` fallback and announce the result
+  through an `.sr-only` live region, so "did that work?" is answered in every
+  modality.
+- **Accessibility and touch fixes.** The textarea has a real `<label for="log">`
+  (it was placeholder-only), `:focus-visible` draws a 2 px ring on every
+  control, buttons are ≥44 px tall, evidence lines got `overflow-wrap:anywhere`
+  so long stack frames stop overflowing narrow screens, and a
+  `@media (max-width:520px)` block tightens the header/verdict/action layout.
+  Motion-dependent bits sit behind `prefers-reduced-motion: no-preference`.
+- **Input guardrails that guide instead of failing.** Empty input, a bare
+  paste link, and prose that is not a log are now distinguished: the first two
+  block with an explanation of what to paste, the third only warns and still
+  runs (a mangled paste should not be silently dropped). While a diagnosis is
+  running, every input is disabled.
+- **Favicon.** An inline SVG data URI replaces the missing `/favicon.ico`
+  request that made every page load log a 404.
+- `tools/verify_web_e2e.py` grew from 7 to **19 acceptance checks** — verdict
+  card ordering, verdict headline text, collapsed environment, ≥2 copy actions,
+  focus landing on the verdict, live-region politeness, `<label for>`, file
+  input accept list, progress hidden when ready, busy-state disabling, link
+  rejection (0 cards rendered) and prose-warn-not-block.
+
+- **Three copy-pasted paste-host loops became one table** (`mcd/extract.py`).
+  mclo.gs / gist / pastebin each had their own near-identical 12-line loop
+  (seen-check, fetch, looks-like-a-report, append, throttle). They are now one
+  `_PASTE_HOSTS` tuple plus `_follow_links()`; a fourth host is a row, not
+  another block. Source labels (`mclo.gs:<id>`) are unchanged, so the harvester
+  and the Action see exactly what they saw before.
+- **One HTTP path** (`_http_get`) and **one encoding ladder**
+  (`read_report_text`) in `mcd/extract.py` / `mcd/parser/report.py`.
+  `_fetch()` (cached, harvester) and `fetch_log()` (uncached, CLI/Action) now
+  share the request/read/decode/timeout code; `parse_file()` and
+  `action.source_from_path()` share the four-encoding ladder.
+- **`_fmt_platform()`** in `mcd/report/render.py`: the `loader version (via
+  launcher)` string was hand-built in all three renderers with three different
+  separators. They now pass a format template, and a report with no loader line
+  no longer prints `None` where a platform name belongs.
+- **`_exit()` / `_worst()`** in `mcd/cli.py`: `--exit-code` was implemented
+  twice (once over a findings list, once by tracking a running maximum in the
+  directory loop). One `_worst()` + one `_exit()` now serve all three input
+  paths.
+- **`VERSION` is `__version__`**: the version string lived in `mcd/cli.py`,
+  `mcd/__init__.py` and `pyproject.toml`, so a release could ship three
+  different answers. `cli.VERSION` is now re-exported from the package.
+- **`tests/test_web_bundle.py`** (4 tests) guards the `web/` wheel: it must
+  contain every module in `mcd/`, no module deleted from `mcd/`, and every rule
+  pack. Verified in both directions — the suite fails loudly when the wheel is
+  missing or stale, with "run python tools/build_web.py" as the message.
+
+- Corpus expansion: 34 → 454 crash fragments from 12 mod repositories
+  (fabric-loader, fabric-api, Mekanism, Jade, RFTools, Curios,
+  twilightforest, sodium, quilt-loader, ModernFix, Placebo,
+  TinkersConstruct), 125 with weak-supervision maintainer labels.
+- `mod.incompatible-set` rewritten against real Fabric resolver wordings
+  ("Some of your mods are incompatible with the game or each other",
+  "mod 'X' requires any 0.8.x version ... but only the wrong version is
+  present"): blind FormattedException fragments 11 → 0.
+- Harvested-corpus diagnosis rate: 55.7% overall (Mekanism subset 91%,
+  RFTools 88%, Curios 81%); the old 34-fragment numbers (31/34) predate
+  the expansion and are not comparable.
+- `test_blind_spots_stay_bounded` is now scale-free: an absolute `blind ≤ 3`
+  assertion was written for the 34-fragment corpus and became meaningless at
+  454 fragments (more issues ⇒ more blind spots even with better rules).
+  Replaced with a rate floor + per-subset bound.
+- `run_tests.sh` / CI now run the whole `tests/` directory (corpus + gaps).
+- Rule count 25 → 33.
+
 ### Fixed
+
+- **`--pack` on a real pack: 35 findings, 34 of them wrong.** First run of Pack
+  Doctor against a real 355-jar NeoForge 1.21.1 server pack (588 MB, its own log
+  says `Done (4.723s)!`). Five distinct defects, each triggered by a real
+  declaration and each fixed with a reverse control:
+
+  | # | what was wrong | evidence in the pack |
+  |---|---|---|
+  | 1 | `INCOMPATIBLE` treated as unconditional; the edge is version-scoped | `ae2wtlib` breaks `extendedae` only in `(,1.21-1.1.4-neoforge]`; installed is `1.21-2.2.35` |
+  | 2 | jar-in-jar providers invisible | `ae2wtlib_api` is REQUIRED by 4 mods and provided by `META-INF/jarjar/` inside `ae2wtlib.jar` (`locator: jarinjar` in the pack's own log); 47 jars bundle jars, 30 mod ids |
+  | 3 | `${file.jarVersion}` kept literally | 25 jars use the placeholder, 25/25 carry `Implementation-Version` in MANIFEST.MF |
+  | 4 | `1.21.1-93` read as a prerelease of `1.21.1` | three satisfied ranges reported as `pack.version-mismatch` |
+  | 5 | `side="CLIENT"` requirements reported missing on a server pack | `connectedglass -> fusion`, `fancymenu -> melody` |
+
+  Result: findings **35 -> 1** (the one left is real: three Fabric jars in a
+  NeoForge instance with no Connector), `undecided` **24 -> 1**, `unreadable`
+  2 -> 1. `corpus/PACK-REALJAR.md` records the evidence; no jar is committed.
+
+- **Version comparison is now two-level.** `<mc-version>-<mod-version>` is how
+  NeoForge mods version themselves, and the fix for (4) briefly made it worse:
+  flattening the suffix into the number tuple compared the MC part against the
+  mod part, turning `[1.21-87-NEOFORGE,)` against `1.21.1-93-NEOFORGE` into a
+  new false finding. The comparator now compares the MC group, then the mod
+  group, then the prerelease rank -- and a letter-led suffix is still a
+  prerelease (`1.20.1-beta < 1.20.1`).
+
+- **`BUILTIN_IDS` was missing `fabric`.** `fabric.mod.json` writes the loader as
+  `depends: {"fabric": "*"}`, so every Fabric mod claimed a missing dependency
+  on the loader itself.
+
+- **`NOT_CHECKED` grew from 2 to 3 entries** and is pinned by content, not by
+  non-emptiness: side-scoped dependencies are now listed, and the bundled-jar
+  line says what *is* read (ids) versus what is not (their own dependencies).
+
+- **`--markdown` produced a table no markdown parser could read.** The
+  `Root cause` cell took an exception signature verbatim, and a Java message
+  like `expected mask a|b but got c|d` turns a two-column table into a
+  five-column one. `--markdown` exists to be pasted into an issue, so arbitrary
+  report text is the normal input, not an edge case -- measured: one report,
+  five cells, row unparseable. All table cells in the crash-report renderer now
+  go through `md_cell()`, and the pack renderer got the same treatment for
+  `kind` / `subject` / the `undecided` columns (only `detail` was escaped).
+  Newlines are collapsed too: a multi-line message ended the row outright.
+- **`deref_gist` read a remote body with no size cap.** Every other fetch in
+  `extract.py` goes through `_http_get`, which stops at `READ_LIMIT` (8 MB);
+  this one used `json.load(r)` on the raw stream. Now capped the same way, and
+  a malformed body returns `None` instead of raising.
+- **Two unused imports, two unused loop variables** across `mcd/` and `tests/`
+  -- the residue that the new lint gate now keeps at zero.
+- **A batch where every file failed exited 0.** On a machine without PyYAML the
+  engine raised per file, the loop counted it as "error parsing <file>" and
+  carried on, and the run finished with `worst == INFO` — a wholly broken run
+  was indistinguishable from a clean one to CI. The rule set is now loaded once
+  before the loop; a load failure prints one message naming the real problem and
+  returns 2. Total per-file failure also returns 2. Partial failure keeps the
+  existing contract (findings decide the code) and reports the count on stderr.
+- **`--pack` never coloured anything.** `render_pack_plain(color=...)` accepted
+  the flag and ignored it, so the CLI threaded a value through to a no-op. It now
+  paints the severity head of each finding, and only when asked — `--text`,
+  pipes and captured output stay byte-identical, which a test asserts by
+  stripping ANSI and comparing against the uncoloured render.
+- **`run_tests.sh` could report failure on a fully green suite.** pytest left
+  ~89 scratch directories in the system temp; a sandbox hook that rate-limits
+  bulk deletes then failed the cleanup and the script saw a non-zero exit at
+  100% passing. The gate now keeps its scratch tree in `tmp/` (gitignored), so
+  its verdict depends on the tests and nothing else.
+
+- **`--rules-dir` reached `--rules` but not diagnosis.** The flag exists so a
+  user can point the engine at their own YAML without editing the package.
+  It was passed to the `--rules` listing and dropped everywhere else:
+  `diagnose()` called `RuleSet.load()` with no arguments, so a custom rule
+  showed up in `--rules` and then silently never ran. Measured before the fix:
+  a probe rule matched the report, `RuleSet.load([dir])` fired it (42 rules,
+  hit on), and `mcd --rules-dir dir report.txt` still printed `FINDINGS (0)`.
+  `diagnose()` now takes `rules_dirs=` and all three input paths (file, stdin,
+  `--url`) pass it through. `action.py` and library callers are unaffected —
+  the parameter is keyword-only with a `None` default.
+- **A missing `--rules-dir` was swallowed.** `RuleSet.load()` skipped a
+  non-existent directory without a word unless `MCD_RULES_PATH` was set, so a
+  typo meant "diagnose with builtin rules only" while the user believed their
+  own rules were in play. The CLI now rejects it up front (`--rules-dir is not
+  a directory: …`, exit 2) and the engine records it in `errors` for callers
+  that load rules directly.
+- **`--json --dir` did not produce JSON.** Batch mode wrote one top-level
+  object per report back to back, so `json.load()` failed with `Extra data` on
+  every batch with more than one file — the exact output a CI would parse.
+  A batch (more than one file) now emits a single array; a single input still
+  emits a single object, so existing single-file consumers keep working.
+- **`--dir` diagnosed most crash reports twice.** `REPORT_GLOBS` is
+  `("crash-*.txt", "*.log", "*.txt")` and a real report matches both
+  `crash-*.txt` and `*.txt`; the enumeration appended without dedupe. A
+  two-report batch rendered four diagnoses — doubled runtime, doubled finding
+  counts, and a doubled chance of `--exit-code` tripping in CI. Found by the
+  new contract test asserting the obvious (`len(out) == 2`), which returned 4.
+- **Unclosed file handles in six tool scripts** (`blind_eval`, `build_compat_edges`,
+  `coverage_report`, `rule_lifecycle`, `stamp_provenance` ×2, `version_strata`).
+  CPython closes them on refcount, Windows does not guarantee it for the write
+  path in `stamp_provenance`, where a still-open handle blocks a later
+  re-read of the file it just rewrote. All now use `with`.
+- **`tools/blind_eval.py` bound the repo slug through a closure over the loop
+  variable.** It happened to work because the function is called in the same
+  iteration it is defined, which is exactly the kind of thing that survives
+  until someone keeps the callable. Now a module-level `_names_repo(x, want)`.
+
+- **A misspelled `when:` key turned a rule into a catch-all.** There is no rules
+  schema, so `Rule.from_dict` reads the keys it knows and ignores the rest
+  silently. That is harmless when the typo sits next to a valid condition and
+  catastrophic when it is the only one: `exceptions:` (for `exception:`) leaves
+  a non-empty `when` dict with no conditions in it, which passes the emptiness
+  check at the top of `evaluate_rule` with nothing left to fail. Measured: a
+  rule written to match `OutOfMemoryError` fired on **4/4** synthetic fixtures,
+  including a GL crash. Two fixes at the two layers where the mistake does
+  damage: `RULE_KEYS` + `_config_warnings()` name the rule and the key at load
+  time (`RuleSet.errors`, printed by the CLI; `--strict` still promotes them),
+  and `evaluate_rule` now refuses a `when` with no recognised key, exactly like
+  an empty one — a stderr warning does not help a library caller, who never
+  sees it. Same sweep caught `fix:` for `fixes:` (rule fires with zero repair
+  steps) and `explaination:` (empty explanation). 12 tests in
+  `tests/test_rule_config_warnings.py`, including the control that the correctly
+  spelled rule still fires and that a *partial* typo keeps the valid conditions.
+- **`- just a string` under `rules:` aborted the whole load.** The per-rule
+  handler caught `KeyError/TypeError/ValueError`, and the resulting
+  `AttributeError` escaped it (and the error message built inside the handler
+  would have raised too). One malformed entry now costs one warning.
+
 - **`crash.runtime-mod` claimed OutOfMemoryError reports.** Found by dogfooding
   the shipped Action on a real GitHub issue (issue #1), not by the test suite:
   the rule matches `java.lang.*(Exception|Error)`, which sweeps up
@@ -1093,156 +1188,6 @@ versions follow [SemVer](https://semver.org/).
   rate floor (≥50%) with a tight absolute bound on the original Mekanism
   subset; catch-all honesty check on the full vendored corpus.
 
-### Changed
-- **The web UI is bilingual — Chinese by default, EN one click away.**
-  Every user-facing string moved into an `I18N` dictionary in `web/app.js`
-  (80 keys per language, identical key sets) and `web/index.html` carries the
-  Chinese copy inline with `data-i18n` / `data-i18n-html` /
-  `data-i18n-placeholder` hooks, so the first paint is Chinese before any
-  script runs. The toggle is persisted in `localStorage` and writes
-  `<html lang>`, `<title>` and the meta description.
-  Two details that a naive i18n pass gets wrong and this one does not:
-  **the switch relabels an already-rendered result** (labels, buttons and the
-  environment block are re-rendered from the same `LAST` Incident document —
-  no re-diagnosis, no data loss), and **an open warning is re-painted in the
-  new language** (notices store the translation KEY plus its variables, never
-  the rendered HTML). Focus is deliberately left where it was, so the toggle
-  cannot steal it mid-run.
-  Severity badges are localized too (致命/错误/警告/提示/信息), which is why
-  the E2E accepts either script.
-  English remains selectable and the CLI, the Action and the JSON/Markdown
-  output are untouched — this is a UI-layer change only.
-  `tools/verify_web_e2e.py` now runs **30 checks**: the original 19 plus
-  Chinese-by-default (`<html lang>`, status line, environment summary, copy
-  buttons), the EN round-trip (notice + status relabelled live, `aria-pressed`
-  correct, focus not stolen), switching back to Chinese re-rendering the same
-  diagnosis, no untranslated `data-i18n` node, and both packs carrying the
-  same keys.
-- **CJK typography.** The font stack now falls back through PingFang SC /
-  Hiragino Sans GB / Microsoft YaHei / Noto Sans CJK SC, body line-height went
-  1.55 → 1.62, and the uppercase + letter-spacing treatment on field labels,
-  the "start here" label and the finding labels is scoped to
-  `html[lang="en"]` — uppercase does nothing useful for Chinese and the extra
-  tracking makes the glyphs look washed out.
-- **Web UI reorganised around the verdict (P0 UX pass).** The page used to dump
-  every card in discovery order, so the one thing a user came for — "what broke
-  and what do I do" — was buried under the environment block. It now leads with
-  a verdict card: root cause as the headline, suspect chip with confidence, the
-  matching "why" reasons, the first two fixes, and an action row (copy fix /
-  copy full diagnosis / open an issue). Environment details collapse into a
-  `<details>`; findings follow the verdict as supporting evidence. Diagnosis
-  output itself is unchanged — same `build_incident()`, so the browser and the
-  CLI still emit byte-identical `schema_version 1.0` documents.
-- **Three ways in, one of them new.** Besides paste-the-log there is now a file
-  picker (`.txt/.log/.text`, 8 MB cap with a readable error) and drag-and-drop
-  onto the input area; the window-level drag guards only fire for targets
-  *outside* the drop zone, so dropping onto the textarea still works normally.
-- **Staged boot instead of a blank wait.** Loading Pyodide, installing the wheel
-  and warming the engine are shown as a three-step progress list with per-step
-  state, and a failure replaces the list with the error, a retry button, a
-  copy-error button and the `pip install` CLI fallback rather than a dead page.
-  The list hides itself once the engine is ready.
-- **Live status + focus hand-off.** `#status` is `role="status" aria-live="polite"`,
-  so boot, lookup and error messages are announced; when a diagnosis lands,
-  focus moves to the verdict heading (`tabindex="-1"`, `preventScroll` + a
-  `scrollIntoView` that respects `prefers-reduced-motion`) so keyboard and
-  screen-reader users start at the answer instead of the top of the page.
-- **Copy actions actually report back.** The copy buttons use
-  `navigator.clipboard` with an `execCommand` fallback and announce the result
-  through an `.sr-only` live region, so "did that work?" is answered in every
-  modality.
-- **Accessibility and touch fixes.** The textarea has a real `<label for="log">`
-  (it was placeholder-only), `:focus-visible` draws a 2 px ring on every
-  control, buttons are ≥44 px tall, evidence lines got `overflow-wrap:anywhere`
-  so long stack frames stop overflowing narrow screens, and a
-  `@media (max-width:520px)` block tightens the header/verdict/action layout.
-  Motion-dependent bits sit behind `prefers-reduced-motion: no-preference`.
-- **Input guardrails that guide instead of failing.** Empty input, a bare
-  paste link, and prose that is not a log are now distinguished: the first two
-  block with an explanation of what to paste, the third only warns and still
-  runs (a mangled paste should not be silently dropped). While a diagnosis is
-  running, every input is disabled.
-- **Favicon.** An inline SVG data URI replaces the missing `/favicon.ico`
-  request that made every page load log a 404.
-- `tools/verify_web_e2e.py` grew from 7 to **19 acceptance checks** — verdict
-  card ordering, verdict headline text, collapsed environment, ≥2 copy actions,
-  focus landing on the verdict, live-region politeness, `<label for>`, file
-  input accept list, progress hidden when ready, busy-state disabling, link
-  rejection (0 cards rendered) and prose-warn-not-block.
-
-- **Three copy-pasted paste-host loops became one table** (`mcd/extract.py`).
-  mclo.gs / gist / pastebin each had their own near-identical 12-line loop
-  (seen-check, fetch, looks-like-a-report, append, throttle). They are now one
-  `_PASTE_HOSTS` tuple plus `_follow_links()`; a fourth host is a row, not
-  another block. Source labels (`mclo.gs:<id>`) are unchanged, so the harvester
-  and the Action see exactly what they saw before.
-- **One HTTP path** (`_http_get`) and **one encoding ladder**
-  (`read_report_text`) in `mcd/extract.py` / `mcd/parser/report.py`.
-  `_fetch()` (cached, harvester) and `fetch_log()` (uncached, CLI/Action) now
-  share the request/read/decode/timeout code; `parse_file()` and
-  `action.source_from_path()` share the four-encoding ladder.
-- **`_fmt_platform()`** in `mcd/report/render.py`: the `loader version (via
-  launcher)` string was hand-built in all three renderers with three different
-  separators. They now pass a format template, and a report with no loader line
-  no longer prints `None` where a platform name belongs.
-- **`_exit()` / `_worst()`** in `mcd/cli.py`: `--exit-code` was implemented
-  twice (once over a findings list, once by tracking a running maximum in the
-  directory loop). One `_worst()` + one `_exit()` now serve all three input
-  paths.
-- **`VERSION` is `__version__`**: the version string lived in `mcd/cli.py`,
-  `mcd/__init__.py` and `pyproject.toml`, so a release could ship three
-  different answers. `cli.VERSION` is now re-exported from the package.
-- **`tests/test_web_bundle.py`** (4 tests) guards the `web/` wheel: it must
-  contain every module in `mcd/`, no module deleted from `mcd/`, and every rule
-  pack. Verified in both directions — the suite fails loudly when the wheel is
-  missing or stale, with "run python tools/build_web.py" as the message.
-
-- Corpus expansion: 34 → 454 crash fragments from 12 mod repositories
-  (fabric-loader, fabric-api, Mekanism, Jade, RFTools, Curios,
-  twilightforest, sodium, quilt-loader, ModernFix, Placebo,
-  TinkersConstruct), 125 with weak-supervision maintainer labels.
-- `mod.incompatible-set` rewritten against real Fabric resolver wordings
-  ("Some of your mods are incompatible with the game or each other",
-  "mod 'X' requires any 0.8.x version ... but only the wrong version is
-  present"): blind FormattedException fragments 11 → 0.
-- Harvested-corpus diagnosis rate: 55.7% overall (Mekanism subset 91%,
-  RFTools 88%, Curios 81%); the old 34-fragment numbers (31/34) predate
-  the expansion and are not comparable.
-- `test_blind_spots_stay_bounded` is now scale-free: an absolute `blind ≤ 3`
-  assertion was written for the 34-fragment corpus and became meaningless at
-  454 fragments (more issues ⇒ more blind spots even with better rules).
-  Replaced with a rate floor + per-subset bound.
-- `run_tests.sh` / CI now run the whole `tests/` directory (corpus + gaps).
-- Rule count 25 → 33.
-
-### Removed
-- **Build output that had leaked into the working tree**: `build/lib/mcd/**`
-  (a second, stale copy of all 15 modules — invisible to imports, very visible
-  to `grep` and to anyone reading the tree), `mc_crash_doctor.egg-info/`, and
-  every `__pycache__/`. All are gitignored and regenerated by `python -m
-  build`; they were there because a build had run in the repo root.
-- **`docs/demo-oom.txt` / `docs/demo-watchdog.txt`**: captured CLI transcripts
-  from an older run, referenced by nothing, and already wrong (both open with a
-  `RuntimeWarning` the CLI no longer emits). The same output is one command
-  away: `mc-crash-doctor tests/fixtures/ground-truth/<report>`.
-- **Dead code with zero references.** pyflakes was non-zero only after the
-  cleanup below; vulture at 80% confidence is now empty. Deleted after grepping
-  the whole tree for each name: `extract.NEOFORGE_RE`,
-  `Extracted.n_stackframes` (written, never read), `report.LOC_RE`,
-  `report.MODLAUNCHER_RE`, `report._unit_to_bytes`, `cli._fetch_url()` (a
-  one-line pass-through to `fetch_log`), `MemoryInfo.is_complete`,
-  `MemoryInfo.utilisation`, `CrashReport.find_section`, and
-  `CrashReport.to_dict`/`to_json`.
-  `to_dict`/`to_json` were a **second serialisation path that nothing called**
-  — precisely the kind of duplicate that drifts from `build_incident()`, so
-  removing it also removes a future inconsistency.
-  `platform._best()` lost its `order` parameter and the `_ORDER_LOADER` /
-  `_ORDER_LAUNCHER` lists that only fed it: both were leftovers from the
-  ranking approach the function's own docstring explains was abandoned.
-  Unused imports (`glob`, `os`, `sys`, `StackFrame`, `Counter`, `re`,
-  `shutil`) and four f-strings without placeholders went with them.
-
-### Fixed
 - **The browser was running older code than the CLI.** `web/` ships a prebuilt
   wheel (that is what Pyodide installs), and it had been built before
   `mcd/action.py` existed, so the committed artifact no longer matched the
@@ -1389,6 +1334,49 @@ versions follow [SemVer](https://semver.org/).
   block, FATAL-introduced blocks are flagged (`ExceptionBlock.fatal`), and
   `root_cause` prefers the last FATAL chain. This was silently misdiagnosing
   every multi-exception log.
+
+### Removed
+
+- **Four definitions nothing referenced** (`tmp/deadcode_scan.py`: 296
+  module-scope defs, references counted as Name/Attribute/import/arg/keyword
+  sites): `triage/attribution._JAR_NOISE` — an abandoned regex superseded by
+  `_norm_jar`'s inline passes, whose own alternation starts with an empty branch
+  and therefore matched every string; `parser/platform.FAMILY` — its comment
+  claimed the eval harness used it, and the harness computes family labels
+  itself; `parser/platform.detect_platform` / `detect_launcher` — wrappers over
+  `detect_platform_detailed` with no callers since `report.py` moved to the
+  one-pass version. Zero-reference defs: 4 → 0.
+- **Build residue from the working tree** — `build/` (a full duplicate of `mcd/`
+  that every grep and symbol scan had to filter out by hand), `egg-info/`,
+  `.pytest_cache/`, all `__pycache__/`. None of it was tracked; all of it is
+  recreated by `python -m build`, which this round's wheel rebuild demonstrated
+  by recreating `build/` and `egg-info/` minutes after the delete.
+
+- **Build output that had leaked into the working tree**: `build/lib/mcd/**`
+  (a second, stale copy of all 15 modules — invisible to imports, very visible
+  to `grep` and to anyone reading the tree), `mc_crash_doctor.egg-info/`, and
+  every `__pycache__/`. All are gitignored and regenerated by `python -m
+  build`; they were there because a build had run in the repo root.
+- **`docs/demo-oom.txt` / `docs/demo-watchdog.txt`**: captured CLI transcripts
+  from an older run, referenced by nothing, and already wrong (both open with a
+  `RuntimeWarning` the CLI no longer emits). The same output is one command
+  away: `mc-crash-doctor tests/fixtures/ground-truth/<report>`.
+- **Dead code with zero references.** pyflakes was non-zero only after the
+  cleanup below; vulture at 80% confidence is now empty. Deleted after grepping
+  the whole tree for each name: `extract.NEOFORGE_RE`,
+  `Extracted.n_stackframes` (written, never read), `report.LOC_RE`,
+  `report.MODLAUNCHER_RE`, `report._unit_to_bytes`, `cli._fetch_url()` (a
+  one-line pass-through to `fetch_log`), `MemoryInfo.is_complete`,
+  `MemoryInfo.utilisation`, `CrashReport.find_section`, and
+  `CrashReport.to_dict`/`to_json`.
+  `to_dict`/`to_json` were a **second serialisation path that nothing called**
+  — precisely the kind of duplicate that drifts from `build_incident()`, so
+  removing it also removes a future inconsistency.
+  `platform._best()` lost its `order` parameter and the `_ORDER_LOADER` /
+  `_ORDER_LAUNCHER` lists that only fed it: both were leftovers from the
+  ranking approach the function's own docstring explains was abandoned.
+  Unused imports (`glob`, `os`, `sys`, `StackFrame`, `Counter`, `re`,
+  `shutil`) and four f-strings without placeholders went with them.
 
 ## [0.1.0] - 2026-09-22
 
