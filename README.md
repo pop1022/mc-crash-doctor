@@ -124,6 +124,9 @@ mc-crash-doctor report.txt --json
 # show how the suspicion score was assembled (weights per signal)
 mc-crash-doctor report.txt --explain
 
+# what happened in the last 60 seconds before the crash?
+mc-crash-doctor latest.log --timeline 60
+
 # no crash yet? check a mods/ directory against what its jars declare.
 # --side tells it what the directory cannot: client or server
 mc-crash-doctor --pack /path/to/server --side server
@@ -148,6 +151,33 @@ for f in findings:
     for fix in f.fixes:
         print("  →", fix)
 ```
+
+### Pack Doctor — check a pack without a crash report
+
+`--pack` reads what every jar in `mods/` declares and reports the contradictions
+it can prove offline: duplicate mods, missing dependencies, mixed loaders,
+versions outside a declared range, and declared incompatibilities. The output
+separates four things on purpose, because "no findings" and "nothing checked"
+are different answers:
+
+```
+findings     a declared contradiction (duplicate / missing / mixed / version / conflict)
+undecided    the range was read but not understood — nothing is claimed either way
+unreadable   a jar with no manifest we can read
+not checked  what this scan does not look at at all
+```
+
+`--side server|client` answers the two questions the directory cannot: whether a
+Fabric/Quilt mod declares itself for the other side, and which `side=`-scoped
+dependencies actually apply. Without it, both stay in `not checked`.
+
+First run against a real 355-jar NeoForge 1.21.1 server pack: **35 findings, 34 of
+them false** — the pack boots, and the reader was misinterpreting real
+declarations (version-scoped incompatibilities, bundled jars, `${file.jarVersion}`,
+`<mc>-<mod>` version numbers, `side="CLIENT"` dependencies). After five fixes it
+reports **1** (three Fabric jars in a NeoForge instance), with `undecided` down
+from 24 to 1. Evidence, including the declarations that triggered each:
+[`corpus/PACK-REALJAR.md`](corpus/PACK-REALJAR.md).
 
 ### As a GitHub Action
 
@@ -181,6 +211,21 @@ committed report in CI, or `url:` for a paste link. Chatter that merely
 triggers the workflow is ignored (`found=false`, no comment). This repo runs
 it on its own issues — see [`.github/workflows/diagnose-issue.yml`](.github/workflows/diagnose-issue.yml).
 
+A second mode checks a pack instead of a report — useful on a PR that edits
+`mods/`. `pack-side` enables the `environment` and side-scoped checks; without
+it those two stay in `not checked`:
+
+```yaml
+      - uses: pop1022/mc-crash-doctor@main
+        with:
+          pack: ./server
+          pack-side: server
+          fail-on: error       # exit 1 on a missing dependency / mixed loader
+```
+
+In pack mode `suspect` is always empty: there is no crash, so there is nobody to
+blame. The full report goes to the step summary either way.
+
 ## Covered failure modes
 
 41 rules across three packs. Rules are YAML — adding one needs no Python.
@@ -204,6 +249,19 @@ ground truth      : 6/6 matched
 ```
 
 The ground-truth set is six real reports from a 266-mod Forge 1.20.1 server (four heap OOM, two watchdog kills). The test also asserts what must **not** fire — e.g. `oom.save-time` must not trigger on reports whose stacks show no chunk-serialisation path. Getting that wrong sends users hunting a memory leak that does not exist.
+
+Diagnosis rate — the share of reports where at least one rule fires:
+
+```
+blind set      156/216 = 72.2%   [66%, 78%]
+whole corpus   344/454 = 75.8%
+```
+
+The blind set is the half of the harvested corpus no rule was written from.
+Three reports cited as rule provenance are pinned into the dev split, which is
+why it is 216 and not 218. The blame-error rate (1/7) is deliberately **not**
+quoted: at n=7 its 95% interval is [3%, 51%], and `corpus/blind-eval.json` marks
+it `quotable_as_rate: false`.
 
 The one version miss is a corpus file containing two contradictory versions (a `1.8.8` startup line and a Magma banner reporting `MC: 1.12.2`, three hours apart). We take the software's own banner.
 

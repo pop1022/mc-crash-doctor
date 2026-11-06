@@ -114,6 +114,9 @@ mc-crash-doctor report.txt --json
 # 把"为什么怀疑它"逐条打出来（每条信号各占多少分）
 mc-crash-doctor report.txt --explain
 
+# 崩溃前 60 秒发生了什么？
+mc-crash-doctor latest.log --timeline 60
+
 # 还没崩？直接检查 mods/ 与各 jar 自己声明的依赖是否自相矛盾。
 # --side 告诉它目录本身说不出口的事：客户端还是服务端
 mc-crash-doctor --pack /path/to/server --side server
@@ -138,6 +141,29 @@ for f in findings:
     for fix in f.fixes:
         print("  →", fix)
 ```
+
+### Pack Doctor —— 不用崩溃报告也能体检
+
+`--pack` 读取 `mods/` 里每个 jar 自己声明了什么，报出它能在离线状态下证明的矛盾：
+重复模组、缺前置、混用加载器、版本不在声明区间内、以及声明的互斥。输出刻意分成
+四类，因为"没发现问题"和"什么都没查"是两种不同的答案：
+
+```
+findings     已声明的矛盾（重复 / 缺前置 / 混用 / 版本 / 冲突）
+undecided    区间读到了但没读懂——两边都不下结论
+unreadable   没有任何我们能读的清单的 jar
+not checked  这次扫描完全没看的东西
+```
+
+`--side server|client` 回答目录本身说不出口的两件事：某个 Fabric/Quilt 模组是否
+声明自己只给另一侧用，以及 `side=` 限定的依赖到底哪条适用。不给它，这两问都留在
+`not checked` 里。
+
+第一次跑真实样本（本机 355 jar / 588 MB 的 NeoForge 1.21.1 服务器包）：
+**35 条 finding，34 条是误报**——包是能启动的，错在读取器误解了真实声明
+（带区间的互斥、内嵌 jar、`${file.jarVersion}`、`<mc>-<mod>` 版本号、`side="CLIENT"` 依赖）。
+修完五处后只剩 **1 条**（NeoForge 实例里装了 3 个纯 Fabric jar），`undecided`
+从 24 降到 1。逐条证据：[`corpus/PACK-REALJAR.md`](corpus/PACK-REALJAR.md)。
 
 ### 作为 GitHub Action
 
@@ -169,6 +195,20 @@ jobs:
 issue 不会获得回复（`found=false`，不发评论）。本仓库已用它诊断自己的 issue，
 见 [`.github/workflows/diagnose-issue.yml`](.github/workflows/diagnose-issue.yml)。
 
+第二种模式不诊断崩溃，而是体检整合包——适合会改 `mods/` 的 PR。`pack-side`
+开启 `environment` 与单侧依赖检查；不给它，这两项留在 `not checked`：
+
+```yaml
+      - uses: pop1022/mc-crash-doctor@main
+        with:
+          pack: ./server
+          pack-side: server
+          fail-on: error       # 缺前置 / 混用加载器时退出码 1
+```
+
+pack 模式下 `suspect` 恒为空：没有崩溃，就没有人可归责。完整报告同样写进
+step summary。
+
 ## 已覆盖的故障类型
 
 三个规则包共 41 条规则。规则是 YAML——加一条不用写 Python。
@@ -192,6 +232,18 @@ ground truth      : 6/6 matched
 ```
 
 地面真值集是 6 份来自 266 模组 Forge 1.20.1 服务端的真实报告（4 次堆 OOM、2 次看门狗击杀）。测试同时断言**不该触发**的规则——例如 `oom.save-time` 不能在栈里没有区块序列化路径的报告上触发。判错会把用户引向排查一个根本不存在的内存泄漏。
+
+诊断率——至少命中一条规则的报告占比：
+
+```
+盲测集        156/216 = 72.2%   [66%, 78%]
+全语料        344/454 = 75.8%
+```
+
+盲测集是从未被任何规则写过的另一半语料。三条规则把来源报告钉成了 provenance，
+这些报告按构造划入 dev，所以分母是 216 而不是 218。甩锅率（1/7）**故意不写**：
+n=7 时 95% 区间是 [3%, 51%]，`corpus/blind-eval.json` 把它标成
+`quotable_as_rate: false`。
 
 唯一的版本误判来自语料本身自相矛盾：文件里同时有 `1.8.8` 启动行和相隔三小时的 Magma 横幅 `(MC: 1.12.2)`。我们采信软件自己的横幅。
 

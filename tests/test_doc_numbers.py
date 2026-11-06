@@ -226,3 +226,28 @@ def test_audit_keeps_its_correction_note():
     text = _doc("docs/AUDIT-2026-10-27.md")
     assert "后续状态（2026-11-07 补记" in text
     assert "35 条 finding" in text and "34 条是误报" in text
+
+
+def test_readme_quotes_the_same_numbers_as_the_json():
+    """The README is the first thing a user reads, and it now quotes both the
+    corpus rate and the blind rate. Those two numbers are the ones a future
+    rule change moves first, so both languages must be checked, not just the
+    generated reports."""
+    c = _json("corpus/coverage.json")["totals"]
+    b = _json("corpus/blind-eval.json")["blind"]
+    needles = [
+        f"{c['diagnosed']}/{c['n']}", f"{c['rate']:.1%}",
+        f"{b['diagnosed']}/{b['n']} = {b['diagnosed'] / b['n'] * 100:.1f}%",
+    ]
+    for doc in ("README.md", "README.zh-CN.md"):
+        miss = _missing(doc, needles)
+        assert not miss, f"{doc} does not cite {miss}"
+
+
+def test_readme_documents_the_flags_it_ships():
+    """`--timeline`, `--explain` and `--side` all exist; a README that omits one
+    leaves the feature discoverable only by reading --help."""
+    for doc in ("README.md", "README.zh-CN.md"):
+        text = _doc(doc)
+        for flag in ("--timeline", "--explain", "--side", "--pack"):
+            assert flag in text, f"{doc} never mentions {flag}"

@@ -95,3 +95,21 @@ def test_corpus_incidents_conform(validator, path):
     errors = sorted(validator.iter_errors(doc), key=lambda e: list(e.path))
     assert not errors, f"{Path(path).name}:\n" + "\n".join(
         f"  {list(e.path)}: {e.message}" for e in errors[:5])
+
+
+def test_finding_commands_are_declared_and_round_trip(validator):
+    """`commands` is emitted by rules (native.gl -> nvidia-smi) but was only
+    tolerated as an extra property. Declaring it keeps the contract visible to
+    anyone reading the schema; the round-trip proves the declaration matches
+    what `build_incident` actually emits."""
+    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    props = schema["$defs"]["finding"]["properties"]
+    assert "commands" in props, "schema should declare the field rules emit"
+    assert props["commands"]["type"] == "array"
+
+    rep, findings, t = diagnose(
+        str(ROOT / "tests/fixtures/synthetic/native-gl.txt"), None)
+    doc = build_incident(rep, findings, t)
+    validator.validate(doc)
+    with_cmds = [f for f in doc["findings"] if f.get("commands")]
+    assert with_cmds and with_cmds[0]["commands"] == ["nvidia-smi"], doc["findings"]

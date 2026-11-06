@@ -759,6 +759,27 @@ versions follow [SemVer](https://semver.org/).
 - `run_tests.sh` / CI now run the whole `tests/` directory (corpus + gaps).
 - Rule count 25 → 33.
 
+- **README now documents what the tool actually ships.** Three gaps: `--timeline`
+  had no example; Pack Doctor had one comment line and no explanation of its four
+  output buckets (`findings` / `undecided` / `unreadable` / `not checked`) or of
+  what `--side` changes; and the diagnosis rate -- the project's headline number
+  -- was missing entirely. Added a `Pack Doctor` subsection (both languages) with
+  the real 355-jar before/after (35 findings -> 1), a diagnosis-rate block
+  (blind 156/216 = 72.2% [66, 78], corpus 344/454 = 75.8%) that also says why the
+  blame-error rate is deliberately not quoted, and a pack-mode example in the
+  Action section. `--side`'s effect on `not checked` is stated where a reader
+  will look for it.
+
+- **`data/schemas/incident.v1.json` declares `commands`.** Rules emit it
+  (`native.gl` -> `nvidia-smi`) but the schema only tolerated it as an extra
+  property, so the published contract documented nothing. Optional and
+  backward-compatible; a round-trip test validates a real incident carrying it.
+
+- **Two more gate-[7] checks**: both READMEs must quote the same coverage/blind
+  numbers as the JSON, and must mention every flag the CLI ships. The first would
+  have caught this round's drift; the second stops the next feature from being
+  discoverable only via `--help`.
+
 ### Fixed
 
 - **`--pack` on a real pack: 35 findings, 34 of them wrong.** First run of Pack
