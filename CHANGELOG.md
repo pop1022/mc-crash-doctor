@@ -780,6 +780,15 @@ versions follow [SemVer](https://semver.org/).
   have caught this round's drift; the second stops the next feature from being
   discoverable only via `--help`.
 
+- **`docs/ASSESSMENT-2026-11.md`**: a full project assessment with measured
+  inputs rather than impressions -- diagnosis rate, attribution split by repo
+  type, per-report finding distribution (91.9% of reports yield <=2 findings),
+  rule health (0 zero-evidence rules; 6 of the 11 that never fire on the
+  harvested corpus do fire on aternos), and end-to-end timings (355 ms per
+  report, 1.4 s for a 355-jar pack). It states the six gaps that matter and
+  ranks fixes by pay-off. Its two headline rates are pinned by gate [7] so the
+  assessment cannot silently become marketing.
+
 ### Fixed
 
 - **`--pack` on a real pack: 35 findings, 34 of them wrong.** First run of Pack

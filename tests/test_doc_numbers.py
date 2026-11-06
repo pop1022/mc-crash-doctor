@@ -251,3 +251,15 @@ def test_readme_documents_the_flags_it_ships():
         text = _doc(doc)
         for flag in ("--timeline", "--explain", "--side", "--pack"):
             assert flag in text, f"{doc} never mentions {flag}"
+
+
+def test_assessment_quotes_live_numbers():
+    """The assessment is a dated snapshot, but its two headline rates are the
+    ones a future rule change moves first. If they drift, the assessment stops
+    being an assessment and becomes marketing."""
+    c = _json("corpus/coverage.json")["totals"]
+    b = _json("corpus/blind-eval.json")["blind"]
+    needles = [f"{c['diagnosed']}/{c['n']} = {c['rate']:.1%}",
+               f"{b['diagnosed']}/{b['n']} = {b['diagnosed'] / b['n'] * 100:.1f}%"]
+    miss = _missing("docs/ASSESSMENT-2026-11.md", needles)
+    assert not miss, f"assessment does not cite {miss}"
