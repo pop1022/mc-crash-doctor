@@ -32,6 +32,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from ..regexkit import literal_prefix
+
 # Evidence tiers. Higher = more authoritative.
 T0, T1, T2 = 0, 1, 2
 
@@ -192,9 +194,13 @@ class PlatformHit:
 
 
 def _scan(text: str, probes: list[Probe], window: int, offset: int = 0) -> list[PlatformHit]:
-    scope = text[:window]
+    scope = text[offset:offset + window] if offset else text[:window]
+    hay = scope.lower()
     hits: list[PlatformHit] = []
     for i, pr in enumerate(probes):
+        lit = literal_prefix(pr.pattern.pattern)
+        if lit and lit not in hay:
+            continue
         m = pr.pattern.search(scope)
         if m:
             hits.append(PlatformHit(pr.loader, pr.tier, offset + m.start(),
@@ -216,8 +222,8 @@ def _collect(text: str) -> list[PlatformHit]:
     """
     hits = _scan(text, PROBES + LAUNCHER_PROBES, HEAD_WINDOW)
     if len(text) > HEAD_WINDOW and not any(h.tier == T0 for h in hits):
-        tail = text[HEAD_WINDOW:]
-        hits += _scan(tail, PROBES + LAUNCHER_PROBES, len(tail), offset=HEAD_WINDOW)
+        hits += _scan(text, PROBES + LAUNCHER_PROBES,
+                      len(text) - HEAD_WINDOW, offset=HEAD_WINDOW)
     return hits
 
 

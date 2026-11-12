@@ -170,6 +170,12 @@ def main(argv: list[str] | None = None) -> int:
 
     # --- pack mode: a different question, so it returns before anything else
     if args.pack:
+        if args.explain:
+            # Silently ignoring it would look like the weights were printed
+            # somewhere below; pack mode has no suspects to explain.
+            print("error: --explain is for crash reports; --pack has no "
+                  "attribution to explain", file=sys.stderr)
+            return 2
         return _pack(args.pack, _fmt(args), out, color, args.exit_code, args.side)
     if args.side:
         # Silently ignoring it would make `--side client` look applied when the
@@ -288,7 +294,13 @@ def _timeline_mode(args) -> int:
             return 2
         source = args.url
     else:
-        p = Path(args.path or "")
+        if not args.path:
+            # `Path("")` is ".", which produced "no such report file: ." for a
+            # flag that was simply missing its argument.
+            print("error: --timeline needs a file, --stdin or --url",
+                  file=sys.stderr)
+            return 2
+        p = Path(args.path)
         if not p.is_file():
             print(f"error: no such report file: {p}", file=sys.stderr)
             return 2
