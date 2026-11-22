@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-10-27T17:59:21+0800",
+  "generated_at": "2026-11-22T00:36:58+0800",
   "files_scanned": 454,
   "parse_errors": 0,
   "parse_error_examples": [],
   "totals": {
     "n": 454,
-    "diagnosed": 344,
-    "rate": 0.7577,
-    "uncovered": 110
+    "diagnosed": 348,
+    "rate": 0.7665,
+    "uncovered": 106
   },
   "buckets": {
     "watchdog": {
@@ -18,8 +18,8 @@
     },
     "mixin": {
       "n": 64,
-      "diagnosed": 57,
-      "severe": 57,
+      "diagnosed": 59,
+      "severe": 59,
       "verdict_known": 25
     },
     "native": {
@@ -48,8 +48,8 @@
     },
     "other": {
       "n": 175,
-      "diagnosed": 104,
-      "severe": 102,
+      "diagnosed": 106,
+      "severe": 104,
       "verdict_known": 44
     }
   },
@@ -201,22 +201,7 @@
       "bucket": "other"
     },
     {
-      "signature": "java.lang.RuntimeException: Error creating Mixin config omega-config.mixins.json for mod omega-config",
-      "count": 1,
-      "bucket": "mixin"
-    },
-    {
       "signature": "java.lang.StackOverflowError: null",
-      "count": 1,
-      "bucket": "other"
-    },
-    {
-      "signature": "java.lang.RuntimeException: Error creating Mixin config fabric-crash-report-info-v1.mixins.json for mod fabr",
-      "count": 1,
-      "bucket": "mixin"
-    },
-    {
-      "signature": "java.lang.RuntimeException: Non-unique Mixin config name mixins.reach-entity-attributes.json used by the mod",
       "count": 1,
       "bucket": "other"
     },
@@ -224,12 +209,27 @@
       "signature": "java.lang.RuntimeException: Could not create directory <HOME>\\AppData\\Roaming\\.minecraft\\<INSTANCE>\\iris-res",
       "count": 1,
       "bucket": "other"
+    },
+    {
+      "signature": "java.lang.IllegalArgumentException: Unsupported class file major version 21845",
+      "count": 1,
+      "bucket": "mod-bug"
+    },
+    {
+      "signature": "java.util.ServiceConfigurationError: org.spongepowered.asm.service.IMixinServiceBootstrap: Provider net.fabricmc.load",
+      "count": 1,
+      "bucket": "other"
+    },
+    {
+      "signature": "java.lang.ClassNotFoundException: net.fabricmc.loader.impl.launch.knot.KnotClient",
+      "count": 1,
+      "bucket": "mod-loading"
     }
   ],
   "uncovered_verdicts": {
-    "(none)": 91,
-    "user_error_or_config": 18,
+    "(none)": 90,
+    "user_error_or_config": 15,
     "bug_in_this_mod": 1
   },
-  "elapsed_seconds": 24.0
+  "elapsed_seconds": 20.2
 }

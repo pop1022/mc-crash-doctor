@@ -6,7 +6,7 @@
   "ground_truth": 6,
   "harvested": 454
  },
- "generated_at": "2026-10-28T11:05:20+08:00",
+ "generated_at": "2026-11-17T21:04:22+08:00",
  "rules": {
   "crash.datapack-book": {
    "lifecycle_status": "verified",
@@ -153,6 +153,24 @@
    "real_evidence": [
     "harvested:ModernFix/533",
     "harvested:ModernFix/534"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "mixin.config-broken": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:fabric-loader/620",
+    "harvested:fabric-loader/750"
+   ],
+   "synthetic_fixtures": [],
+   "verdict": "hold"
+  },
+  "mixin.config-duplicate": {
+   "lifecycle_status": "verified",
+   "real_evidence": [
+    "harvested:fabric-loader/778",
+    "harvested:fabric-loader/834"
    ],
    "synthetic_fixtures": [],
    "verdict": "hold"

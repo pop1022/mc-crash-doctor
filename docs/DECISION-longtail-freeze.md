@@ -3,19 +3,21 @@
 > 2026-11-07。状态：**冻结，生效中**。本文是可引用的决策记录，不是计划。
 > 证据：`docs/DECISION-coverage.md`（A2）、`corpus/RULE_CANDIDATES.md`、
 > `corpus/CRASH-FINGERPRINTS.md`（D3）、`corpus/COVERAGE.md`。
+> **2026-11-22 复算**：下表数字由 `corpus/coverage.json` 与
+> `corpus/coverage-granularity.json` 重新生成（规则此后有增加）；决策与阈值未变。
 
 ## 决定
 
 **不再为未覆盖长尾里的非泛化单例写规则。** 覆盖率作为质量指标继续追踪，但
-"再加几条规则把 75.8% 推到 80%" 不再是一项工作项。省下的工时投向真实数据验证、
+"再加几条规则把 76.6% 推到 80%" 不再是一项工作项。省下的工时投向真实数据验证、
 证据质量与发布链路。
 
 ## 依据（全部是实测，不是估计）
 
 | 量 | 值 | 来源 |
 |---|---|---|
-| 语料诊断率 | **344/454 = 75.8%** | `coverage.json` |
-| 未覆盖 | **110** 份，`other` 桶占 71 份 | `coverage.json` |
+| 语料诊断率 | **348/454 = 76.6%** | `coverage.json` |
+| 未覆盖 | **106** 份，`other` 桶占 69 份 | `coverage.json` |
 | 签名聚类 | 103 簇 / **99 个单例** / 1.07 份每规则 | `coverage-granularity.json` |
 | top-10 占比 | **15.5%**（R4 停手阈值 30%） | 同上 |
 | 抹掉类名/数字/路径/引号后 | 102 簇 / 100 单例 / **1.08 份每规则** | 同上：长尾不是聚类粒度造成的 |
@@ -35,7 +37,8 @@
 ## 已经做完的（不是欠账）
 
 - 三条零撞车规则（`game-provider` 3 / `class-already-loaded` 2 / `quilt-coerce` 2），
-  语料 337/454 → 344/454。写之前每条都按"异常链中任一条命中"量过 gain 与 collision。
+  语料 337/454 → 344/454（当时口径；此后规则继续增加，当前见上表）。
+  写之前每条都按"异常链中任一条命中"量过 gain 与 collision。
 - **明确拒绝**通用 `missing-class`：gain 6，但 collision **30**，其中 24 次已被
   `mod.coremod-missing` 解释。用 6 份新覆盖换 30 份报告多一条 finding 是负收益。
 - 5 份 `Manually triggered debug crash` 是人按调试键产生的，**不是故障**，不计入

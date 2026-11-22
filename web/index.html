@@ -1,247 +1,323 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-type="software" data-motion="live">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>mc-crash-doctor — 在浏览器里诊断 Minecraft 崩溃</title>
+<title>mc-crash-doctor：在浏览器里诊断 Minecraft 崩溃</title>
 <meta id="meta-desc" name="description" content="粘贴 Minecraft 崩溃报告或服务器日志，由 mc-crash-doctor 规则引擎在浏览器本地完成诊断；日志不会离开你的电脑。">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%2358a6ff'/><text x='16' y='24' font-size='19' text-anchor='middle' fill='%23ffffff' font-family='monospace'>▣</text></svg>">
-<style>
-  :root {
-    --bg: #0d1117; --panel: #161b22; --border: #30363d;
-    --fg: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
-    --fatal: #f85149; --error: #f85149; --warn: #d29922;
-    --hint: #39c5cf; --ok: #3fb950;
-    --focus: #58a6ff;
-  }
-  @media (prefers-color-scheme: light) {
-    :root { --bg:#fff; --panel:#f6f8fa; --border:#d0d7de; --fg:#1f2328;
-            --muted:#656d76; --accent:#0969da; --fatal:#cf222e; --error:#cf222e;
-            --warn:#9a6700; --hint:#1b7c83; --ok:#1a7f37; --focus:#0969da; }
-  }
-  * { box-sizing: border-box; }
-  /* An author `display` rule beats the UA's [hidden] rule, so #progress
-     (display:flex) and any <button> (display:inline-flex) stayed visible even
-     with .hidden = true. This is the fix: hidden must win. */
-  [hidden] { display: none !important; }
-  body { margin:0; background:var(--bg); color:var(--fg);
-         font:15px/1.62 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,
-              "PingFang SC","Hiragino Sans GB","Microsoft YaHei",
-              "Noto Sans CJK SC",sans-serif; }
-  .wrap { max-width: 900px; margin: 0 auto; padding: 28px 20px 60px; }
-
-  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden;
-             clip:rect(0 0 0 0); white-space:nowrap; }
-  .topbar { display:flex; align-items:flex-start; justify-content:space-between;
-            gap:12px; flex-wrap:wrap; }
-  h1 { font-size: 24px; margin: 0 0 4px; }
-  h1 .logo { color: var(--accent); }
-  .sub { color: var(--muted); margin: 0 0 14px; font-size: 14px; }
-  .privacy { display:inline-block; background:var(--panel); border:1px solid var(--border);
-             border-radius:999px; padding:3px 12px; font-size:12.5px; color:var(--muted);
-             margin:0 0 18px; }
-  .privacy b { color: var(--ok); font-weight:600; }
-
-  /* 语言切换：紧凑的次级控件（44px 触控高度，与主按钮一致） */
-  .lang { display:flex; gap:6px; flex:0 0 auto; margin-top:2px; }
-  .lang button { min-height:44px; padding:0 14px; font-size:13px; font-weight:600;
-                 background:transparent; color:var(--muted);
-                 border:1px solid var(--border); border-radius:8px; }
-  .lang button:hover:not([aria-pressed="true"]) { color:var(--fg); }
-  .lang button[aria-pressed="true"] { color:var(--fg); border-color:var(--accent);
-                                      background:var(--panel); }
-
-  .field-label { display:block; font-size:12px; letter-spacing:.6px;
-                 color:var(--muted); margin:0 0 6px; }
-  .drop { border:1px dashed var(--border); border-radius:10px; padding:6px; }
-  .drop.over { border-color: var(--accent); background: var(--panel); }
-  .drop.over textarea { pointer-events:none; }
-  textarea { width:100%; min-height:220px; resize:vertical; background:var(--panel);
-             color:var(--fg); border:1px solid var(--border); border-radius:8px;
-             padding:12px; display:block;
-             font:12.5px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; }
-  textarea:focus-visible { outline:2px solid var(--focus); outline-offset:1px;
-                           border-color:var(--accent); }
-  .hint { color:var(--muted); font-size:12.5px; margin:8px 2px 0; }
-  .hint code { font-size:12px; }
-
-  .row { display:flex; gap:10px; align-items:center; margin-top:12px; flex-wrap:wrap; }
-  button, .linkbtn { min-height:44px; display:inline-flex; align-items:center;
-                     justify-content:center; background:var(--accent); color:#fff;
-                     border:0; border-radius:8px; padding:0 22px; font-size:15px;
-                     font-weight:600; cursor:pointer; font-family:inherit; }
-  button:disabled { opacity:.5; cursor:not-allowed; }
-  button.ghost, .linkbtn.ghost { background:transparent; color:var(--muted);
-                     border:1px solid var(--border); font-weight:400;
-                     padding:0 16px; font-size:13.5px; text-decoration:none; }
-  button.ghost:hover:not(:disabled) { color:var(--fg); border-color:var(--muted); }
-  button:focus-visible, .linkbtn:focus-visible {
-                     outline:2px solid var(--focus); outline-offset:2px; }
-
-  #status { color:var(--muted); font-size:13.5px; margin:12px 2px 0; }
-  #status.err { color: var(--fatal); }
-  #status.ok { color: var(--ok); }
-
-  .progress { list-style:none; display:flex; gap:8px; margin:10px 2px 0; padding:0;
-              font-size:12.5px; color:var(--muted); flex-wrap:wrap; }
-  .progress li { border:1px solid var(--border); border-radius:999px; padding:2px 10px; }
-  .progress li[data-state="active"] { color:var(--fg); border-color:var(--accent); }
-  .progress li[data-state="done"] { color:var(--ok); border-color:var(--ok); }
-  .progress li[data-state="failed"] { color:var(--fatal); border-color:var(--fatal); }
-
-  .notice { margin-top:14px; border:1px solid var(--warn); border-left:4px solid var(--warn);
-            border-radius:8px; padding:12px 14px; font-size:13.5px; background:var(--panel); }
-  .notice.ok { border-color:var(--ok); border-left-color:var(--ok); }
-  .notice p { margin:0 0 6px; }
-  .notice p:last-child { margin-bottom:0; }
-  .notice pre { margin:8px 0; overflow:auto; font-size:11.5px; color:var(--muted);
-                background:var(--bg); border:1px solid var(--border);
-                border-radius:6px; padding:8px; }
-
-  .card { background:var(--panel); border:1px solid var(--border); border-radius:10px;
-          padding:16px 18px; margin-top:16px; }
-  .card h2 { margin:0 0 10px; font-size:16px; }
-
-  .verdict { border-color:var(--border); }
-  .verdict .eyebrow { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
-  .verdict .eyebrow span.where { color:var(--muted); font-size:12px; }
-  .verdict h2 { font-size:19px; line-height:1.45; margin:0 0 4px; outline:none;
-                overflow-wrap:anywhere; }
-  .verdict .cause-meta { color:var(--muted); font-size:12px; margin:0 0 12px;
-                         font-family:ui-monospace,Consolas,monospace; word-break:break-word; }
-  .suspect-row { display:flex; align-items:center; gap:10px; padding:10px 12px;
-                 background:var(--bg); border:1px solid var(--border); border-radius:8px;
-                 margin-bottom:12px; flex-wrap:wrap; }
-  .suspect-row .who { flex:1; min-width:140px; }
-  .suspect-row .k { display:block; color:var(--muted); font-size:11px; margin-bottom:2px; }
-  .suspect-row .v { font-weight:600; font-size:14px; }
-  .suspect-row .conf { text-align:right; }
-  .suspect-row .suspect { border:0; background:transparent; padding:0; font-size:14px; }
-  .why { margin:0 0 12px; padding-left:18px; color:var(--muted); font-size:12.5px; }
-  .why li { margin:2px 0; }
-  .starthere .k { display:block; color:var(--muted); font-size:11px;
-                  margin-bottom:4px; }
-  .starthere ol { margin:0 0 12px; padding-left:20px; }
-  .starthere li { margin:4px 0; }
-  .actions { display:flex; gap:8px; flex-wrap:wrap; border-top:1px solid var(--border);
-             padding-top:12px; margin-top:2px; }
-
-  .overview { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;
-              margin:18px 2px 0; font-size:14px; }
-  .overview .counts { color:var(--muted); font-size:13px; }
-  .sev { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.5px;
-         border-radius:4px; padding:2px 7px; margin-right:8px; vertical-align:2px; }
-  .sev.fatal,.sev.error { background:var(--fatal); color:#fff; }
-  .sev.warning { background:var(--warn); color:#000; }
-  .sev.hint { background:var(--hint); color:#000; }
-  .sev.info { background:var(--muted); color:#fff; }
-  .finding + .finding { margin-top:18px; padding-top:16px; border-top:1px solid var(--border); }
-  .finding h3 { margin:0 0 6px; font-size:15.5px; line-height:1.5; }
-  .finding p { margin:6px 0; }
-  .finding ul { margin:6px 0 6px 0; padding-left:20px; }
-  .finding li { margin:3px 0; }
-  .label { color:var(--muted); font-size:12px;
-           letter-spacing:.6px; margin-top:10px; }
-  .evidence { background:var(--bg); border:1px solid var(--border); border-radius:6px;
-              padding:8px 10px; font:12px/1.5 ui-monospace,Consolas,monospace;
-              white-space:pre-wrap; overflow-wrap:anywhere; color:var(--muted); margin-top:4px; }
-  .suspects { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
-  .suspect { border:1px solid var(--border); border-radius:8px; padding:6px 12px;
-             background:var(--bg); font-size:13.5px; }
-  .suspect b { color:var(--accent); }
-  .suspect .conf { color:var(--muted); font-size:12px; margin-left:6px; }
-  .meta { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-          gap:6px 18px; font-size:13.5px; }
-  .meta div b { color:var(--fg); font-weight:600; }
-  .meta div span { color:var(--muted); }
-  .none { color:var(--muted); }
-  a { color:var(--accent); }
-  .finding a, .notice a, .none a { text-decoration:underline; }
-  footer { margin-top:36px; color:var(--muted); font-size:13px; text-align:center; }
-  footer a { text-decoration:none; }
-  details { margin-top:14px; }
-  details > summary { cursor:pointer; color:var(--muted); font-size:13px; }
-  details > summary:focus-visible { outline:2px solid var(--focus); outline-offset:3px; }
-  details.raw pre { overflow:auto; background:var(--bg); border:1px solid var(--border);
-                    border-radius:6px; padding:10px; font-size:11.5px; color:var(--muted); }
-  details.env { margin-top:16px; border:1px solid var(--border); border-radius:8px;
-                padding:10px 12px; background:var(--panel); }
-  details.env .meta { margin-top:10px; }
-
-  /* 英文界面才需要全大写/字距；中文没有大小写，去掉免得字形发虚 */
-  html[lang="en"] .field-label,
-  html[lang="en"] .starthere .k,
-  html[lang="en"] .label { text-transform:uppercase; letter-spacing:.6px; }
-
-  @media (max-width: 520px) {
-    .wrap { padding: 20px 14px 48px; }
-    h1 { font-size: 21px; }
-    textarea { min-height: 160px; }
-    .row > button, .row > .linkbtn { flex:1 1 100%; }
-    .verdict h2 { font-size:17px; }
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    .drop { transition: border-color .15s, background-color .15s; }
-  }
-</style>
+<meta name="page-type" content="software">
+<meta name="site-kind" content="software">
+<meta name="theme-color" content="#1b1d21">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23212529'/><rect x='7' y='8' width='4' height='11' fill='%23f0b357'/><rect x='14' y='8' width='4' height='16' fill='%23e9eaec'/><rect x='21' y='8' width='4' height='7' fill='%23f0b357'/></svg>">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-sc@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-sc@5/500.css">
+<link rel="stylesheet" href="styles.css">
+<script>document.documentElement.classList.add("js");</script>
+<script src="app.js" defer></script>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="topbar">
-      <h1><span class="logo" aria-hidden="true">▣</span> mc-crash-doctor</h1>
-      <div class="lang" role="group" aria-label="界面语言 / Language">
-        <button type="button" id="lang-zh" data-lang="zh" aria-pressed="true">中文</button>
-        <button type="button" id="lang-en" data-lang="en" aria-pressed="false">EN</button>
+<a class="skip" href="#main" data-i18n="skip">跳到正文</a>
+
+<header class="nav">
+  <div class="container wrap nav__in">
+    <a class="brand" href="#top"><span class="brand__mark" aria-hidden="true"></span>mc-crash-doctor</a>
+    <nav class="nav__links" aria-label="页面章节" data-i18n-aria="nav.label">
+      <a href="#verdict" data-i18n="nav.verdict">结论</a>
+      <a href="#evidence" data-i18n="nav.evidence">证据</a>
+      <a href="#coverage" data-i18n="nav.coverage">覆盖</a>
+      <a href="#rules" data-i18n="nav.rules">规则</a>
+      <a href="#faq" data-i18n="nav.faq">常见问题</a>
+    </nav>
+    <div class="lang" role="group" aria-label="界面语言 / Language">
+      <button type="button" id="lang-zh" data-lang="zh" aria-pressed="true" lang="zh-CN">中文</button>
+      <button type="button" id="lang-en" data-lang="en" aria-pressed="false" lang="en">EN</button>
+    </div>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+  <section class="hero" id="top">
+    <div class="container wrap hero__in">
+      <div class="hero__head" data-enter>
+        <h1 data-i18n-html="hero.h1">服务器崩了。<br>找出那个模组。</h1>
+        <p class="lead" data-i18n="hero.lead">粘一份崩溃报告。规则引擎在浏览器里跑完，给出根因、可疑模组和证据强度。日志不出这台机器。</p>
+      </div>
+
+      <div class="instrument" data-enter="2">
+        <div class="instrument__grid">
+          <div class="instrument__main">
+
+            <div class="drop" id="drop">
+              <textarea id="log" spellcheck="false" aria-describedby="hint" autocomplete="off"
+                aria-label="崩溃报告或日志" data-i18n-aria="fieldLabel"
+                data-i18n-placeholder="placeholder"></textarea>
+            </div>
+            <div class="row">
+              <button id="go" data-i18n="diagnose">开始诊断</button>
+              <button id="sample" class="ghost" data-i18n="sample">用示例试试</button>
+              <button id="pick" class="ghost" data-i18n="pick">选择文件…</button>
+              <button id="clear" class="ghost" hidden data-i18n="clear">清空</button>
+              <input id="file" type="file" accept=".txt,.log,.log.gz,text/plain" hidden>
+            </div>
+
+            <!-- The first question a new player has is not "what does this mean"
+                 but "where is the file". Answered here, collapsed, before the
+                 status line so it does not push the result down. -->
+            <details class="where">
+              <summary data-i18n="where.summary">刚崩了，不知道文件在哪？</summary>
+              <p class="where__lead" data-i18n-html="where.lead">先找 <code>crash-reports</code> 里最新的 <code>.txt</code>；没有的话，<code>logs/latest.log</code> 也能诊断。</p>
+              <p class="where__row" data-i18n-html="where.vanilla">官方启动器：<code>%APPDATA%\.minecraft\crash-reports\</code></p>
+              <p class="where__row" data-i18n-html="where.vanillaAlt">macOS：<code>~/Library/Application Support/minecraft/crash-reports/</code>；Linux：<code>~/.minecraft/crash-reports/</code></p>
+              <p class="where__row" data-i18n-html="where.prism">Prism：右键实例 →「打开文件夹」→ <code>crash-reports\</code></p>
+              <p class="where__row" data-i18n-html="where.modrinth">Modrinth App：<code>%APPDATA%\ModrinthApp\profiles\&lt;实例&gt;\crash-reports\</code></p>
+              <p class="where__row" data-i18n-html="where.server">服务端：服务器目录下的 <code>crash-reports\</code>；没有就看 <code>logs\latest.log</code></p>
+            </details>
+
+            <p id="status" class="status" role="status" aria-live="polite"></p>
+            <div id="notice" class="notice" hidden></div>
+          </div>
+          <aside class="instrument__side">
+            <p class="hint" id="hint" data-i18n-html="hint"></p>
+            <div class="progress" id="progress" hidden aria-label="引擎加载进度">
+              <ol>
+                <li data-step="runtime" data-i18n="stepRuntime">Python 运行时</li>
+                <li data-step="engine" data-i18n="stepEngine">规则引擎</li>
+                <li data-step="ready" data-i18n="stepReady">就绪</li>
+              </ol>
+            </div>
+            <p class="privacy" id="privacy" data-i18n-html="privacy"></p>
+          </aside>
+        </div>
       </div>
     </div>
-    <p class="sub" data-i18n="sub">粘贴 Minecraft 崩溃报告或服务器日志 → 直接给出根因、修复步骤，以及该找哪个模组算账。</p>
-    <p class="privacy" id="privacy" data-i18n-html="privacy"
-       title="诊断在标签页内的 WebAssembly 里完成，不上传、无服务器、无统计。">🔒 <b>纯本地运行。</b> 日志不会离开你的浏览器。</p>
-  </header>
+  </section>
 
-  <main>
-    <label class="field-label" for="log" data-i18n="fieldLabel">崩溃报告或日志</label>
-    <div class="drop" id="drop">
-      <textarea id="log" spellcheck="false" aria-describedby="hint"
-        data-i18n-placeholder="placeholder"
-        placeholder="把 crash-report.txt / latest.log 粘到这里，或者把文件拖进这个框…"></textarea>
+  <figure class="band-photo band-photo--tall">
+    <img src="img/forest.jpg" width="2880" height="1230" fetchpriority="high" decoding="async"
+      data-i18n-alt="photo.forest.alt" alt="游戏截图：日出穿过云杉林海，雾气从山谷里升起来。">
+    <figcaption>
+      <div class="wrap">
+        <p class="statement" data-i18n-html="photo.bridge.line">每一份日志，<br>都来自一个这样消失的世界。</p>
+      </div>
+    </figcaption>
+  </figure>
+
+  <section id="verdict">
+    <div class="container">
+      <div class="sec__head">
+        <h2 data-i18n="verdict.h2">结论先给，证据在后。</h2>
+        <p class="lead" data-i18n="verdict.lead">这份输出来自仓库自带的真实报告：一台 266 模组的 Forge 1.20.1 服务器，一 tick 卡了 120 秒，被 watchdog 杀掉。</p>
+      </div>
+
+      <div class="out-empty" id="out-empty">
+        <p class="out-empty__t" data-i18n="out.empty.t">结论区是空的，因为这里只显示真的跑出来的结果。</p>
+        <p class="out-empty__b" data-i18n="out.empty.b">粘一份崩溃报告，或点「用示例试试」——示例会在 0.2 秒内给出真实报告在浏览器里跑出的结论，不用等引擎下载完。</p>
+      </div>
+      <div id="out" role="region" aria-label="诊断结果"></div>
     </div>
-    <p class="hint" id="hint" data-i18n-html="hint">贴完整报告效果最好——Mod List 和 System Details 能让定责准确很多。
-      也可以把 <code>.txt</code>/<code>.log</code> 文件拖进这个框，或点「选择文件…」。</p>
+  </section>
 
-    <div class="row">
-      <button id="go" data-i18n="diagnose" disabled>开始诊断</button>
-      <button class="ghost" id="sample" data-i18n="sample" disabled>用示例试试</button>
-      <button class="ghost" id="pick" data-i18n="pick">选择文件…</button>
-      <input type="file" id="file" accept=".txt,.log,.text,text/plain" hidden>
-      <button class="ghost" id="clear" data-i18n="clear" hidden>清空</button>
+  <section id="evidence" class="band">
+    <div class="container wrap split">
+      <div class="split__head">
+        <h2 data-i18n="ev.h2">崩在哪一行，就指向哪个模组。</h2>
+        <p class="lead" data-i18n="ev.lead">同一份报告把模组的出处写在三个地方。三处对上，才敢报 97%。</p>
+        <ol class="signals">
+          <li>
+            <span class="signals__n">01</span>
+            <div>
+              <b data-i18n="ev.s1.t">Mixin 归属</b>
+              <p data-i18n="ev.s1.b">一个 mixin 崩了，几乎总是它主人的锅。这是最硬的信号。</p>
+              <code>pl:mixin:APP:create.mixins.json:Class from mod (create)</code>
+            </div>
+          </li>
+          <li>
+            <span class="signals__n">02</span>
+            <div>
+              <b data-i18n="ev.s2.t">模组自己的堆栈帧</b>
+              <p data-i18n="ev.s2.b">根因调用栈里第一个非原版、非加载器的类，拿去报告自己的 Mod List 里对。</p>
+              <code>me.jellysquid.mods.lithium.common.reflection.ReflectionUtil</code>
+            </div>
+          </li>
+          <li>
+            <span class="signals__n">03</span>
+            <div>
+              <b data-i18n="ev.s3.t">jar 名</b>
+              <p data-i18n="ev.s3.b">帧尾的 jar 与版本直接给出构件，不用猜缩写。</p>
+              <code>~[some-mod-1.2.3.jar%2312!/:1.2.3]</code>
+            </div>
+          </li>
+        </ol>
+      </div>
+
+      <div class="split__body">
+        <div class="ledger">
+          <div class="ledger__head"><span data-i18n="ev.ledger">解析结果</span><span>sample</span></div>
+          <dl>
+            <div class="row-item"><dt data-i18n="env.loader">加载器</dt><dd>forge 47.4.16</dd></div>
+            <div class="row-item"><dt data-i18n="env.minecraft">游戏版本</dt><dd>1.20.1</dd></div>
+            <div class="row-item"><dt data-i18n="env.java">Java</dt><dd>21.0.12</dd></div>
+            <div class="row-item"><dt data-i18n="env.heap">堆内存</dt><dd>6965 / 8192 MiB, 85%</dd></div>
+            <div class="row-item"><dt data-i18n="env.mods">模组数</dt><dd>266</dd></div>
+            <div class="row-item"><dt data-i18n="ev.root">根因</dt><dd class="hot">ServerHangWatchdog, tick 120.00 s</dd></div>
+          </dl>
+        </div>
+      </div>
     </div>
+  </section>
 
-    <p id="status" role="status" aria-live="polite">正在加载 Python 引擎…（首次约 10 秒，之后走缓存）</p>
+  <section id="coverage">
+    <div class="container">
+      <div class="sec__head">
+        <h2 data-i18n="cov.h2">四类死法，正好是没人管的那些。</h2>
+        <p class="lead" data-i18n="cov.lead">它们不给你一条干净的异常，只留一份长得像正常关服的日志。</p>
+      </div>
+      <div class="panels">
+        <article>
+          <h3 data-i18n="cov.1.t">堆耗尽</h3>
+          <span class="rid">oom.heap</span>
+          <p data-i18n="cov.1.b">“平时好好的，一 stop 就崩”不是内存泄漏，是存档时把整片区域一次性编码进内存。</p>
+          <span class="reading">95% / <b>oom.save-time</b></span>
+        </article>
+        <article>
+          <h3 data-i18n="cov.2.t">tick 卡了 120 秒</h3>
+          <span class="rid">hang.watchdog</span>
+          <p data-i18n="cov.2.b">watchdog 杀掉 JVM，报告只留下它当时卡在哪，不告诉你谁把它卡住的。</p>
+          <span class="reading">120.00 s / <b>ServerHangWatchdog</b></span>
+        </article>
+        <article>
+          <h3 data-i18n="cov.3.t">mixin 没打上</h3>
+          <span class="rid">mixin.apply-failed</span>
+          <p data-i18n="cov.3.b">两个模组改同一个类，先崩的是后来的那个，但先崩不等于先错。</p>
+          <span class="reading">Mixin apply failed / <b>class owner</b></span>
+        </article>
+        <article>
+          <h3 data-i18n="cov.4.t">Metaspace 撑爆</h3>
+          <span class="rid">oom.metaspace</span>
+          <p data-i18n="cov.4.b">加 -Xmx 一点用都没有；撑爆的是类元数据，不是堆。</p>
+          <span class="reading"><b>Metaspace</b>, -Xmx 无效</span>
+        </article>
+      </div>
+    </div>
+  </section>
 
-    <ol class="progress" id="progress" aria-label="引擎加载进度">
-      <li data-step="runtime" data-i18n="stepRuntime" data-state="active">Python 运行时</li>
-      <li data-step="engine" data-i18n="stepEngine" data-state="pending">规则引擎</li>
-      <li data-step="ready" data-i18n="stepReady" data-state="pending">就绪</li>
-    </ol>
+  <section id="world">
+    <div class="wrap">
+      <div class="world__text">
+        <p class="statement" data-i18n-html="world.line">村子还在原地。</p>
+        <p class="world__note" data-i18n="world.note">崩掉的是进程，不是这个世界。存档还躺在硬盘里，日志只是它掉下来时留下的碎片。</p>
+      </div>
+      <div class="world__figs">
+        <figure>
+          <img src="img/village-a.jpg" width="1280" height="720" loading="lazy" decoding="async"
+            data-i18n-alt="photo.villageA.alt" alt="游戏截图：山坡上的村庄，晨雾漫过屋顶和麦田。">
+        </figure>
+        <figure>
+          <img src="img/village-b.jpg" width="1280" height="720" loading="lazy" decoding="async"
+            data-i18n-alt="photo.villageB.alt" alt="游戏截图：秋色村庄与城堡，红色树冠围着木屋。">
+        </figure>
+      </div>
+    </div>
+  </section>
 
-    <div id="notice" class="notice" role="alert" hidden></div>
-  </main>
+  <section id="rules" class="band">
+    <div class="container wrap split rules">
+      <div class="split__head">
+        <h2 data-i18n="rules.h2">规则是数据，不是黑盒。</h2>
+        <p class="lead" data-i18n="rules.lead">一条规则就是一段 YAML：什么时候触发、为什么、怎么修。加一条不用改 Python。</p>
+        <ul class="rules__facts">
+          <li><b data-i18n="rules.f1.t">优先级执行</b> <span data-i18n="rules.f1.s">数字小的先判</span></li>
+          <li><b data-i18n="rules.f2.t">证据权重写在规则里</b> <span data-i18n="rules.f2.s">不是运行时拍的</span></li>
+          <li><b data-i18n="rules.f3.t">加规则只要两样</b> <span data-i18n="rules.f3.s">一个 YAML 加一份真实报告</span></li>
+        </ul>
+        <a class="link" href="https://github.com/pop1022/mc-crash-doctor/blob/main/mcd/rules/builtin/memory-performance.yaml" target="_blank" rel="noopener" data-i18n="rules.link">看 memory-performance.yaml</a>
+      </div>
+      <div class="split__body">
+        <div class="codeblock">
+          <div class="codeblock__bar"><span>mcd/rules/builtin/memory-performance.yaml</span><span>16 rules</span></div>
+<pre><code>rules:
+- id: oom.save-time
+  title: Ran out of heap while saving the world
+  severity: fatal
+  priority: 5
+  confidence: 0.95
+  when:
+    exception:
+    - java\.lang\.OutOfMemoryError
+    exception_msg:
+    - Java heap space
+    frame:
+    - ChunkTaskPriorityQueueSorter|ChunkSerializer|NbtIo
+    text:
+    - Saving worlds|Saving chunks|stop\(\)
+  explanation: The server ran out of heap while
+    serialising chunks to disk.</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  <section id="out" aria-label="诊断结果"></section>
-  <span id="copystatus" class="sr-only" role="status" aria-live="polite"></span>
+  <section id="faq">
+    <div class="container wrap faq">
+      <h2 data-i18n="faq.h2">常见问题</h2>
+      <div class="faq__list">
+        <details open>
+          <summary data-i18n="faq.q1">日志会被上传吗？</summary>
+          <p data-i18n="faq.a1">不会。引擎是编译成 WebAssembly 的 CPython，规则在标签页内跑完：没有服务器，没有统计，也没有请求带着你的日志出去。</p>
+        </details>
+        <details>
+          <summary data-i18n="faq.q2">支持哪些加载器？</summary>
+          <p data-i18n="faq.a2">Forge、NeoForge、Fabric、Quilt。服务端和客户端的报告都能读，包括只写着“Ticking entity”的那种。</p>
+        </details>
+        <details>
+          <summary data-i18n="faq.q3">和 mclo.gs 有什么不同？</summary>
+          <p data-i18n="faq.a3">它擅长加载期的报错（缺依赖、模组重复、版本不对）。这里补的是内存与性能：堆 OOM、watchdog、mixin 冲突、Metaspace，并且按三处证据给模组打分。</p>
+        </details>
+        <details>
+          <summary data-i18n="faq.q4">能离线用吗？</summary>
+          <p data-i18n-html="faq.a4">页面首次要拉一次 Pyodide（约 10 MB），之后诊断不出网。完全离线就用 CLI：<code>pip install mc-crash-doctor</code>。</p>
+        </details>
+      </div>
+    </div>
+  </section>
+  <p id="copystatus" class="visually-hidden" aria-live="polite"></p>
+</main>
 
-  <footer>
-    <a href="https://github.com/pop1022/mc-crash-doctor">github.com/pop1022/mc-crash-doctor</a>
-    <span data-i18n="footerTail">· 与 CLI 同一套引擎 · 规则是 YAML，欢迎 PR</span>
-  </footer>
-</div>
+<aside class="closing-note">
+  <div class="wrap">
+    <p class="statement" data-i18n-html="close.line">世界还在跑。<br>日志只是它留在磁盘上的痕迹。</p>
+    <a class="close-action" href="#top" data-i18n="close.action">粘一份报告</a>
+  </div>
+</aside>
 
-<!-- Pyodide and sample.js are loaded by app.js, not here: the runtime has
-     fallback CDNs, and the 78 KB sample is fetched on first use. -->
-<noscript><p style="padding:1rem;border:1px solid #c33;border-radius:8px">
-本页需要 JavaScript 才能诊断。<br>This page needs JavaScript to diagnose a report.</p></noscript>
-<script src="app.js"></script>
+<footer class="foot closing">
+  <div class="container wrap foot__in">
+    <div class="foot__mast">
+      mc-crash-doctor
+      <p data-i18n="foot.tag">Minecraft 崩溃报告诊断：根因、嫌疑模组、修复步骤。MIT 许可。</p>
+    </div>
+    <div class="foot__cols">
+      <div>
+        <h3 class="footcol" data-i18n="foot.col1">项目</h3>
+        <a href="https://github.com/pop1022/mc-crash-doctor" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/pop1022/mc-crash-doctor/tree/main/mcd/rules/builtin" target="_blank" rel="noopener" data-i18n="foot.rules">规则目录</a>
+        <a href="https://github.com/pop1022/mc-crash-doctor/issues" target="_blank" rel="noopener" data-i18n="foot.issue">报告没覆盖的崩溃</a>
+      </div>
+      <div>
+        <h3 class="footcol" data-i18n="foot.col2">本地运行</h3>
+        <a href="https://github.com/pop1022/mc-crash-doctor#install" target="_blank" rel="noopener" data-i18n="foot.cli">CLI 安装</a>
+        <a href="https://github.com/pop1022/mc-crash-doctor/blob/main/README.zh-CN.md" target="_blank" rel="noopener" data-i18n="foot.docs">中文说明</a>
+      </div>
+    </div>
+    <p class="foot__legal">
+      <span data-i18n="foot.legal">开源许可，无服务器，与命令行同一套引擎</span>
+      <span>版本 0.1.0</span>
+      <span data-i18n-html="foot.credit">游戏截图：<a href="https://wallhaven.cc/w/qzjro7" target="_blank" rel="noopener">HeianDeSuipian</a>、<a href="https://wallhaven.cc/w/7pe3xy" target="_blank" rel="noopener">212112111zwl</a>，来自 Wallhaven</span>
+    </p>
+  </div>
+</footer>
 </body>
 </html>

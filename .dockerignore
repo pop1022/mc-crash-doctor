@@ -1,0 +1,16 @@
+.git
+.github
+.hallmark
+.taste-skill
+.pytest_cache
+.ruff_cache
+.workbuddy
+corpus
+docs
+tests
+tmp
+tools
+web
+*.md
+!README.md
+!LICENSE

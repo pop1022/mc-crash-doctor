@@ -7,8 +7,85 @@
 # real reports, not guessed.
 
 rules:
+  - id: mixin.config-broken
+    title: "Mixin config {{cap:text:1}} could not be created for {{cap:text:2}}"
+    title_zh: "无法为 {{cap:text:2}} 创建 mixin 配置 {{cap:text:1}}"
+    severity: fatal
+    priority: 8
+    confidence: 0.85
+    tags:
+    - mixin
+    - mod-loading
+    when:
+      text:
+      - Error creating Mixin config (\S+) for mod (\S+)
+    explanation: >-
+      The loader found the mod but could not create its mixin configuration, so
+      startup stopped before Minecraft loaded. Almost always the jar is
+      incomplete or built for another Minecraft version: the config file exists
+      in mixin metadata but the class or JSON it points at does not.
+    explanation_zh: >-
+      加载器找到了这个模组，却创建不了它的 mixin 配置，所以在 Minecraft 加载前就停了。
+      几乎总是 jar 不完整，或者这个构建是给别的 Minecraft 版本编的：元数据里登记了配置文件，
+      但里面指向的类或 JSON 不存在。
+    fixes:
+    - Re-download {{cap:text:2}} for exactly this Minecraft version; a partial download is the usual cause.
+    - If it is already the right build, open the jar and check that {{cap:text:1}} is inside it.
+    - Remove the mod if no build exists for this version -- the loader will not start with it installed.
+    fixes_zh:
+    - 按当前 Minecraft 版本重新下载 {{cap:text:2}}；下到一半是常见原因。
+    - 如果版本本来就是对的，打开 jar 确认 {{cap:text:1}} 在里面。
+    - 这个版本没有可用构建就删掉它，装着他加载器起不来。
+    provenance:
+      fixtures:
+      - fabric-loader/620
+    lifecycle_status: verified
+
+  - id: mixin.config-duplicate
+    title: "Two mods ship a mixin config with the same name ({{cap:text:1}})"
+    title_zh: "两个模组带了同名 mixin 配置（{{cap:text:1}}）"
+    severity: fatal
+    priority: 9
+    confidence: 0.9
+    tags:
+    - mixin
+    - mod-loading
+    when:
+      text:
+      - Non-unique Mixin config name (\S+) used by the mods ([^\n]+)
+    explanation: >-
+      Two mods declare a mixin config with the same file name, so the loader
+      refuses to pick one: {{cap:text:2}}. This is not a version problem -- both
+      jars have to be present for it to happen. Remove one, or update both to
+      builds that renamed the config.
+    explanation_zh: >-
+      两个模组声明了同名 mixin 配置，加载器不愿替你选，于是直接报错：{{cap:text:2}}。
+      这不是版本问题，只有两个 jar 同时在场才会触发。删掉其中一个，或者把两边都更新到改了
+      配置名的构建。
+    fixes:
+    - Remove one of the two mods named above and start again.
+    - "If you need both, update whichever is older: the rename is usually on the newer build."
+    - Check for a duplicate copy of the same mod first (an old jar left beside the new one ships the same config).
+    fixes_zh:
+    - 删掉上面点名的两个模组之一再启动。
+    - 两个都要用就更新较旧的那个，改名通常发生在新构建里。
+    - 先检查是不是同一个模组装了两份：旧 jar 留在新 jar 旁边，带的配置名完全一样。
+    provenance:
+      fixtures:
+      - fabric-loader/778
+    lifecycle_status: verified
+
   - id: mod.dep-missing.forge
     title: "Missing required mod: {{cap:text:1}}"
+    title_zh: "缺少必需的前置模组：{{cap:text:1}}"
+    explanation_zh: >-
+      Forge 拒绝启动，因为某个模组声明了强制依赖但没装。方括号里是 Forge 的版本区间语法：
+      redstoneflux@[2.1.0,2.2.0) 表示 redstoneflux 从 2.1.0
+      起、不含 2.2.0。
+    fixes_zh:
+    - "装上区间里点名的模组，版本落在该区间内。"
+    - "按 Minecraft {{mc_version}} 与加载器 {{loader}} 下载对应版本。"
+    - "如果你是故意删掉这个前置的，把依赖它的模组也一起删掉。"
     severity: fatal
     priority: 11
     confidence: 0.95
@@ -37,6 +114,12 @@ rules:
 
   - id: mod.dep-missing.forge-old
     title: "Missing required mod (Forge 1.12 and older)"
+    title_zh: "缺少必需的前置模组（Forge 1.12 及更早）"
+    explanation_zh: >-
+      诊断同上，只是老版本 Forge 不打印版本区间，只列模组 id。
+    fixes_zh:
+    - "把日志行里列出的每个模组 id 都装上。"
+    - "版本必须完全对上：1.12.2 的依赖满足不了 1.16.5。"
     severity: fatal
     priority: 11
     confidence: 0.9
@@ -60,6 +143,13 @@ rules:
 
   - id: mod.dep-missing.fabric
     title: "Missing required mod: {{cap:text:1}}"
+    title_zh: "缺少必需的前置模组：{{cap:text:1}}"
+    explanation_zh: >-
+      Fabric 的依赖解析器满足不了某个依赖。那一行同时点名了谁需要它、缺的是谁。
+    fixes_zh:
+    - "按日志点名，装上 {{mc_version}} 与 fabric 对应的缺失模组。"
+    - "如果要求了具体版本（version 0.4.6 or later），就装那个版本或更新。"
+    - "Fabric 要求依赖链上每一环都在：模组本体和它的库都要装。"
     severity: fatal
     priority: 11
     confidence: 0.95
@@ -87,6 +177,15 @@ rules:
 
   - id: mod.incompatible-set
     title: "Incompatible mod set: {{cap:text:1}}"
+    title_zh: "模组组合不兼容：{{cap:text:1}}"
+    explanation_zh: >-
+      两个模组没法一起跑：其中一个声明的版本区间被另一个违反，或者它们明确互斥。解析器那一行会写明是哪一对、
+      它要什么版本、你实际装了什么。
+    fixes_zh:
+    - "读解析器那一行：它说了谁需要哪个区间、你手上是什么。"
+    - "更新落后的那个，或者把两者钉到区间有交集的版本。"
+    - "如果冲突不可解（一个模组明确排斥另一个），删掉其中一个。"
+    - "常见原因：你更新了一边，另一边还钉在旧的 Sodium 或 Fabric-API 区间。"
     severity: fatal
     priority: 12
     confidence: 0.9
@@ -127,6 +226,14 @@ rules:
 
   - id: mod.wrong-mc-version
     title: "Mod {{cap:text:1}} does not support Minecraft {{mc_version}}"
+    title_zh: "模组 {{cap:text:1}} 不支持 Minecraft {{mc_version}}"
+    explanation_zh: >-
+      服务器是 {{mc_version}}，但这个模组是给别的版本编的。Forge 宁愿拒绝加载，
+      也不冒损坏存档的风险。
+    fixes_zh:
+    - "删掉点名的模组，或换成 {{mc_version}} 的构建。"
+    - "如果 {{mc_version}} 没有构建，找还在维护的分支。"
+    - "更新整合包之后要整套重下：只更新一部分，正是这个报错的来源。"
     severity: fatal
     priority: 14
     confidence: 0.92
@@ -152,6 +259,12 @@ rules:
 
   - id: mod.duplicate
     title: "Duplicate mod files installed"
+    title_zh: "装了重复的模组文件"
+    explanation_zh: >-
+      mods 目录里有两个文件提供同一个模组 id。几乎总是手动更新后留下的旧 jar。
+    fixes_zh:
+    - "在 mods 里按模组名搜，只留一个文件：{{mc_version}} 对应的最新版。"
+    - "按文件名排序，foo-1.0.jar 和 foo-1.1.jar 挨着的时候最容易看出来。"
     severity: fatal
     priority: 13
     confidence: 0.9
@@ -173,6 +286,14 @@ rules:
 
   - id: mod.load-fatal
     title: "A mod failed fatally during {{cap:text:1}}"
+    title_zh: "某个模组在 {{cap:text:1}} 阶段致命失败"
+    explanation_zh: >-
+      加载器走过启动各阶段时，有个模组抛了异常。日志里紧挨着的 States 表会写明哪些模组走到了哪一步，
+      第一个标 E（Errored）的就是元凶。
+    fixes_zh:
+    - "在日志的 States 表里找标 E 而不是 A 的模组。"
+    - "更新它；如果它在 {{mc_version}} 上已无人维护，删掉。"
+    - "Fabric 与 Quilt 上对应的一行会直接点名失败的 entrypoint。"
     severity: fatal
     priority: 18
     confidence: 0.8
@@ -198,6 +319,13 @@ rules:
 
   - id: mod.config-invalid
     title: "A config file failed to parse"
+    title_zh: "某个配置文件解析失败"
+    explanation_zh: >-
+      配置文件格式坏了，通常是手改改坏的：尾逗号、键没加引号、括号不配对、YAML 里混进 tab。
+    fixes_zh:
+    - "日志会点名文件。校验它：JSON 最常见的错是尾逗号。"
+    - "删掉该文件会让模组重新生成默认配置：服务器能起来，你的修改没了。"
+    - "拿一份全新实例里的同名文件做 diff，定位坏在哪一行。"
     severity: error
     priority: 30
     confidence: 0.85
@@ -226,6 +354,13 @@ rules:
 
   - id: mod.coremod-missing
     title: "A coremod / library jar is missing from the classpath"
+    title_zh: 缺少 coremod 或前置库 jar
+    explanation_zh: >-
+      加载器需要的类不在 classpath 上。模组服上通常意味着少装了一个前置库模组，或者删了某个 jar 而依赖它的模组还在。
+    fixes_zh:
+    - 看证据行里缺失类的包前缀，那通常就是前置库。
+    - 装上对应 {{mc_version}} 的前置模组。
+    - 如果这个类是 net/minecraft/client/... 却出现在服务端，说明装了仅客户端的模组，删掉它。
     severity: fatal
     priority: 19
     confidence: 0.75
@@ -253,6 +388,15 @@ rules:
 
   - id: mod.corrupt-jar
     title: "A mod jar is corrupt or empty: {{cap:text:1}}"
+    title_zh: "模组 jar 损坏或为空：{{cap:text:1}}"
+    explanation_zh: >-
+      mods 目录里的某个 jar（或 classpath 上的库）不是有效的 zip：下载被截断、
+      中断，或者文件被写成全零。点名的文件根本读不出来，所以加载器在游戏启动前就中止了。这从来不是配置或兼容性问题。
+    fixes_zh:
+    - "删掉点名的 jar 重新下载（文件已损坏，不是版本旧）。"
+    - "从官方来源（Modrinth 或 CurseForge）重下；下到一半是常见原因。"
+    - "如果是 libraries/ 下的库（例如 icu4j），也删掉，启动器会重新拉。"
+    - "如果同时有好几个 jar 都坏了，检查磁盘健康。"
     severity: fatal
     priority: 18
     confidence: 0.95
@@ -288,6 +432,14 @@ rules:
 
   - id: mod.binary-incompat
     title: "Binary incompatibility: a mod calls a field/method that no longer exists"
+    title_zh: "二进制不兼容：模组调用的字段或方法已不存在"
+    explanation_zh: >-
+      模组是针对另一个版本的 Minecraft 或库（Fabric API、Forge、别的模组
+      API）编译的，它调用的字段或方法在当前版本里没了。一对模组只更新了一边，就是这个症状。
+    fixes_zh:
+    - "报错里点名的类属于它编译时依赖的那套 API。"
+    - "两边一起更新：模组本体和它需要的库或 API，都换成为 {{mc_version}} 发布的版本。"
+    - "如果你刚更新了 Fabric API 或 Forge，那这个模组现在太旧了：更新它或删掉。"
     severity: fatal
     priority: 17
     confidence: 0.85
@@ -321,6 +473,14 @@ rules:
 
   - id: mod.linkage-duplicate
     title: "Class linkage conflict: two mods ship the same class"
+    title_zh: "类链接冲突：两个模组带了同一个类"
+    explanation_zh: >-
+      classpath 上两个 jar 定义了同一个类（一个模组打包了另一个模组也带的库，或者残留了一份旧副本）
+      。类加载器不愿替你选，直接中止。
+    fixes_zh:
+    - "loader constraint violation 那一行会点名重复的类和两个类加载器；按包名在 mods 里找含该包的 jar。"
+    - "删掉同一模组的重复副本（旧版本和新版本并排是最常见的原因）。"
+    - "如果是两个不同模组各自打包了同一个库，两边都更新，新版本会 shade 或去掉重复。"
     severity: fatal
     priority: 17
     confidence: 0.85
@@ -351,6 +511,14 @@ rules:
 
   - id: quilt.config-broken
     title: "Quilt config/JSON5 file is malformed"
+    title_zh: "Quilt 的配置或 JSON5 文件格式错误"
+    explanation_zh: >-
+      某个 quilt.mod.json 或配置文件不是合法的 JSON5，报错会点名字段路径（例如
+      $.version）。通常是手改或写到一半。
+    fixes_zh:
+    - "报错点名了文件和 JSON 路径：打开它，改那个字段的语法。"
+    - "JSON5 允许注释和尾逗号，严格模式的解析器不允许，先确认加载器要的是哪种。"
+    - "删掉该文件通常会在下次启动时重新生成默认值。"
     severity: fatal
     priority: 19
     confidence: 0.8
@@ -382,6 +550,13 @@ rules:
 
   - id: loader.namespace-missing
     title: "Requested mapping namespace is not loaded"
+    title_zh: "请求的映射命名空间没有加载"
+    explanation_zh: >-
+      加载器加载不了某个模组要求的映射命名空间：实例里的映射 jar 缺失或损坏，或者启动器没下下来。
+    fixes_zh:
+    - "在启动器里重装或修复该实例，这会重新下载映射（intermediary、yarn）jar。"
+    - "如果用了离线模式或第三方启动器，确认它能连上映射下载服务器。"
+    - "用同版本的全新实例做对照，能区分是实例坏了还是某个模组坏了。"
     severity: fatal
     priority: 18
     confidence: 0.8
@@ -416,6 +591,14 @@ rules:
 
   - id: loader.game-provider-missing
     title: "The loader could not find the game itself"
+    title_zh: "加载器找不到游戏本体"
+    explanation_zh: >-
+      启动器把模组加载器拉起来了，但加载器后面没有 Minecraft：工作目录指向一个空实例或装了一半的实例。
+      这是启动器或实例的问题，不是模组问题，换哪个模组版本都没用，上面那段堆栈只是加载器发现了这件事。
+    fixes_zh:
+    - "让启动器指向一个含 versions/<mc-version>/ 且带原版 jar 的实例，或者重装该实例。"
+    - "如果是手动启动的，要在实例目录（含 mods/ 的那层）里跑，不要在启动器根目录。"
+    - "Prism 或 MultiMC：Edit Instance 然后是 Version，重新下载游戏文件。"
     severity: fatal
     priority: 9
     confidence: 0.9
@@ -441,6 +624,15 @@ rules:
 
   - id: mixin.class-already-loaded
     title: "A class was already loaded when mixin tried to patch it"
+    title_zh: "mixin 要改的类已经被加载了"
+    explanation_zh: >-
+      mixin 应用补丁时发现目标类已经加载，于是放弃。实际意味着这次启动里有两样东西想改同一个类：
+      通常是同一个模组装了两遍（正常 jar 旁边还有 dev、api、universal 副本，
+      或者两个版本），也可能是某个模组把一个改过的 Minecraft 类和真正的那个放在一起。
+    fixes_zh:
+    - "mods 里每个模组只留一个 jar：找后缀或版本不同的第二份。"
+    - "如果冒号后面点名的是 Minecraft 类，找找游戏文件旁边有没有 minecraft-client-patched-*.jar 这类补丁 jar。"
+    - "别指望日志会变：mixin 状态是每次启动独立的，删掉重复文件重启，而不是重读这份崩溃。"
     severity: error
     priority: 12
     confidence: 0.85
@@ -466,6 +658,14 @@ rules:
 
   - id: quilt.version-constraint-unreadable
     title: "Quilt could not read a mod's loader version constraint"
+    title_zh: "Quilt 读不懂某个模组的加载器版本约束"
+    explanation_zh: >-
+      某个模组声明加载器依赖时用了 Quilt 元数据读取器不接受的值类型（模式要字符串，它给了对象）
+      。Quilt 不愿猜你的意思，直接停住，所以什么都没加载，尽管这个模组在别的加载器上可能是好的。
+    fixes_zh:
+    - "更新那个模组：修法几乎总是更新的元数据（作者要输出纯字符串）。"
+    - "如果它在 Fabric 上能用，就把整合包跑在 Fabric 上，这种元数据结构是冲着 Fabric 模式去的。"
+    - "把日志里的模组 id 报给作者，他们那边改一行就行。"
     severity: error
     priority: 12
     confidence: 0.85

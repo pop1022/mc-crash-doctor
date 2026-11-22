@@ -147,8 +147,11 @@ _REDACTORS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"/(?:home|Users)/[^\s/]+"), "<HOME>"),
     # Player line: "Player: Steve (uuid)"
     (re.compile(r"(Player:\s*)\S+(.*?)(\s*\(\s*[0-9a-fA-F\-]{8,})"), r"\1<PLAYER>\2\3"),
-    # bare usernames in typical launcher paths
-    (re.compile(r"(\.minecraft[\\/])([^\\/]+)"), r"\1<INSTANCE>"),
+    # bare usernames in typical launcher paths. The segment must stop at a
+    # newline as well as at a separator: [^\\/]+ used to run past the end of
+    # the line and swallow whatever followed a trailing ".minecraft\\mods"
+    # (measured on the corpus exporter: the last line of the report vanished).
+    (re.compile(r"(\.minecraft[\\/])([^\r\n\\/]+)"), r"\1<INSTANCE>"),
     # UUIDs
     (re.compile(r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
                 r"[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b"), "<UUID>"),

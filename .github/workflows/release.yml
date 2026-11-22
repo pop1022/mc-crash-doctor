@@ -1,0 +1,88 @@
+name: release
+
+# Tag-driven release: gates -> build once -> verify the artifacts -> attach them
+# to the GitHub Release -> publish that exact upload to PyPI.
+#
+# Two things this file deliberately does differently from its first version:
+#   * the venv check installs with dependencies. The old one used --no-deps and
+#     could never import mcd (PyYAML is a hard dependency), so it "passed" on a
+#     broken install. tools/verify_release.py now does the real check.
+#   * Release assets and PyPI come from ONE build. Rebuilding in a second job
+#     gives two artifacts with the same name and different bytes; publishing
+#     downloads the artifact this run produced and checks SHA256SUMS first.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[pretty,test]" build ruff
+
+      # A green branch push is not evidence that the tag is green.
+      - name: Gates
+        run: |
+          python tests/test_redaction.py
+          python tests/eval_parser.py --strict
+          python tests/test_e2e.py
+          python -m pytest tests/ -q
+          python -m ruff check mcd/ tools/ tests/
+
+      - name: Build
+        run: python -m build
+
+      # Installs the wheel into a throwaway venv with its dependencies, then
+      # checks import location, version, tag, rule ids (vs
+      # corpus/rule-lifecycle.json), a diagnosis, the timeline and pack entry
+      # points, and writes SHA256SUMS.
+      - name: Verify the artifacts
+        run: python tools/verify_release.py dist --sums --tag "$GITHUB_REF_NAME"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+      - name: Attach to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+
+  publish:
+    needs: release
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/mc-crash-doctor
+    permissions:
+      id-token: write          # the OIDC token PyPI exchanges for an API call
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: The upload is the artifact that was tested
+        working-directory: dist
+        run: sha256sum -c SHA256SUMS
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/

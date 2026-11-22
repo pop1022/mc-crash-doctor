@@ -180,6 +180,8 @@ def test_when_keys_matches_what_evaluate_rule_reads():
 
     import mcd.rules.engine as eng
 
-    src = inspect.getsource(eng.evaluate_rule)
+    # The AND half moved into _evaluate_all when when_any was added, so the
+    # guard has to read both bodies: a key is "read" if either function names it.
+    src = inspect.getsource(eng.evaluate_rule) + inspect.getsource(eng._evaluate_all)
     for key in sorted(WHEN_KEYS):
         assert f'"{key}"' in src, f"WHEN_KEYS lists {key!r} but nothing reads it"

@@ -27,7 +27,7 @@
 |---|---|
 | wheel 能构建，且**内含 3 份规则 YAML** | `python -m build --wheel`；`zipfile -l` 数出 3 个 `.yaml` |
 | 干净 venv 安装可用 | 新建 `tmp/venv` → `pip install` wheel → 从**中性目录**确认 `mcd.__file__` 指向 site-packages；`--version` / `--rules`（44 条）/ 诊断 / `--pack` / `--explain` 全部跑通 |
-| 七道门禁 | `bash run_tests.sh` → ALL GATES PASSED |
+| 八道门禁 | `bash run_tests.sh` → ALL GATES PASSED |
 | 指标与文档一致 | `tests/test_doc_numbers.py`（门禁 [7]）按 JSON 反查文档数字 |
 | 网页版真实浏览器验证 | `tools/verify_web_e2e.py` → **34/34 PASS / RESULT: VERIFIED**（本地与公网 Pages 各一次） |
 | 网页抗 CDN 屏蔽 | 屏蔽 jsDelivr 主域名后走 fastly 镜像仍能"引擎就绪"；全屏蔽时列出三个 URL 供定位 |
@@ -41,9 +41,9 @@
 
 **可以对外引用**（n ≥ 30，机器已算 Wilson 区间）：
 
-- 盲测诊断率 **156/216 = 72.2% [66%, 78%]**
-- 语料诊断率 **344/454 = 75.8%**（全语料，不是盲测）
-- 根因抽取 215/216 [97%, 100%]；mod 仓 top-1 112/143 [71%, 84%]
+- 盲测诊断率 **157/214 = 73.4% [67%, 79%]**
+- 语料诊断率 **348/454 = 76.6%**（全语料，不是盲测）
+- 根因抽取 213/214 = 99.5% [97%, 100%]；模组仓诊断率 112/143 [71%, 84%]（不是归因率）
 
 **不可以引用**：甩锅率 1/7 = 14%。样本 n=7，Wilson 区间 [3%, 51%]，
 宽到没有信息量；`quotable_as_rate.blame_error=false` 会在脚本里挡住它。

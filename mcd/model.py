@@ -82,6 +82,21 @@ class ExceptionBlock:
         msg = (self.message or "").split("\n", 1)[0].strip()
         return f"{self.kind}: {msg[:80]}".strip(": ")
 
+    @property
+    def headline(self) -> str:
+        """Human-readable first line: no mid-word cut, capped at a word edge.
+
+        `signature` is a grouping key and must stay short and stable. It was
+        also being printed as the terminal's "root" line, where an 80-character
+        hard cut produced "seconds (shoul" -- a typo that was not in the log.
+        Use this for display; keep signature for grouping.
+        """
+        msg = (self.message or "").split("\n", 1)[0].strip()
+        if len(msg) > 160:
+            cut = msg[:160].rsplit(" ", 1)[0]
+            msg = (cut or msg[:160]) + "…"
+        return f"{self.kind}: {msg}".strip(": ")
+
     def to_dict(self) -> dict:
         d = asdict(self)
         d["signature"] = self.signature

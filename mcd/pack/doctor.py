@@ -28,11 +28,18 @@ THE RULE THIS FILE IS BUILT AROUND
   that answers "ok" for a range it did not understand is the failure mode this
   project keeps finding.
 
+TWO KINDS OF ANSWER, KEPT APART
+  findings are contradictions between declarations. overlaps are two jars
+  touching the same mixin target -- read from refmaps, printed with the coverage
+  that produced them, and never counted as a problem. Mixin overlap is normal;
+  it becomes evidence only when a crash names one of those mixins.
+
 WHAT IS NOT CHECKED (deliberate, listed so callers do not over-trust)
-  * client-only mod on a server -- the manifest reader does not capture Fabric's
-    `environment` field yet, so the tool cannot see it. ROADMAP 2.2 lists it as
-    a required finding; it is reported as NOT CHECKED rather than guessed.
-  * nested jars (`META-INF/jars/*.jar`, Fabric's bundled libraries).
+  * nested jars (`META-INF/jars/*.jar`, Fabric's bundled libraries) -- their ids
+    are read so they can satisfy a dependency, their own dependencies are not.
+  * a jar that ships no refmap contributes no mixin targets; the coverage line
+    says how many jars were actually read, so "no overlaps" cannot be mistaken
+    for "no mixins".
   * whether a version actually exists / is the latest -- that needs 2.1.
   * load order (`ordering: BEFORE/AFTER`) -- conflicts are not decided by it.
 
@@ -47,6 +54,8 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .mixins import mixin_references
+from ..metadata.jars import mixin_config_names
 from ..metadata.manifest import (ManifestError, ModManifest, nested_modids,
                                 parse_jar)
 from ..model import Severity
@@ -117,6 +126,14 @@ class PackReport:
     findings: list[PackFinding] = field(default_factory=list)
     undecided: list[dict] = field(default_factory=list)
     unreadable: list[dict] = field(default_factory=list)
+    #: Two jars touch the same target class or the same member. Informational,
+    #: not a finding: overlapping is normal and usually harmless, and calling it
+    #: a problem would be the false-positive failure mode this project keeps
+    #: finding. It becomes useful exactly when a crash names one of the mixins.
+    overlaps: list[dict] = field(default_factory=list)
+    #: How much of the pack the overlap check actually saw. Printed because
+    #: "no overlaps" and "no jar shipped a refmap" must not look the same.
+    mixin_coverage: dict = field(default_factory=dict)
     context: dict = field(default_factory=dict)
     loaders: dict = field(default_factory=dict)
     side: str | None = None         # client|server when the caller said so
@@ -146,6 +163,7 @@ class PackReport:
             "side": self.side,
             "findings": [f.to_dict() for f in self.findings],
             "undecided": self.undecided, "unreadable": self.unreadable,
+            "overlaps": self.overlaps, "mixin_coverage": self.mixin_coverage,
             "not_checked": list(self.not_checked()),
         }
 
@@ -197,6 +215,33 @@ def _pack_context(root: Path) -> dict:
     return out
 
 
+def _requirement_chain(by_id: dict[str, list[tuple[Path, ModManifest]]],
+                       missing: str, *, depth: int = 3) -> list[str]:
+    """Who pulls *missing* in, nearest first: ['create', 'immersive_aircraft'].
+
+    Only useful for a dependency that is absent: the direct requirer is already
+    named in the finding, and the second hop is what turns "install flywheel"
+    into "install flywheel, because create needs it and immersive_aircraft needs
+    create". Depth is capped so a pack with a deep chain prints a line, not a
+    family tree, and a cycle cannot loop: every id enters the chain once.
+    """
+    chain: list[str] = []
+    frontier = {missing}
+    seen = {missing}
+    for _ in range(depth):
+        layer = sorted(
+            modid for modid, entries in by_id.items()
+            if modid not in seen
+            and any(d.modid in frontier for _jar, man in entries
+                    for d in man.hard_requirements))
+        if not layer:
+            break
+        chain.extend(layer)
+        seen.update(layer)
+        frontier = set(layer)
+    return chain
+
+
 def analyse(root: str | Path, *, side: str | None = None) -> PackReport:
     """Check a `mods/` directory.
 
@@ -210,13 +255,31 @@ def analyse(root: str | Path, *, side: str | None = None) -> PackReport:
     base = Path(root)
     mods = _mods_dir(base)
     if mods is None:
+        # The old message named the same condition for three different
+        # situations: a path that does not exist, a mods/ folder with no jars,
+        # and a folder of unrelated files. The suffix says which one it is.
+        if not base.is_dir():
+            detail = (f"({base} is a file, not a directory)" if base.is_file()
+                      else f"({base} does not exist)")
+        elif (base / "mods").is_dir():
+            detail = f"({base / 'mods'} holds no .jar files)"
+        else:
+            detail = f"(no {base / 'mods'}, and no .jar files in {base})"
         raise FileNotFoundError(
-            f"no `mods/` directory with .jar files under {base}")
+            f"no `mods/` directory with .jar files under {base} {detail}")
 
     rep = PackReport(root=str(base), mods_dir=str(mods),
                      context=_pack_context(base), side=side)
 
     by_id: dict[str, list[tuple[Path, ModManifest]]] = defaultdict(list)
+    mixin_owner: dict[str, list[str]] = {}   # config name -> jars shipping it
+    # target class -> jar -> mixin classes; and (target, member) -> jar -> the
+    # same. Two levels because a shared class is ordinary (every performance mod
+    # mixes into the client class) while a shared member is a real collision
+    # candidate -- and even that is informational, not a finding.
+    target_owner: dict[str, dict[str, set[str]]] = {}
+    member_owner: dict[tuple[str, str], dict[str, set[str]]] = {}
+    refmap_jars = 0
     provided: dict[str, str] = {}          # provided id -> who provides it
     loaders: dict[str, int] = defaultdict(int)
     jars = sorted(mods.glob("*.jar"))
@@ -226,13 +289,28 @@ def analyse(root: str | Path, *, side: str | None = None) -> PackReport:
         try:
             manifests = parse_jar(jar)
         except ManifestError as exc:
-            rep.unreadable.append({"jar": jar.name, "reason": str(exc)})
+            reason = str(exc)
+            # ManifestError already names the file; printing "broken.jar:
+            # broken.jar: not a readable jar" reads like two problems.
+            prefix = f"{jar.name}: "
+            if reason.startswith(prefix):
+                reason = reason[len(prefix):]
+            rep.unreadable.append({"jar": jar.name, "reason": reason})
             continue
         # A jar can declare nothing at the top level and still provide mods:
         # JarJar/Fabric bundle them under META-INF/jarjar|jars. Reading only the
         # ids is enough to stop claiming a dependency is missing when it is
         # sitting inside another mod's jar (measured: 4 findings on a pack that
         # boots). The bundle's own dependencies are still not checked.
+        for cfg in mixin_config_names(jar):
+            mixin_owner.setdefault(cfg, []).append(jar.name)
+        refs = mixin_references(jar)
+        if not refs.empty:
+            refmap_jars += 1
+        for target, classes in refs.targets.items():
+            target_owner.setdefault(target, {}).setdefault(jar.name, set()).update(classes)
+        for key, classes in refs.methods.items():
+            member_owner.setdefault(key, {}).setdefault(jar.name, set()).update(classes)
         bundled = nested_modids(jar)
         if not manifests and not bundled:
             rep.unreadable.append({
@@ -266,6 +344,54 @@ def analyse(root: str | Path, *, side: str | None = None) -> PackReport:
         for bid in bundled:
             provided.setdefault(bid, jar.name)
 
+    # --- mixin config collisions -------------------------------------------
+    # Two jars declaring the same <name>.mixins.json: the mixin service keeps
+    # one and silently drops the other, or fails with mixin.apply-failed. It is
+    # a declaration-level fact, so it is checkable without running the game.
+    for cfg, owners in sorted(mixin_owner.items()):
+        jars_for_cfg = sorted(set(owners))
+        if len(jars_for_cfg) > 1:
+            rep.findings.append(PackFinding(
+                kind="pack.mixin-config-collision",
+                severity=Severity.WARNING,
+                subject=cfg,
+                detail=(f"{len(jars_for_cfg)} jars ship a mixin config with the "
+                        f"same name ({cfg}): " + ", ".join(jars_for_cfg)
+                        + ". The mixin service applies one and drops or fails "
+                          "the other; keep one jar per config."),
+                evidence=jars_for_cfg))
+
+    # --- mixin target overlaps (informational) -----------------------------
+    # Deeper than a config-name collision: two jars injecting into the same
+    # target member is what mixin.apply-failed / InvalidInjectionException look
+    # like once the game runs. It is NOT a finding -- overlapping is how the
+    # ecosystem works, and a pack with 300 mods overlaps thousands of times.
+    # So it goes in its own bucket with the coverage that produced it, and the
+    # renderer labels it as a lead to check when a crash names a mixin.
+    OVERLAP_CAP = 20
+    rows: list[dict] = []
+    for (target, member), owners in member_owner.items():
+        if len(owners) > 1:
+            rows.append({"scope": "member", "target": target, "member": member,
+                         "jars": sorted(owners)})
+    overlapping_targets = {t for t, owners in target_owner.items() if len(owners) > 1}
+    members_by_target = {(r["target"], r["member"]) for r in rows}
+    for target in sorted(overlapping_targets):
+        owners = target_owner[target]
+        if any(t == target for t, _ in members_by_target):
+            continue            # already listed at the finer granularity
+        rows.append({"scope": "class", "target": target, "member": "",
+                     "jars": sorted(owners)})
+    rows.sort(key=lambda r: (r["scope"] != "member", -len(r["jars"]), r["target"]))
+    rep.overlaps = rows[:OVERLAP_CAP]
+    rep.mixin_coverage = {
+        "jars_with_refmap": refmap_jars,
+        "targets": len(target_owner),
+        "members": len(member_owner),
+        "overlapping_targets": len(overlapping_targets),
+        "overlapping_members": sum(1 for o in member_owner.values() if len(o) > 1),
+        "listed": len(rep.overlaps),
+    }
     rep.loaders = dict(sorted(loaders.items(), key=lambda kv: -kv[1]))
 
     # --- duplicate mods: the same id declared by two different jars ---------
@@ -312,6 +438,11 @@ def analyse(root: str | Path, *, side: str | None = None) -> PackReport:
                 if target is None and dep.modid in provided:
                     continue
                 if target is None:
+                    chain = _requirement_chain(by_id, dep.modid)
+                    # Only printed when there is a second hop; a one-link chain
+                    # would repeat the "required by" clause above.
+                    via = ("; chain: " + " <- ".join([dep.modid] + chain)
+                           if len(chain) > 1 else "")
                     rep.findings.append(PackFinding(
                         kind="pack.missing-dependency",
                         severity=Severity.ERROR,
@@ -320,7 +451,8 @@ def analyse(root: str | Path, *, side: str | None = None) -> PackReport:
                                f"({m.version or 'no version'}) but no jar in "
                                f"mods/ declares it"
                                + (f"; range {dep.version_range}"
-                                  if dep.version_range else ""),
+                                  if dep.version_range else "")
+                               + via,
                         evidence=[jar.name]))
                     continue
                 if not dep.version_range or len({j.name for j, _ in target}) > 1:

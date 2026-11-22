@@ -154,3 +154,28 @@ def test_json_findings_carry_commands(capsys):
     doc = json.loads(capsys.readouterr().out)
     with_cmds = [f for f in doc["findings"] if f.get("commands")]
     assert with_cmds and with_cmds[0]["commands"] == ["nvidia-smi"]
+
+
+# --- the rich path (optional dependency) ------------------------------------
+# CI installs .[pretty,test], so this path is the one users with `rich` get.
+# Without these two tests a change to render_terminal could break it silently:
+# every other test passes color=False and lands in the plain fallback.
+def test_terminal_output_with_rich_prints_the_panel_and_the_findings() -> None:
+    pytest.importorskip("rich")
+    rep = parse_file(NATIVE)
+    findings = run_rules(rep, RuleSet.load())
+    buf = io.StringIO()
+    render_terminal(rep, findings, triage(rep), buf, color=True)
+    text = buf.getvalue()
+    assert "Minecraft crash diagnosis" in text          # the panel title
+    assert "Suspect mods" in text or "Findings" in text
+    assert "nvidia-smi" in text
+    assert "\x1b[" not in text                          # a pipe is not a tty
+
+
+def test_terminal_output_with_rich_says_so_when_nothing_matched() -> None:
+    pytest.importorskip("rich")
+    rep = parse_file(NATIVE)
+    buf = io.StringIO()
+    render_terminal(rep, [], triage(rep), buf, color=True)
+    assert "No rule matched" in buf.getvalue()

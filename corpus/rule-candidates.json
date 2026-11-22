@@ -1,20 +1,20 @@
 {
   "summary": {
     "total_reports": 454,
-    "uncovered": 110,
-    "clusters": 103,
-    "singletons": 99,
-    "singleton_reports": 99,
+    "uncovered": 106,
+    "clusters": 99,
+    "singletons": 95,
+    "singleton_reports": 95,
     "reports_per_rule": 1.07,
     "top_n": 10,
     "top_n_reports": 17,
-    "top_n_share": 0.1545,
+    "top_n_share": 0.1604,
     "r4_threshold": 0.3,
     "r4_fires": true,
     "verdicts": {
       "reusable": 3,
       "needs_generalisation": 1,
-      "singleton": 86,
+      "singleton": 82,
       "singleton+overfit": 13
     }
   },
@@ -1336,50 +1336,6 @@
       ]
     },
     {
-      "signature": "java.lang.RuntimeException: Error creating Mixin config fabric-crash-report-info-v1.mixins.json for mod fabr",
-      "size": 1,
-      "bucket": "mixin",
-      "kinds": [
-        "java.lang.IllegalArgumentException"
-      ],
-      "description": [],
-      "overfit": [],
-      "verdict": "singleton",
-      "when": {
-        "exception": [
-          "^java\\.lang\\.IllegalArgumentException$"
-        ],
-        "exception_msg": [
-          "Error\\ creating\\ Mixin\\ config\\ fabric\\-crash\\-report\\-info\\-v1\\.mixins\\.json\\ for\\ mod\\ fabr"
-        ]
-      },
-      "reports": [
-        "FabricMC__fabric-loader/750"
-      ]
-    },
-    {
-      "signature": "java.lang.RuntimeException: Error creating Mixin config omega-config.mixins.json for mod omega-config",
-      "size": 1,
-      "bucket": "mixin",
-      "kinds": [
-        "java.lang.IllegalArgumentException"
-      ],
-      "description": [],
-      "overfit": [],
-      "verdict": "singleton",
-      "when": {
-        "exception": [
-          "^java\\.lang\\.IllegalArgumentException$"
-        ],
-        "exception_msg": [
-          "Error\\ creating\\ Mixin\\ config\\ omega\\-config\\.mixins\\.json\\ for\\ mod\\ omega\\-config"
-        ]
-      },
-      "reports": [
-        "FabricMC__fabric-loader/620"
-      ]
-    },
-    {
       "signature": "java.lang.RuntimeException: Exception thrown while executing job",
       "size": 1,
       "bucket": "other",
@@ -1487,50 +1443,6 @@
       },
       "reports": [
         "FabricMC__fabric-api/5046"
-      ]
-    },
-    {
-      "signature": "java.lang.RuntimeException: Non-unique Mixin config name mixins.reach-entity-attributes.json used by the mod",
-      "size": 1,
-      "bucket": "other",
-      "kinds": [
-        "java.lang.RuntimeException"
-      ],
-      "description": [],
-      "overfit": [],
-      "verdict": "singleton",
-      "when": {
-        "exception": [
-          "^java\\.lang\\.RuntimeException$"
-        ],
-        "exception_msg": [
-          "Non\\-unique\\ Mixin\\ config\\ name\\ mixins\\.reach\\-entity\\-attributes\\.json\\ used\\ by\\ the\\ mod"
-        ]
-      },
-      "reports": [
-        "FabricMC__fabric-loader/778"
-      ]
-    },
-    {
-      "signature": "java.lang.RuntimeException: Non-unique Mixin config name xlpackets.mixins.json used by the mods thiccpackets",
-      "size": 1,
-      "bucket": "other",
-      "kinds": [
-        "java.lang.RuntimeException"
-      ],
-      "description": [],
-      "overfit": [],
-      "verdict": "singleton",
-      "when": {
-        "exception": [
-          "^java\\.lang\\.RuntimeException$"
-        ],
-        "exception_msg": [
-          "Non\\-unique\\ Mixin\\ config\\ name\\ xlpackets\\.mixins\\.json\\ used\\ by\\ the\\ mods\\ thiccpackets"
-        ]
-      },
-      "reports": [
-        "FabricMC__fabric-loader/834"
       ]
     },
     {

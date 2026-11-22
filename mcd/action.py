@@ -39,7 +39,7 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
-from .cli import VERSION, diagnose
+from .cli import MAX_INPUT_BYTES, VERSION, _looks_like_report, diagnose
 from .extract import extract, fetch_log
 from .model import Finding, Severity
 from .parser.report import read_report_text
@@ -339,7 +339,23 @@ def _report_payload(args, ev: dict):
     if src is None:
         return None
 
-    return diagnose(None, src.text, source=src.label)
+    text = src.text or ""
+    # The same three guards the CLI applies to a file, because a workflow reads
+    # the same kinds of input: an issue body can be chatter, a pasted link can
+    # resolve to an empty page, and --path can point at a rotated 9 MB log.
+    # Without them the Action comments "0 findings" on all three.
+    if not text.strip():
+        print(f"mc-crash-doctor: {src.label} is empty -- nothing to diagnose",
+              file=sys.stderr)
+        return None
+    size = len(text.encode("utf-8"))
+    if size > MAX_INPUT_BYTES:
+        raise ValueError(f"{src.label} is {size / 1e6:.1f} MB -- limit "
+                         f"{MAX_INPUT_BYTES // 1e6:.0f} MB")
+    if not _looks_like_report(text):
+        return None
+
+    return diagnose(None, text, source=src.label)
 
 
 def _pack_mode(args) -> int:
@@ -441,7 +457,11 @@ def main(argv: list[str] | None = None) -> int:
         return _pack_mode(args)
 
     ev = load_event(args.event)
-    payload = _report_payload(args, ev)
+    try:
+        payload = _report_payload(args, ev)
+    except ValueError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
     issue_no = args.issue or _event_issue(ev).get("number")
 
     if payload is None:

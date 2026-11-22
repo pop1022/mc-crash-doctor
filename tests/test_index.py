@@ -70,6 +70,7 @@ def test_no_duplicate_issues(records):
     )
 
 
+@pytest.mark.private_corpus
 def test_row_count_matches_crash_text_count(records):
     """After dedupe, every row has exactly one report on disk."""
     files = list((ROOT / "corpus" / "github").glob("**/*.crash.txt"))

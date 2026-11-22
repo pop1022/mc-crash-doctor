@@ -1,5 +1,15 @@
 name: tests
 
+# Two kinds of job:
+#   * the matrix runs the pytest suite on the three declared Python versions --
+#     the PR signal;
+#   * full-gates runs everything on one version: lint, coverage floors, docs
+#     numbers, contract checks, via the same script developers run locally.
+#
+# The corpus-dependent tests (corpus/github/**/*.crash.txt, not shipped) skip
+# here and the run prints "extended gate: NOT RUN". A private job that has the
+# corpus should set MCD_REQUIRE_CORPUS=1, which turns any such skip into a
+# failure -- otherwise "extended gate" is a label, not a gate.
 on:
   push:
     branches: [main]
@@ -62,3 +72,25 @@ jobs:
           assert len(yml) >= 2, f"expected >=2 rule packs, got {yml}"
           print(f"ok: {whl} ships {len(yml)} rule files")
           PY
+
+  full-gates:
+    name: lint + coverage + docs numbers + contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[pretty,test]" ruff build
+
+      # The same eight gates a developer runs. Before this job, CI ran neither
+      # the lint gate nor the coverage floors nor the docs-number check, so three
+      # of the eight promises existed only on one machine.
+      - name: All gates
+        run: bash run_tests.sh

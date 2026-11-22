@@ -50,9 +50,31 @@ def render_pack_markdown(rep: PackReport, out: TextIO) -> None:
             out.write(f"| {f.severity.name} | `{md_cell(f.kind)}` | "
                       f"`{md_cell(f.subject)}` | {md_cell(f.detail)} |\n")
         out.write("\n")
-    else:
+    elif rep.declared_mods:
         out.write("No contradictions between the installed jars.\n\n")
+    else:
+        out.write("Nothing to compare: no jar here declares a readable "
+                  "manifest.\n\n")
 
+    if rep.overlaps or (rep.mixin_coverage or {}).get("jars_with_refmap"):
+        cov = rep.mixin_coverage or {}
+        out.write("**Overlaps** — two or more jars touch the same target. "
+                  "Informational, not a finding: this is normal, and it matters "
+                  "only when a crash names one of the mixins below.\n\n")
+        if rep.overlaps:
+            out.write("| scope | target | member | jars |\n|---|---|---|---|\n")
+            for o in rep.overlaps:
+                out.write(f"| {o['scope']} | `{md_cell(o['target'])}` | "
+                          f"`{md_cell(o['member'] or '—')}` | "
+                          f"{md_cell(', '.join(o['jars']))} |\n")
+            out.write("\n")
+        else:
+            out.write("None on the targets that could be read.\n\n")
+        out.write(f"Read from {cov.get('jars_with_refmap', 0)} jar(s) shipping a "
+                  f"refmap: {cov.get('targets', 0)} targets, "
+                  f"{cov.get('members', 0)} members; overlapping "
+                  f"{cov.get('overlapping_targets', 0)} target(s), "
+                  f"{cov.get('overlapping_members', 0)} member(s).\n\n")
     if rep.undecided:
         out.write("**Undecided** — the constraint was read but not understood, "
                   "so nothing is claimed either way:\n\n")
@@ -93,9 +115,27 @@ def render_pack_plain(rep: PackReport, out: TextIO, *, color: bool = False) -> N
             out.write(f"    {f.detail}\n")
             if f.evidence:
                 out.write(f"    evidence: {', '.join(f.evidence)}\n")
-    else:
+    elif rep.declared_mods:
         out.write("no contradictions between the installed jars\n")
+    else:
+        # Zero findings on zero readable mods is not a clean bill of health.
+        out.write("nothing to compare: no jar here declares a readable "
+                  "manifest (see below)\n")
 
+    cov = rep.mixin_coverage or {}
+    if rep.overlaps or cov.get("jars_with_refmap"):
+        out.write(f"\noverlaps ({len(rep.overlaps)} listed, informational -- not "
+                  f"a finding):\n")
+        for o in rep.overlaps:
+            what = f"{o['target']}#{o['member']}" if o["member"] else o["target"]
+            out.write(f"  ~ {what}: {', '.join(o['jars'])}\n")
+        if not rep.overlaps:
+            out.write("  none on the targets that could be read\n")
+        out.write(f"  read from {cov.get('jars_with_refmap', 0)} jar(s) with a "
+                  f"refmap: {cov.get('targets', 0)} targets, "
+                  f"{cov.get('members', 0)} members, overlapping "
+                  f"{cov.get('overlapping_targets', 0)} target(s) / "
+                  f"{cov.get('overlapping_members', 0)} member(s)\n")
     if rep.undecided:
         out.write(f"\nundecided ({len(rep.undecided)}) -- range not understood, "
                   f"nothing claimed:\n")

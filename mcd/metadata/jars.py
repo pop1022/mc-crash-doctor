@@ -49,6 +49,7 @@ from __future__ import annotations
 
 import re
 import urllib.parse
+from pathlib import Path
 from typing import Iterable
 
 __all__ = [
@@ -269,3 +270,24 @@ def partition_jars(jars: Iterable[str]) -> dict[str, list[str]]:
     for jar in jars:
         out[classify_jar(jar)].append(jar)
     return out
+
+
+def mixin_config_names(jar: Path) -> list[str]:
+    """Mixin config file names shipped by a jar, without their directories.
+
+    Two jars that declare the same "X.mixins.json" collide at load time: the
+    mixin service applies one and drops (or fails) the other. The name, not the
+    path, is what collides, so only the basename is returned.
+
+    A jar that cannot be opened yields [] -- the caller already reports broken
+    jars through parse_jar, and a second error for the same file is noise.
+    """
+    import zipfile
+    from pathlib import PurePosixPath
+
+    try:
+        with zipfile.ZipFile(jar) as z:
+            return sorted({PurePosixPath(n).name for n in z.namelist()
+                           if n.endswith(".mixins.json")})
+    except (OSError, zipfile.BadZipFile):
+        return []

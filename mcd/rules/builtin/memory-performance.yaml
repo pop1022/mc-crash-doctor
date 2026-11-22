@@ -20,6 +20,13 @@
 rules:
 - id: oom.save-time
   title: Ran out of heap while saving the world
+  title_zh: 存档时堆内存耗尽
+  explanation_zh: "服务器在把区块写进磁盘时用完了堆。执行 stop 或自动存档时，当前已加载的整片区域会一次性编码进内存，峰值远高于平时的游戏负载。这不是内存泄漏，别去找泄漏点；解法是把堆调大。{{#heap_max_mib}}崩溃时堆上限 {{heap_max_mib}} MiB。{{/heap_max_mib}}{{#mod_count}}当时已加载 {{mod_count}} 个模组。{{/mod_count}}"
+  fixes_zh:
+  - 在 JVM 参数文件里调大堆（Forge/NeoForge 是 user_jvm_args.txt，第一行写 -Xms8G -Xmx8G）。
+  - 让 -Xms 与 -Xmx 相等，避免运行时反复扩堆。
+  - 不要超过约 12G：G1GC 的停顿会变长，收益趋平。
+  - 趁内存还低的时候（刚启动完）再执行一次 stop，然后用新参数重启。
   severity: fatal
   priority: 5
   confidence: 0.95
@@ -36,10 +43,7 @@ rules:
     - ChunkTaskPriorityQueueSorter|ChunkSerializer|CompoundTag|NbtIo|write\(
     text:
     - Saving worlds|Saving chunks|ThreadedAnvilChunkStorage|stop\(\)
-  explanation: The server ran out of heap while serialising chunks to disk. On shutdown (`stop`) or autosave
-    the whole loaded region set is encoded into memory at once, so peak usage spikes far above normal
-    gameplay. This is NOT a memory leak -- do not go hunting for one. The fix is a larger heap. Current
-    max heap is {{heap_max_mib}} MiB with {{mod_count}} mods loaded.
+  explanation: "The server ran out of heap while serialising chunks to disk. On shutdown (stop) or autosave the whole loaded region set is encoded into memory at once, so peak usage spikes far above normal gameplay. This is NOT a memory leak -- do not go hunting for one. The fix is a larger heap.{{#heap_max_mib}} Current max heap is {{heap_max_mib}} MiB.{{/heap_max_mib}}{{#mod_count}} {{mod_count}} mods were loaded.{{/mod_count}}"
   fixes:
   - 'Raise the heap in the JVM args file (Forge/NeoForge: `user_jvm_args.txt`, first line `-Xms8G -Xmx8G`).'
   - Keep `-Xms` equal to `-Xmx` so the heap does not resize at runtime.
@@ -55,6 +59,12 @@ rules:
   lifecycle_status: experimental
 - id: oom.heap
   title: 'Java heap exhausted (OutOfMemoryError: Java heap space)'
+  title_zh: "堆内存耗尽（OutOfMemoryError: Java heap space）"
+  explanation_zh: "JVM 已经分配不出新对象了。{{#heap_max_mib}}崩溃时堆上限是 {{heap_max_mib}} MiB。{{/heap_max_mib}}1.20.1 带 200 个以上模组的服务器，8G 才比较宽裕；2G 到 4G 是常见默认值，本来就不够。"
+  fixes_zh:
+  - 提高 -Xmx（并把 -Xms 设成一样大）。1.20.1 加 200 个模组，从 8G 起步。
+  - 如果堆已经很大（10G 以上），更可能是某个模组泄漏：记下堆栈指向的模组。
+  - 下次加上 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=dumps/ 留一份堆转储。
   severity: fatal
   priority: 10
   confidence: 0.85
@@ -66,9 +76,7 @@ rules:
     - java\.lang\.OutOfMemoryError
     exception_msg:
     - Java heap space|heap space
-  explanation: The JVM could not allocate more objects. Max heap was {{heap_max_mib}} MiB at crash time.
-    Modded 1.20.1 servers with 200+ mods need 8G to be comfortable; 2G-4G is a common default and is simply
-    too small.
+  explanation: "The JVM could not allocate more objects.{{#heap_max_mib}} Max heap was {{heap_max_mib}} MiB at crash time.{{/heap_max_mib}} Modded 1.20.1 servers with 200+ mods need 8G to be comfortable; 2G-4G is a common default and is simply too small."
   fixes:
   - 'Increase `-Xmx` (and `-Xms` to match). 200+ mods on 1.20.1: start at 8G.'
   - If the heap is already large (>=10G), suspect a leaking mod instead -- note which mod the stack points
@@ -80,12 +88,27 @@ rules:
   - frame_mods
   - jar
   refs: []
+  # Positive and negative assertion in one place: this rule must fire on the
+  # OOM report and stay quiet on the watchdog one, which is the case its
+  # not_exception-style guard is supposed to leave alone.
+  expect:
+    fires:
+    - ground-truth/crash-2026-09-08_18.01.19-server.txt
+    quiet:
+    - ground-truth/crash-2026-09-08_22.31.14-server.txt
   provenance:
     fixtures:
     - gt:crash-2026-09-08_18.01.19-server.txt
   lifecycle_status: verified
 - id: oom.metaspace
   title: Metaspace exhausted (too many loaded classes)
+  title_zh: "Metaspace 耗尽（类太多）"
+  explanation_zh: >-
+    Metaspace 存的是类的元数据。大量使用 mixin 的整合包会生成成千上万个合成类，
+    所以哪怕堆开得很大也会撑爆，加 -Xmx 在这里没有用。
+  fixes_zh:
+  - "加上或调大 -XX:MaxMetaspaceSize=512M（300 模组以上用 768M 到 1G）。"
+  - "如果机器内存够，干脆去掉 -XX:MaxMetaspaceSize 让它自己长。"
   severity: fatal
   priority: 8
   confidence: 0.9
@@ -112,6 +135,13 @@ rules:
   lifecycle_status: verified
 - id: oom.gc-overhead
   title: GC overhead limit exceeded -- heap is thrashing
+  title_zh: "GC 开销超限：堆在反复挣扎"
+  explanation_zh: >-
+    JVM 把 98% 以上的时间花在 GC 上，却只回收了不到 2% 的堆。本质和堆太小是同一个病，
+    只是换了个报法。
+  fixes_zh:
+  - "按堆 OOM 处理：提高 -Xmx。"
+  - "不要用 -XX:-UseGCOverheadLimit 把它压下去，那只是把真问题藏起来。"
   severity: fatal
   priority: 9
   confidence: 0.85
@@ -135,6 +165,13 @@ rules:
   lifecycle_status: experimental
 - id: hang.watchdog
   title: Server hung for {{cap:text:1}}s and was killed by the watchdog
+  title_zh: 服务器卡了 {{cap:text:1}} 秒，被 watchdog 杀掉
+  explanation_zh: >-
+    单个 tick 花了 {{cap:text:1}} 秒（上限 60 秒），watchdog 随后杀掉了 JVM。所以这份报告只说明它卡在哪里，不说明是谁抛的异常。看最上面的栈帧，找被阻塞的代码路径：同步 IO、超大的区块操作，或者死锁。
+  fixes_zh:
+  - 看下面的栈顶帧：第一个不是原版的类，通常就是元凶。
+  - 如果发生在存档过程中，按内存问题处理（见 oom.save-time）。
+  - 只作为最后手段：-Dfml.watchdogKillTimeout=180 能拖时间，但会掩盖原因。
   severity: fatal
   priority: 6
   confidence: 0.9
@@ -160,6 +197,11 @@ rules:
   - frame_mods
   - mixin
   - jar
+  expect:
+    fires:
+    - ground-truth/crash-2026-09-08_22.31.14-server.txt
+    quiet:
+    - ground-truth/crash-2026-09-08_18.01.19-server.txt
   provenance:
     fixtures:
     - gt:crash-2026-09-08_22.31.14-server.txt
@@ -167,6 +209,14 @@ rules:
   lifecycle_status: verified
 - id: perf.tick-timeout
   title: A single tick ran long (server can't keep up)
+  title_zh: "单个 tick 跑太久（服务端跟不上）"
+  explanation_zh: >-
+    服务器开始掉出 50ms 的 tick 预算。模组多的时候，通常是世界生成、实体数量，或者某个模组的
+    tick 处理。
+  fixes_zh:
+  - "装个 profiler（Spark：spark sampler --timeout 60），看火焰图。"
+  - "先降模拟距离，再降视距：模拟距离才砍实体与区块 tick。"
+  - "用 Chunky 预生成世界，别让探索时现生成。"
   severity: warning
   priority: 40
   confidence: 0.6
@@ -189,6 +239,13 @@ rules:
   lifecycle_status: verified
 - id: java.class-version
   title: Java {{java_major}} is too old for this mod / Minecraft version
+  title_zh: Java {{java_major}} 对这个模组或游戏版本来说太旧了
+  explanation_zh: >-
+    有个 class 文件是用更新的 JVM 编译的。class 文件 61 对应 Java 17，65 对应 Java 21。Minecraft 1.20.5+ 与 NeoForge 1.21+ 需要 Java 21；1.17 到 1.20.4 需要 Java 17。
+  fixes_zh:
+  - 装对应的 JDK，并把启动脚本或启动器指向它。
+  - 1.21+ 与 NeoForge 用 Java 21；1.17 到 1.20.4 用 Java 17；1.16.5 及更早用 Java 8。
+  - Forge 上改 run.bat 或 user_jvm_args.txt，或设 JAVA_HOME，让服务端用对的 JVM。
   severity: fatal
   priority: 7
   confidence: 0.95
@@ -216,6 +273,14 @@ rules:
   lifecycle_status: verified
 - id: mixin.apply-failed
   title: Mixin transformation failed ({{cap:text:1}})
+  title_zh: Mixin 注入失败（{{cap:text:1}}）
+  explanation_zh: >-
+    有个 mixin 打不进目标类。几乎总是两个模组改了同一个类，或者这个模组是给别的 Minecraft 版本编的。失败的那份 mixin 配置写在下面的证据里。
+  fixes_zh:
+  - 看上面点名的 mixin 配置（xxx.mixins.json），前缀就是模组 id。
+  - 更新那个模组，以及它可能撞车的模组（性能类模组是常见嫌疑人）。
+  - 如果是加完某个模组才开始崩的，先把它去掉验证。
+  - 针对 net.minecraft 内部实现的 mixin 跨小版本必炸：确认该模组支持 {{mc_version}}。
   severity: fatal
   priority: 15
   confidence: 0.85
@@ -250,6 +315,13 @@ rules:
   lifecycle_status: verified
 - id: mixin.target-missing
   title: Mixin target method/field no longer exists
+  title_zh: "mixin 的目标方法或字段不存在了"
+  explanation_zh: >-
+    某个 mixin 在这个 Minecraft 版本里找不到目标类或方法：这个模组是给别的版本编的，
+    或者它依赖的 mixin 已经把目标改名了。
+  fixes_zh:
+  - "换成与 Minecraft {{mc_version}} 完全对应的构建。"
+  - "如果模组已停更，找为 {{mc_version}} 维护的分支。"
   severity: error
   priority: 16
   confidence: 0.75
@@ -282,6 +354,13 @@ rules:
   lifecycle_status: verified
 - id: crash.ticking-entity
   title: Crash while ticking an entity
+  title_zh: 更新实体时崩溃
+  explanation_zh: >-
+    某个实体的每 tick 更新抛了异常。下面报告里、堆栈之后有实体 id 和坐标，可以只删这一个坏实体，不用删整个存档。
+  fixes_zh:
+  - "在报告里找 Entity Type: 或 Entity's Exact location:。"
+  - 如果这个实体类型属于某个模组，那个模组是第一嫌疑人：更新或移除它。
+  - 最后手段：用 MCA Selector 或 NBTExplorer 从区块文件里删掉这个实体。先备份存档。
   severity: error
   priority: 50
   confidence: 0.6
@@ -308,6 +387,12 @@ rules:
   lifecycle_status: verified
 - id: crash.ticking-blockentity
   title: Crash while ticking a block entity
+  title_zh: "更新方块实体时崩溃"
+  explanation_zh: >-
+    某个方块实体（箱子、机器、导管）在 tick 时抛了异常。方块类型和坐标都写在报告里。
+  fixes_zh:
+  - "在报告里读 Block entity ID: 与 Location:。"
+  - "用 MCA Selector 或 Region Fixer 删掉那一个方块（或它所在的区块）。先备份。"
   severity: error
   priority: 51
   confidence: 0.6
@@ -332,6 +417,12 @@ rules:
   lifecycle_status: verified
 - id: crash.rendering
   title: Crash while rendering (client)
+  title_zh: "渲染时崩溃（客户端）"
+  explanation_zh: >-
+    客户端在画东西时崩了。模组客户端上常见的嫌疑人是光影模组、HUD 与覆盖层模组，以及物品模型覆盖。
+  fixes_zh:
+  - "先关光影重试，这能排除最常见的一类。"
+  - "堆栈里第一个非 minecraft 的类，就是当时在画东西的模组。"
   severity: error
   priority: 55
   confidence: 0.6
@@ -356,6 +447,12 @@ rules:
   lifecycle_status: verified
 - id: crash.rendering-entity
   title: Crash while rendering an entity
+  title_zh: "渲染实体时崩溃"
+  explanation_zh: >-
+    某个实体的模型或渲染器抛了异常。常见于更新后模型或贴图缺失的模组实体。
+  fixes_zh:
+  - "报告里的 Entity Type: 就是它所属的模组。"
+  - "更新或移除那个模组；顺带更新渲染类前置（实体模型、动画库）。"
   severity: error
   priority: 54
   confidence: 0.65
@@ -380,6 +477,13 @@ rules:
   lifecycle_status: verified
 - id: native.gl
   title: Graphics driver / OpenGL failure
+  title_zh: "显卡驱动或 OpenGL 失败"
+  explanation_zh: >-
+    客户端拿不到可用的 OpenGL 上下文。原因可能是显卡驱动太旧、远程桌面会话，或者驱动拒绝为该显卡做加速。
+  fixes_zh:
+  - "去显卡厂商官网更新驱动，不要用 Windows Update 的版本。"
+  - "不要通过 RDP 或远程桌面启动游戏，它没有 GL 加速。"
+  - "只作为诊断尝试：-Dorg.lwjgl.opengl.Display.allowSoftwareOpenGL=true。"
   severity: error
   priority: 60
   confidence: 0.75
@@ -411,6 +515,13 @@ rules:
   lifecycle_status: experimental
 - id: disk.space
   title: Disk full or filesystem not writable
+  title_zh: "磁盘满或目录不可写"
+  explanation_zh: >-
+    服务器写不进去了。要么卷满了，要么进程对世界目录没有写权限。
+  fixes_zh:
+  - "检查 world/ 与日志所在磁盘的剩余空间。"
+  - "Windows 上不要从 C:\\Program Files\\ 运行（需要管理员权限），放到普通用户目录。"
+  - "旧的 .log.gz 和 crash-reports 会越积越多，定期清理。"
   severity: fatal
   priority: 20
   confidence: 0.85
@@ -435,6 +546,13 @@ rules:
   lifecycle_status: experimental
 - id: world.corrupt-region
   title: A region/chunk file is corrupt
+  title_zh: "区域或区块文件损坏"
+  explanation_zh: >-
+    某个已保存的区块读不回来了：区域文件被截断或损坏，通常是存档时断电或磁盘写满。
+  fixes_zh:
+  - "动手之前先备份 world/。"
+  - "只删报告点名的那个区域文件（world/region/r.X.Y.mca），损失的是那 512x512 的区域，不是整个世界。"
+  - "用 Minecraft Region Fixer 精确修复或删除坏区块。"
   severity: fatal
   priority: 22
   confidence: 0.8

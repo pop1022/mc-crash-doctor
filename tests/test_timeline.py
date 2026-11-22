@@ -12,7 +12,8 @@ from __future__ import annotations
 import io
 
 from mcd.cli import main
-from mcd.timeline import extract_events, render_timeline, window
+from mcd.timeline import (extract_events, render_timeline, trailing_lines,
+                          window)
 
 OLD = """[12:34:50] [Server thread/INFO]: Starting minecraft server
 [12:34:55] [Server thread/WARN]: Can't keep up! Is the server overloaded?
@@ -97,3 +98,34 @@ def test_default_diagnosis_is_untouched_by_the_flag(tmp_path, capsys):
     p.write_text(OLD, encoding="utf-8")
     assert main([str(p), "--text"]) == 0
     assert "Timeline" not in capsys.readouterr().out
+
+# --- the lines that have no clock -------------------------------------------
+def test_trailing_lines_come_back_in_file_order() -> None:
+    text = "[12:00:00] [Server thread/INFO]: ok\nstack line 1\nstack line 2\n"
+    assert trailing_lines(text) == ["stack line 1", "stack line 2"]
+
+
+def test_trailing_lines_stop_at_the_last_timestamp() -> None:
+    text = "stack before\n[12:00:00] [Server thread/INFO]: ok\nstack after\n"
+    assert trailing_lines(text) == ["stack after"]
+
+
+def test_trailing_lines_respect_the_limit() -> None:
+    text = "[12:00:00] x\n" + "".join(f"line {i}\n" for i in range(9))
+    assert trailing_lines(text, limit=3) == ["line 6", "line 7", "line 8"]
+
+
+def test_timeline_prints_the_exception_verbatim(capsys) -> None:
+    # A log that ends on the exception: that is the case where the tail has no
+    # clock and the timeline used to drop the only line that named the crash.
+    text = ("[12:34:55] [Server thread/ERROR]: Exception ticking world\n"
+            "java.lang.NullPointerException: boom\n"
+            "\tat net.minecraft.world.level.Level.tick(Level.java:1)\n")
+    events, skipped = extract_events(text)
+    chosen, _ = window(events, 60)
+    buf = io.StringIO()
+    render_timeline(chosen, skipped, 60, buf, trailing=trailing_lines(text))
+    out = buf.getvalue()
+    assert "verbatim" in out
+    assert "java.lang.NullPointerException: boom" in out
+    assert "at net.minecraft.world.level.Level.tick" in out

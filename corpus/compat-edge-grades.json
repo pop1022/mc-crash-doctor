@@ -1,0 +1,22 @@
+{
+  "generated_by": "tools/grade_compat_edges.py",
+  "input": "compat-edges.jsonl",
+  "raw_rows": 9895,
+  "pair_rows_raw": 9721,
+  "mod_rows_raw": 174,
+  "pairs": 8731,
+  "mods": 87,
+  "duplicates_merged": 1077,
+  "pair_grades": {
+    "A": 0,
+    "B": 0,
+    "C": 8731
+  },
+  "mod_grades": {
+    "A": 8,
+    "B": 54,
+    "C": 14,
+    "rejected": 11
+  },
+  "note": "Pairs are co-occurrence only -- no row in the source corpus ties two different mods causally. Grade A lives exclusively in the per-mod claims (outdated_version / bug_in_this_mod)."
+}

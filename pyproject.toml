@@ -40,7 +40,8 @@ dependencies = [
 pretty = ["rich>=13.0"]
 # Schema-conformance tests (tests/test_schema.py). Core diagnosis never
 # imports jsonschema; only the test suite does.
-test = ["pytest>=7", "jsonschema>=4.18"]
+# coverage backs the floor gate in tools/coverage_gate.py (gate 8).
+test = ["pytest>=7", "jsonschema>=4.18", "coverage>=7"]
 
 [project.urls]
 Homepage = "https://github.com/pop1022/mc-crash-doctor"

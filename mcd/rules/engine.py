@@ -59,7 +59,9 @@ LIFECYCLE_STATES = frozenset({
 RULE_KEYS = frozenset({
     "id", "title", "severity", "priority", "when", "explanation", "fixes",
     "suspects_from", "confidence", "tags", "refs", "once", "lifecycle_status",
-    "provenance", "commands",
+    "provenance", "commands", "expect",
+    # Chinese copy (optional, per rule; falls back to the English fields)
+    "title_zh", "explanation_zh", "fixes_zh",
 })
 
 #: Commands a rule may suggest. The tool never runs them: these are printed for
@@ -97,6 +99,12 @@ class Rule:
     when: dict[str, Any] = field(default_factory=dict)
     explanation: str = ""
     fixes: list[str] = field(default_factory=list)
+    #: Chinese copy, authored per rule and optional. A rule without it falls
+    #: back to the English text rather than printing an empty finding -- the
+    #: translator's backlog is visible in tools/i18n_status.py, not in the UI.
+    title_zh: str = ""
+    explanation_zh: str = ""
+    fixes_zh: list[str] = field(default_factory=list)
     #: Read-only diagnostics printed under the fixes. Filtered by
     #: `safe_commands` at emission time; unsafe entries are also warned about at
     #: load time, so nothing is dropped quietly.
@@ -119,6 +127,12 @@ class Rule:
     # fixture key is either "repo/issue" (harvested corpus, gitignored) or a
     # bare filename under tests/fixtures/synthetic/.
     provenance: dict[str, Any] = field(default_factory=dict)
+    #: Per-rule fixture assertions: {"fires": [ref], "quiet": [ref]}.
+    #: provenance.fixtures is the historical "which report motivated this"
+    #: (checked by tests/test_gaps.py against the gitignored corpus); expect
+    #: travels with the rule and is checked by --validate-rules, which is the
+    #: only self-test a third-party pack can carry.
+    expect: dict[str, Any] = field(default_factory=dict)
 
     @property
     def safe_commands(self) -> tuple[str, ...]:
@@ -143,6 +157,9 @@ class Rule:
             when=d.get("when", {}),
             explanation=d.get("explanation", ""),
             fixes=list(d.get("fixes", [])),
+            title_zh=d.get("title_zh", ""),
+            explanation_zh=d.get("explanation_zh", ""),
+            fixes_zh=list(d.get("fixes_zh", [])),
             commands=[str(c) for c in (d.get("commands") or [])],
             suspects_from=list(d.get("suspects_from", [])),
             confidence=float(d.get("confidence", 0.7)),
@@ -151,6 +168,7 @@ class Rule:
             source=source,
             once=bool(d.get("once", True)),
             lifecycle_status=status,
+            expect=d.get("expect", {}) if isinstance(d.get("expect"), dict) else {},
             provenance=prov,
         )
 
@@ -190,7 +208,7 @@ class RuleSet:
 
     @classmethod
     def load(cls, extra_dirs: list[str | Path] | None = None,
-             *, strict: bool = False) -> "RuleSet":
+             *, strict: bool = False, report: bool = True) -> "RuleSet":
         if yaml is None:
             raise RuntimeError(
                 "PyYAML is required: pip install mc-crash-doctor[rules] "
@@ -207,7 +225,10 @@ class RuleSet:
         # shared parse.
         rs = cls(rules)
         rs.errors = errors
-        if errors and not strict:
+        # `report=False` exists for --validate-rules, which prints the same
+        # strings itself in a grouped form. Two printers would show each warning
+        # twice, and a gate that double-reports is one people learn to ignore.
+        if errors and not strict and report:
             for e in errors:
                 print(f"mc-crash-doctor: rule warning: {e}", file=sys.stderr)
         if strict and errors:
@@ -362,9 +383,13 @@ WHEN_KEYS = frozenset({
     # regex conditions (negative) -- see the loop in evaluate_rule
     "not_exception",
     # exact / comparator conditions
-    "loader", "kind", "java_major", "max_heap_mib", "mod_count",
+    "loader", "kind", "java_major", "max_heap_mib", "mod_count", "mc_version",
     # mod-presence and attribution gates
     "has_mod", "not_has_mod", "has_suspect",
+    # disjunction: a list of condition blocks, any one of which may match.
+    # Keys outside it are still ANDed, so a rule can say "always require this,
+    # and accept either of those".
+    "when_any",
 })
 
 
@@ -406,12 +431,103 @@ def _config_warnings(fname: str, rd: dict[str, Any]) -> list[str]:
                     else "nothing is left to match on, so it matches EVERY report")
             out.append(f"{fname}: rule {rid!r}: unknown condition(s) "
                        f"{unknown_when} -- ignored by the engine; {tail}")
+        if "when_any" in when:
+            out.extend(_when_any_warnings(fname, rid, when["when_any"]))
+    if "expect" in rd:
+        # Imported here, not at module scope: expect.py imports this module for
+        # Rule/RuleSet/run_rules, so a top-level import would be circular.
+        from .expect import warnings_for
+        out.extend(warnings_for(fname, rid, rd.get("expect")))
+    texts = [("explanation", rd.get("explanation", "")),
+             ("explanation_zh", rd.get("explanation_zh", ""))]
+    texts += [(f"fixes[{i}]", fx) for i, fx in enumerate(rd.get("fixes") or [])]
+    for label, text in texts:
+        if not isinstance(text, str):
+            continue
+        opens = re.findall(r"\{\{#(\w+)\}\}", text)
+        closes = re.findall(r"\{\{/(\w+)\}\}", text)
+        if sorted(opens) != sorted(closes):
+            out.append(f"{fname}: rule {rid!r}: {label} has an unbalanced "
+                       f"conditional block -- it is stripped at render time")
     return out
 
 
-def evaluate_rule(rule: Rule, ctx: MatchCtx) -> dict[str, re.Match] | None:
-    """Return capture dict if the rule matches, else None."""
-    w = rule.when
+def _when_any_warnings(fname: str, rid: str, clauses: object) -> list[str]:
+    """Shape checks for when_any. Each message says what the engine will do."""
+    out: list[str] = []
+    if not isinstance(clauses, list):
+        return [f"{fname}: rule {rid!r}: when_any must be a list of condition "
+                f"blocks -- the rule matches nothing as written"]
+    if not clauses:
+        return [f"{fname}: rule {rid!r}: when_any is empty -- the rule matches "
+                f"nothing"]
+    for i, clause in enumerate(clauses):
+        if not isinstance(clause, dict):
+            out.append(f"{fname}: rule {rid!r}: when_any[{i}] is not a block "
+                       f"of conditions -- skipped")
+        elif "when_any" in clause:
+            out.append(f"{fname}: rule {rid!r}: nested when_any inside "
+                       f"when_any[{i}] is not supported -- that block never "
+                       f"matches; flatten it")
+        elif not (set(clause) & WHEN_KEYS):
+            out.append(f"{fname}: rule {rid!r}: when_any[{i}] has no condition "
+                       f"the engine reads -- it matches every report")
+    return out
+
+
+#: A version clause: optional operator, then digits and dots.
+_VERSION_CLAUSE = re.compile(r"^(>=|<=|>|<|=)?\s*v?(\d+(?:\.\d+)*)$")
+
+
+def _version_tuple(text: str) -> tuple[int, ...]:
+    return tuple(int(p) for p in re.findall(r"\d+", text)[:3])
+
+
+def _version_ok(spec: str, version: str) -> bool:
+    """Does `version` satisfy `spec`?
+
+    Spec grammar: clauses separated by spaces, each `<op><version>` with op in
+    >=, <=, >, < or = (default =, meaning a prefix match: "1.20" matches
+    1.20.1 but not 1.201). Every clause must hold, so ">=1.20 <1.21" is a
+    range.
+
+    A report that never states its Minecraft version satisfies no version
+    gate: the rule cannot prove it applies, and guessing is the failure mode
+    this project exists to avoid. 30% of the corpus has no version line, so a
+    gate is a real narrowing -- use it only where the version is the point.
+    """
+    if not version:
+        return False
+    got = _version_tuple(version)
+    for clause in str(spec).split():
+        m = _VERSION_CLAUSE.match(clause)
+        if not m:
+            return False
+        op, want_raw = m.group(1) or "=", m.group(2)
+        want = _version_tuple(want_raw)
+        if op == "=":
+            if not (version == want_raw or version.startswith(want_raw + ".")):
+                return False
+        elif op == ">=":
+            ok = got >= want
+        elif op == "<=":
+            ok = got <= want
+        elif op == ">":
+            ok = got > want
+        else:
+            ok = got < want
+        if op != "=" and not ok:
+            return False
+    return True
+
+
+def _evaluate_all(w: dict, ctx: MatchCtx) -> dict[str, re.Match] | None:
+    """AND every key in one condition block. Returns its captures or None."""
+    # Nesting is not supported: a clause that itself says when_any has no
+    # meaning the engine can explain, so it matches nothing instead of
+    # half-applying. _config_warnings names it at load time.
+    if "when_any" in w:
+        return None
     # A `when` block containing no key the engine reads matches nothing, exactly
     # like an empty one. Without the second half of this test, `exceptions:`
     # (typo for `exception:`) leaves a non-empty dict with no conditions in it,
@@ -483,6 +599,11 @@ def evaluate_rule(rule: Rule, ctx: MatchCtx) -> dict[str, re.Match] | None:
     if "mod_count" in w and not _compare(w["mod_count"],
                                          ctx.rep.system.mod_count):
         return None
+    if "mc_version" in w:
+        spec = w["mc_version"]
+        specs = [str(s) for s in spec] if isinstance(spec, (list, tuple)) else [str(spec)]
+        if not any(_version_ok(s, ctx.rep.system.minecraft_version) for s in specs):
+            return None
 
     # mod presence
     for key in ("has_mod", "not_has_mod"):
@@ -504,6 +625,86 @@ def evaluate_rule(rule: Rule, ctx: MatchCtx) -> dict[str, re.Match] | None:
             return None
 
     return caps
+
+
+def evaluate_rule(rule: Rule, ctx: MatchCtx) -> dict[str, re.Match] | None:
+    """Return capture dict if the rule matches, else None.
+
+    Two shapes:
+      * a plain block -- every key must hold (AND), a list inside a key is
+        any-of (that is what _any_regex does);
+      * `when_any: [block, block, ...]` -- keys beside it are still required,
+        and then any one block may satisfy the rest.
+
+    Captures are merged from the keys outside when_any plus the block that
+    matched, so a template can use either. When two blocks set the same capture
+    key, the matching block wins: it is the one that describes this report.
+    """
+    w = rule.when
+    clauses = w.get("when_any") if isinstance(w, dict) else None
+    if not clauses:
+        return _evaluate_all(w, ctx)
+
+    rest = {k: v for k, v in w.items() if k != "when_any"}
+    base = _evaluate_all(rest, ctx) if rest else {}
+    if base is None:
+        return None
+    for clause in clauses:
+        if not isinstance(clause, dict):
+            continue
+        caps = _evaluate_all(clause, ctx)
+        if caps is not None:
+            return {**base, **caps}
+    return None
+
+
+#: Optional fragments: {{#key}} ... {{/key}} keeps the body only when the value
+#: is non-empty. A crash log without System Details has no heap ceiling, and
+#: "Max heap was  MiB at crash time" is worse than saying nothing.
+_COND = re.compile(r"\{\{#(\w+)\}\}(.*?)\{\{/\1\}\}", re.S)
+
+
+#: Artifacts of an empty placeholder, removed after substitution. The rules
+#: already guard most of these with when: conditions, but a log without System
+#: Details can still reach copy that assumed a value was there.
+_TIDY = (
+    # Empty parens first: removing them leaves two spaces behind, which the
+    # collapse below then cleans up.
+    (re.compile(r"\(\s*\)|（\s*）"), ""),
+    (re.compile(r"[ \t]+([,.;:!?，。；：！？、])"), r"\1"),
+    (re.compile(r"([（(])[ \t]+"), r"\1"),
+    (re.compile(r"[ \t]+([）)])"), r"\1"),
+    (re.compile(r"[ \t]{2,}"), " "),
+)
+
+
+def _tidy(text: str) -> str:
+    """Collapse what an empty field leaves behind: "was  MiB", "( )", " ，".
+
+    Wording can still read oddly ("for / fabric" when the version is unknown),
+    but it never prints a hole or a double space in the middle of a sentence.
+    """
+    for pattern, repl in _TIDY:
+        text = pattern.sub(repl, text)
+    return text.strip()
+
+
+def _fill_conditionals(template: str, values: dict[str, str]) -> str:
+    """Resolve optional blocks, then strip any marker that is left over."""
+    def one(m: re.Match) -> str:
+        key, body = m.group(1), m.group(2)
+        return body if values.get(key) else ""
+
+    out = template
+    prev = None
+    # A loop because re.sub does not rescan the replacement text, and two
+    # sibling blocks in one sentence both have to resolve.
+    while prev != out:
+        prev = out
+        out = _COND.sub(one, out)
+    # Unbalanced or unknown markers are removed instead of being printed to a
+    # user. _config_warnings names the file so the author can fix it.
+    return re.sub(r"\{\{#[^}]+\}\}|\{\{/[^}]+\}\}", "", out)
 
 
 def _render(template: str, ctx: MatchCtx, caps: dict[str, re.Match]) -> str:
@@ -547,14 +748,29 @@ def _render(template: str, ctx: MatchCtx, caps: dict[str, re.Match]) -> str:
         except (IndexError, re.error):
             return ""
 
-    out = re.sub(r"\{\{cap:([\w:]+)\}\}", _cap, template)
+    out = _fill_conditionals(template, values)
+    out = re.sub(r"\{\{cap:([\w:]+)\}\}", _cap, out)
     for k, v in values.items():
         out = out.replace("{{" + k + "}}", v)
-    return out
+    return _tidy(out)
+
+
+def _localised(rule: Rule, lang: str) -> tuple[str, str, list[str]]:
+    """Pick the copy for the requested language: zh when translated, else English.
+
+    Localisation happens before the Finding is built, so every consumer
+    (terminal, Markdown, JSON, the browser) receives one already-localised
+    document and no consumer needs its own fallback table.
+    """
+    if lang.lower().startswith("zh") and rule.title_zh:
+        return (rule.title_zh,
+                rule.explanation_zh or rule.explanation,
+                rule.fixes_zh or rule.fixes)
+    return rule.title, rule.explanation, rule.fixes
 
 
 def run_rules(rep: CrashReport, ruleset: RuleSet | None = None,
-              suspect_fn=None) -> list[Finding]:
+              suspect_fn=None, lang: str = "en") -> list[Finding]:
     """Evaluate all rules against a parsed report."""
     rs = ruleset or RuleSet.load()
     ctx = MatchCtx.build(rep)
@@ -575,14 +791,15 @@ def run_rules(rep: CrashReport, ruleset: RuleSet | None = None,
         suspects: list[str] = []
         if suspect_fn and rule.suspects_from:
             suspects = suspect_fn(rep, rule.suspects_from, caps)
+        r_title, r_expl, r_fixes = _localised(rule, lang)
         findings.append(Finding(
             rule_id=rule.id,
-            title=_render(rule.title, ctx, caps),
+            title=_render(r_title, ctx, caps),
             severity=rule.severity,
-            summary=_render(rule.explanation, ctx, caps),
-            explanation=_render(rule.explanation, ctx, caps),
+            summary=_render(r_expl, ctx, caps),
+            explanation=_render(r_expl, ctx, caps),
             evidence=evidence,
-            fixes=[_render(f, ctx, caps) for f in rule.fixes],
+            fixes=[_render(f, ctx, caps) for f in r_fixes],
             commands=[_render(c, ctx, caps) for c in rule.safe_commands],
             suspects=suspects,
             confidence=rule.confidence,

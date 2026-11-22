@@ -61,10 +61,10 @@ ordering. See `tests/test_invariance.py`.
 | metric | value | 95% CI | quotable as a rate? |
 |---|---|---|---|
 | parse errors | 0 | — | yes (it is a count) |
-| diagnosed (≥1 finding) | 156/216 (72%) | [66%, 78%] | yes |
-| root cause extracted | 215/216 (100%) | [97%, 100%] | yes |
+| diagnosed (≥1 finding) | 157/214 (73%) | [67%, 79%] | yes |
+| root cause extracted | 213/214 (100%) | [97%, 100%] | yes |
 | mod repos diagnosed | 112/143 (78%) | [71%, 84%] | yes |
-| loader repos diagnosed | 44/73 (60%) | [49%, 71%] | yes |
+| loader repos diagnosed | 45/71 (63%) | [52%, 74%] | yes |
 | **blame-error rate** | **1/7 scored** | **[3%, 51%]** | **NO — n=7** |
 
 The blame-error row is the one that matters for trust, and it is the one we

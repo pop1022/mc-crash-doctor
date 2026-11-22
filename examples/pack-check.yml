@@ -1,0 +1,31 @@
+# Copy this file into a modpack repository as .github/workflows/pack-check.yml
+#
+# What it does: every pull request that touches `mods/` gets a static check of
+# the pack -- missing dependencies, duplicate mod ids, mixed loaders, client-only
+# mods on a server directory. It reads the jars' own manifests, so it needs no
+# network and no API keys, and it never runs Minecraft.
+#
+# Tune `fail-on` to taste: error fails the job on a broken pack, fatal only on
+# the kinds that stop a server from booting. The default is `fatal`.
+name: modpack check
+
+on:
+  pull_request:
+    paths:
+      - "mods/**"
+
+jobs:
+  doctor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pop1022/mc-crash-doctor@v0.1.0
+        with:
+          # A directory of jars, not a crash report.
+          pack: mods
+          # Say which side the directory runs on, or the side check stays silent:
+          # Forge/NeoForge manifests carry no per-mod side field, so the tool can
+          # only judge Fabric/Quilt mods here.
+          pack-side: server
+          fail-on: error

@@ -2,7 +2,7 @@
 
 **Diagnose Minecraft crash reports and logs: root cause, the mod at fault, and the fix.**
 
-Paste a crash report from your 200-mod server and get back *"lithium, 97% confidence, stack frame #32"* instead of 1,500 lines of stack trace.
+Paste a crash report from your 200-mod server and get back *"lithium — evidence strength 97%, stack frame #32"* instead of 1,500 lines of stack trace.
 
 ```
   platform : forge 47.4.16
@@ -61,7 +61,7 @@ mc-crash-doctor covers that category, and cross-indexes three independent proven
 
 ## What makes attribution work
 
-A crash report carries mod provenance in three places. Using all three is what turns "something crashed" into "mod X, 97%":
+A crash report carries mod provenance in three places. Using all three is what turns "something crashed" into "mod X, and the frames that point at it":
 
 1. **Mixin ownership** — `pl:mixin:APP:create.mixins.json:Class from mod (create)`. A mixin crash is nearly always the mixin owner's fault. Strongest signal.
 2. **Mod-owned stack frames** — first non-vanilla, non-loader class in the root-cause trace, resolved against the report's own Mod List (266 mods parse fine).
@@ -253,8 +253,8 @@ The ground-truth set is six real reports from a 266-mod Forge 1.20.1 server (fou
 Diagnosis rate — the share of reports where at least one rule fires:
 
 ```
-blind set      156/216 = 72.2%   [66%, 78%]
-whole corpus   344/454 = 75.8%
+blind set      157/214 = 73.4%   [67%, 79%]
+whole corpus   348/454 = 76.6%
 ```
 
 The blind set is the half of the harvested corpus no rule was written from.

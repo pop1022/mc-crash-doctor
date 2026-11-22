@@ -8,6 +8,14 @@
 rules:
   - id: mod.load-failed.neoforge
     title: "Mod loading failed (NeoForge loader error)"
+    title_zh: "模组加载失败（NeoForge 加载器报错）"
+    explanation_zh: >-
+      一个或多个模组加载时抛异常，NeoForge 中止了启动。真正的成因在报告更深处：找第一个
+      Caused by，或者 loading-error 段里点名的模组。
+    fixes_zh:
+    - "往下翻到这个异常下面的第一个 Caused by，那里点名了模组和真实错误。"
+    - "更新或删掉那里点名的模组；如果是刚加的或刚更新的，先回滚这次改动。"
+    - "如果成因是缺前置，按 {{mc_version}} 装上它点名的库模组。"
     severity: fatal
     priority: 17
     confidence: 0.85
@@ -34,6 +42,13 @@ rules:
 
   - id: mod.load-failed.fabric-entry
     title: "Mod loading failed: {{cap:text:1}}"
+    title_zh: "模组加载失败：{{cap:text:1}}"
+    explanation_zh: >-
+      某个模组在加载时抛异常，加载器中止。报告在错误段靠前的位置列出了失败的模组和它的 entrypoint。
+    fixes_zh:
+    - "在 Mod Loading has failed 段里找点名的模组，就是要更新或删掉的那个。"
+    - "确认它的依赖都在，且版本满足要求。"
+    - "如果它刚更新过，退回上一版试试。"
     severity: fatal
     priority: 17
     confidence: 0.85
@@ -60,6 +75,14 @@ rules:
 
   - id: mod.client-class-on-server
     title: "A client-only class was loaded on the dedicated server"
+    title_zh: "服务端加载了仅客户端的类"
+    explanation_zh: >-
+      某个模组（或它的 mixin）在通用或服务端代码里引用了仅客户端的类（{{cap:text:1}}）
+      。Forge 与 NeoForge 会拦下这种调用，免得专用服务器运行时崩溃，这说明该模组的端侧隔离是坏的。
+    fixes_zh:
+    - "错误下面的堆栈帧点名了做加载的模组：更新它，这是一类有已知修法的已知 bug。"
+    - "如果是更新某个模组之后才出现的，把这个模组回滚。"
+    - "这永远是模组的 bug，不是你的服务端配置问题：带上这份报告去上游报。"
     severity: fatal
     priority: 17
     confidence: 0.95
@@ -85,6 +108,13 @@ rules:
 
   - id: crash.runtime-mod
     title: "{{suspect_top}} crashed at runtime"
+    title_zh: "{{suspect_top}} 在运行时崩了"
+    explanation_zh: >-
+      出错的代码路径经过 {{suspect_top}}（归因置信度 {{suspect_top_conf}}）。异常本身很泛，但堆栈指向这个模组的类。
+    fixes_zh:
+    - 把 {{suspect_top}} 更新到 {{mc_version}} 的最新版：这类运行时 NPE/ISE 通常很快被修。
+    - 如果已经是最新，把这份崩溃报告提到该模组的 issue 区。
+    - 临时方案：删掉 {{suspect_top}} 以及依赖它的模组。
     severity: error
     priority: 80
     confidence: 0.55
@@ -110,6 +140,14 @@ rules:
       - "If it is already up to date, report this crash report to the mod's issue tracker."
       - "As a workaround, remove {{suspect_top}} and anything that depends on it."
     suspects_from: ["frame_mods", "mixin", "jar"]
+    # The OOM report also has a stack, so a catch-all would blame a mod for it.
+    # quiet pins the not_exception guard; fires keeps the rule from being
+    # quietly disabled by a future condition edit.
+    expect:
+      fires:
+      - ground-truth/crash-2026-09-08_22.31.14-server.txt
+      quiet:
+      - ground-truth/crash-2026-09-08_18.01.19-server.txt
     provenance:
       fixtures:
       - mekanism/8590
@@ -123,6 +161,13 @@ rules:
 
   - id: crash.rendering-blockentity
     title: "Crash while rendering a block entity"
+    title_zh: "渲染方块实体时崩溃"
+    explanation_zh: >-
+      客户端在画某个方块实体（机器、箱子、展示方块）时崩了。方块类型和坐标都在报告里。
+    fixes_zh:
+    - "在报告里读 Block entity type 和 Location，那点名了它所属的模组。"
+    - "更新那个模组；渲染崩溃通常跟着更新后的模型或注册表改动走。"
+    - "如果区块一加载就复发，用 MCA Selector 或世界编辑删掉这个方块。"
     severity: error
     priority: 53
     confidence: 0.65
@@ -146,6 +191,14 @@ rules:
 
   - id: crash.threading-race
     title: "Threading violation: world data touched off-thread"
+    title_zh: "线程违规：世界数据被跨线程访问"
+    explanation_zh: >-
+      原版的随机数和若干注册表是刻意做成单线程的；Minecraft 现在会检测跨线程访问，宁可抛异常也不坏存档。
+      某个模组在工作线程里调用了世界相关代码，或者并行区块加载器在跟它抢。
+    fixes_zh:
+    - "堆栈里第一个非原版帧就是做跨线程调用的模组。"
+    - "如果装了并行加载类模组（modernfix、starlight 系），先更新它或关掉它的线程选项。"
+    - "更新出问题的模组；这是模组 bug，不是配置问题。"
     severity: error
     priority: 45
     confidence: 0.8
@@ -170,6 +223,13 @@ rules:
 
   - id: crash.datapack-book
     title: "A datapack/resourcepack entry failed to load"
+    title_zh: "数据包或资源包条目加载失败"
+    explanation_zh: >-
+      某个书或数据包定义格式错误，或者引用了没装的包。报错里的 id 点名了出问题的内容。
+    fixes_zh:
+    - "找出注册该 id 的包（书来自 Patchouli 系模组）并更新它。"
+    - "如果是 world/datapacks 里的自定义数据包，校验它的 JSON：一个坏文件会让整次加载失败。"
+    - "移除该数据包目录，世界就能加载。"
     severity: error
     priority: 46
     confidence: 0.8
@@ -194,6 +254,15 @@ rules:
 
   - id: mixin.injection-failed
     title: "Mixin injection failed: {{cap:exception_msg:1}}"
+    title_zh: "mixin 注入失败：{{cap:exception_msg:1}}"
+    explanation_zh: >-
+      某个 mixin 的注入器打不进目标：通常是两个模组用不兼容的签名改同一个方法（旧模组的 @WrapOperation
+      或 @Redirect 撞上新版本的改动），或者目标方法在 MC 更新里改了形状。报错点名的
+      mixin 方法（模组id$方法名）就指明了它属于哪个模组。
+    fixes_zh:
+    - "报错里失败的注入器写成 模组id$方法名，那个模组就是坏掉的 mixin 的主人。"
+    - "更新它；如果目标方法还有别的模组也在改，两边都要更新，必须针对同一个 MC 版本构建。"
+    - "如果新 MC 版本刚发布，等这个模组更新：这类注入失败没法靠配置绕开。"
     severity: fatal
     priority: 15
     confidence: 0.9
@@ -225,6 +294,14 @@ rules:
 
   - id: crash.registry-load-failed
     title: "Registry loading failed -- a mod registered invalid entries"
+    title_zh: "注册表加载失败：某个模组注册了非法条目"
+    explanation_zh: >-
+      进入或加载世界时动态注册表中止：某个模组注册的条目过不了校验（id 非法、缺必填字段、键重复）
+      。真正的成因记在这个异常的上方，这一行只是总结。
+    fixes_zh:
+    - "往上翻到这次崩溃上方的第一行 ERROR，那里会点名注册表键和拥有它的模组。"
+    - "通常是数据包驱动的注册表条目（世界生成、生物群系、维度模组）引用了新版本改名过的东西：更新那个模组。"
+    - "如果去掉疑似模组后世界能正常加载，那它的数据包条目就是元凶。"
     severity: fatal
     priority: 47
     confidence: 0.8
@@ -253,6 +330,14 @@ rules:
 
   - id: net.connectivity
     title: "Network failure reaching a remote host: {{cap:exception_msg:1}}"
+    title_zh: "连接远程主机失败：{{cap:exception_msg:1}}"
+    explanation_zh: >-
+      游戏或某个模组连不上远程主机，或者 TLS 证书对不上：DNS 被拦、有过滤代理或防火墙、JVM
+      信任库里的证书过期，或者公司做了中间人代理。这是环境问题，不是模组 bug。
+    fixes_zh:
+    - "检查点名的域名的 DNS 与防火墙规则；有些网络（学校、运营商、地区级过滤）会拦或劫持这些端点。"
+    - "如果在做 TLS 拦截的公司代理后面，把它的根证书导进 JVM 的 cacerts，或对这些域名关掉拦截。"
+    - "太旧的 Java 也会在现代证书上失败：更新 Java（当前 MC 用 17 或 21）。"
     severity: error
     priority: 44
     confidence: 0.85
@@ -286,6 +371,14 @@ rules:
 
   - id: env.headless-jvm
     title: "JVM cannot load GUI libraries (headless environment)"
+    title_zh: "JVM 加载不了 GUI 库（无头环境）"
+    explanation_zh: >-
+      有东西想开窗口（配置对话框、错误弹窗，或者客户端本身），但这个 JVM 没有图形支持，常见于精简
+      Linux 或 JRE、Docker、纯命令行服务器。
+    fixes_zh:
+    - "Linux 上装完整 JDK 的 GUI 库：apt install openjdk-17-jdk（不是 -jre-headless），或对应发行版的 libawt_xawt 包。"
+    - "如果这是服务端，出问题的代码本来就不该开 GUI：在堆栈里找到那个模组并更新它，服务端安全的模组会先判断 FMLEnvironment.dist。"
+    - "Docker 里用带 AWT 的 JDK 镜像，或者设 -Djava.awt.headless=true，让调用方以一个清晰的错误失败，而不是把加载器搞崩。"
     severity: fatal
     priority: 44
     confidence: 0.9

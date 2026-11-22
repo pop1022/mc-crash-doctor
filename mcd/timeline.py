@@ -9,6 +9,11 @@ It is deliberately read-only and dumb: no parsing of levels into severities, no
 guessing which line is the crash. A line without a timestamp is skipped, and the
 report says how many were skipped rather than quietly dropping them.
 
+One exception, and it is about honesty rather than inference: the lines that
+follow the last timestamped entry are usually the exception text that made the
+crash worth looking at, and they never carry a timestamp. Those are shown
+verbatim, labelled as such -- what a log says is not something to paraphrase.
+
     python -m mcd latest.log --timeline 60
 """
 from __future__ import annotations
@@ -72,6 +77,24 @@ def extract_events(text: str) -> tuple[list[Event], int]:
     return events, skipped
 
 
+def trailing_lines(text: str, limit: int = 4) -> list[str]:
+    """Non-empty lines after the last timestamped one, in file order.
+
+    A stack trace has no clock prefix; the tail of a log is exactly where the
+    exception lives. These are returned verbatim and never folded into the
+    timeline, so nothing here is presented as something with a time.
+    """
+    lines = [ln for ln in (text or "").splitlines() if ln.strip()]
+    tail: list[str] = []
+    for line in reversed(lines):
+        if _TS_LINE.match(line):
+            break
+        tail.append(line)
+        if len(tail) >= limit:
+            break
+    return list(reversed(tail))
+
+
 def window(events: list[Event], seconds: int = 60) -> tuple[list[Event], int]:
     """Events in the `seconds` before the last event, plus the earliest event's
     clock. Handles a midnight wrap (a log that starts 23:59 and ends 00:01) by
@@ -95,7 +118,8 @@ def window(events: list[Event], seconds: int = 60) -> tuple[list[Event], int]:
 
 
 def render_timeline(events: list[Event], skipped: int, seconds: int,
-                    out: TextIO, *, source: str = "") -> None:
+                    out: TextIO, *, source: str = "",
+                    trailing: list[str] | None = None) -> None:
     head = f"Timeline — last {seconds}s of timestamped log lines"
     out.write(head + "\n" + "=" * len(head) + "\n")
     if source:
@@ -115,5 +139,12 @@ def render_timeline(events: list[Event], skipped: int, seconds: int,
         who = f" ({e.thread})" if e.thread else ""
         out.write(f"{e.clock}{tag}{who}  {e.message}\n")
 
+    if trailing:
+        out.write(f"\n  after the last timestamp, verbatim "
+                  f"({len(trailing)} line(s)):\n")
+        for line in trailing:
+            out.write(f"      {line.strip()}\n")
 
-__all__ = ["Event", "extract_events", "window", "render_timeline"]
+
+__all__ = ["Event", "extract_events", "trailing_lines", "window",
+           "render_timeline"]

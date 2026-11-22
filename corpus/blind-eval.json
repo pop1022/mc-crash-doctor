@@ -6,18 +6,18 @@
     "known_issue/outdated_version": "ambiguous, reported not scored"
   },
   "split": {
-    "dev": 238,
-    "blind": 216
+    "dev": 240,
+    "blind": 214
   },
   "blind": {
-    "n": 216,
+    "n": 214,
     "parse_errors": 0,
-    "diagnosed": 156,
-    "root_cause": 215,
+    "diagnosed": 157,
+    "root_cause": 213,
     "by_verdict": {
       "(none)": [
         157,
-        111
+        112
       ],
       "bug_in_this_mod": [
         4,
@@ -44,7 +44,7 @@
         3
       ],
       "user_error_or_config": [
-        42,
+        40,
         29
       ]
     },
@@ -63,25 +63,25 @@
       "ambig_repo": 2
     },
     "loader_repo": {
-      "n": 73,
-      "diag": 44
+      "n": 71,
+      "diag": 45
     }
   },
   "ci95": {
     "method": "Wilson score interval, z=1.959963984540054",
     "min_quotable_n": 30,
     "diagnosed": {
-      "k": 156,
-      "n": 216,
-      "rate": 0.7222222222222222,
-      "lo": 0.659,
-      "hi": 0.7777
+      "k": 157,
+      "n": 214,
+      "rate": 0.7336448598130841,
+      "lo": 0.6707,
+      "hi": 0.7884
     },
     "root_cause": {
-      "k": 215,
-      "n": 216,
-      "rate": 0.9953703703703703,
-      "lo": 0.9742,
+      "k": 213,
+      "n": 214,
+      "rate": 0.9953271028037384,
+      "lo": 0.974,
       "hi": 0.9992
     },
     "mod_repo_diagnosed": {
@@ -92,11 +92,11 @@
       "hi": 0.8429
     },
     "loader_repo_diagnosed": {
-      "k": 44,
-      "n": 73,
-      "rate": 0.6027397260273972,
-      "lo": 0.4881,
-      "hi": 0.7071
+      "k": 45,
+      "n": 71,
+      "rate": 0.6338028169014085,
+      "lo": 0.5176,
+      "hi": 0.7363
     },
     "blame_error": {
       "k": 1,
@@ -107,11 +107,11 @@
     },
     "by_verdict_diagnosed": {
       "(none)": {
-        "k": 111,
+        "k": 112,
         "n": 157,
-        "rate": 0.7070063694267515,
-        "lo": 0.6316,
-        "hi": 0.7726
+        "rate": 0.7133757961783439,
+        "lo": 0.6382,
+        "hi": 0.7783
       },
       "bug_in_this_mod": {
         "k": 3,
@@ -157,10 +157,10 @@
       },
       "user_error_or_config": {
         "k": 29,
-        "n": 42,
-        "rate": 0.6904761904761905,
-        "lo": 0.5397,
-        "hi": 0.8093
+        "n": 40,
+        "rate": 0.725,
+        "lo": 0.5717,
+        "hi": 0.8389
       }
     },
     "quotable_as_rate": {

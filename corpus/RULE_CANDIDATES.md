@@ -3,15 +3,15 @@
 > 由 `tools/suggest_rules.py --report` 生成，**不要手改**。
 > 本文件只提出候选，**不含任何生效规则**；生效路径见文末「怎么用」。
 
-扫描 454 份 · 未覆盖 **110** 份 · 签名聚类 103 个
+扫描 454 份 · 未覆盖 **106** 份 · 签名聚类 99 个
 
 ## 先看这两个数：一条规则能买到几份报告
 
 - 只按签名聚类，一条规则平均覆盖 **1.07 份**报告
-- 其中 **99** 个聚类只有 1 份报告（合计 99 份，占未覆盖集的 90%）
-- top-10 聚类合计 17 份 = **15%**
+- 其中 **95** 个聚类只有 1 份报告（合计 95 份，占未覆盖集的 90%）
+- top-10 聚类合计 17 份 = **16%**
 
-ROADMAP 风险 R4 的停手判据是「top-10 < 30% → 长尾已枯竭，转结构化输出，停止堆规则」。本次实测 15%，**判据触发**：写规则不再是瓶颈。
+ROADMAP 风险 R4 的停手判据是「top-10 < 30% → 长尾已枯竭，转结构化输出，停止堆规则」。本次实测 16%，**判据触发**：写规则不再是瓶颈。
 
 ## 聚类清单
 
@@ -72,54 +72,50 @@ ROADMAP 风险 R4 的停手判据是「top-10 < 30% → 长尾已枯竭，转结
 | 53 | 1 | `other` | `java.lang.RuntimeException: An exception occurred when launching the server!` | `singleton` |
 | 54 | 1 | `other` | `java.lang.RuntimeException: Could not create directory <HOME>\AppData\Roaming\.m` | `singleton+overfit` |
 | 55 | 1 | `other` | `java.lang.RuntimeException: Could not execute entrypoint stage 'client' due to e` | `singleton` |
-| 56 | 1 | `mixin` | `java.lang.RuntimeException: Error creating Mixin config fabric-crash-report-info` | `singleton` |
-| 57 | 1 | `mixin` | `java.lang.RuntimeException: Error creating Mixin config omega-config.mixins.json` | `singleton` |
-| 58 | 1 | `other` | `java.lang.RuntimeException: Exception thrown while executing job` | `singleton` |
-| 59 | 1 | `other` | `java.lang.RuntimeException: Fabric permissions version 0.4.0-SNAPSHOT is not sup` | `singleton` |
-| 60 | 1 | `other` | `java.lang.RuntimeException: Failed to load class file for 'net.minecraft.client.` | `singleton` |
-| 61 | 1 | `other` | `java.lang.RuntimeException: Failed to read accessWidener file from mod wurst` | `singleton` |
-| 62 | 1 | `other` | `java.lang.RuntimeException: Failed to read classTweaker file from mod fabric-bio` | `singleton` |
-| 63 | 1 | `other` | `java.lang.RuntimeException: Non-unique Mixin config name mixins.reach-entity-att` | `singleton` |
-| 64 | 1 | `other` | `java.lang.RuntimeException: Non-unique Mixin config name xlpackets.mixins.json u` | `singleton` |
-| 65 | 1 | `mod-bug` | `java.lang.RuntimeException: Sodium mod config not found` | `singleton` |
-| 66 | 1 | `mod-bug` | `java.lang.RuntimeException: Unfixable conflicts` | `singleton` |
-| 67 | 1 | `mod-bug` | `java.lang.RuntimeException: Unknown variable: BIOME_PALE_GARDEN` | `singleton` |
-| 68 | 1 | `mod-bug` | `java.lang.RuntimeException: broken shader file` | `singleton` |
-| 69 | 1 | `other` | `java.lang.RuntimeException: error remapping game jars [<HOME>\AppData\Roaming\co` | `singleton+overfit` |
-| 70 | 1 | `other` | `java.lang.RuntimeException: error remapping game jars [F:\Modded MC\curseforge\m` | `singleton+overfit` |
-| 71 | 1 | `other` | `java.lang.RuntimeException: java.util.concurrent.ExecutionException: java.lang.A` | `singleton` |
-| 72 | 1 | `other` | `java.lang.RuntimeException: net.fabricmc.loader.api.VersionParsingException: Cou` | `singleton` |
-| 73 | 1 | `other` | `java.lang.StackOverflowError: Exception in server tick loop` | `singleton` |
-| 74 | 1 | `other` | `java.lang.StackOverflowError: null` | `singleton` |
-| 75 | 1 | `other` | `java.lang.StringIndexOutOfBoundsException: Range [16, 13) out of bounds for leng` | `singleton` |
-| 76 | 1 | `other` | `java.lang.Throwable: null` | `singleton` |
-| 77 | 1 | `mod-loading` | `java.lang.TypeNotPresentException: Type kts/dev/common/A not present` | `singleton+overfit` |
-| 78 | 1 | `native` | `java.lang.UnsatisfiedLinkError: Failed to locate library: liblwjgl.so` | `singleton` |
-| 79 | 1 | `other` | `java.lang.UnsupportedOperationException: Reflective setAccessible(true) disabled` | `singleton` |
-| 80 | 1 | `other` | `java.net.ConnectException: Connection timed out: connect` | `singleton` |
-| 81 | 1 | `other` | `java.net.SocketTimeoutException: connect timed out` | `singleton` |
-| 82 | 1 | `other` | `java.net.http.HttpConnectTimeoutException: HTTP connect timed out` | `singleton` |
-| 83 | 1 | `other` | `java.net.http.HttpTimeoutException: request timed out` | `singleton` |
-| 84 | 1 | `other` | `java.nio.file.NoSuchFileException: config\metadata.json` | `singleton` |
-| 85 | 1 | `other` | `java.util.ConcurrentModificationException: null` | `singleton` |
-| 86 | 1 | `other` | `java.util.ServiceConfigurationError: org.spongepowered.asm.service.IMixinService` | `singleton` |
-| 87 | 1 | `mod-bug` | `java.util.concurrent.CompletionException: java.lang.ClassCastException: class ne` | `singleton` |
-| 88 | 1 | `other` | `java.util.concurrent.CompletionException: java.lang.NoSuchMethodError: 'net.mine` | `singleton` |
-| 89 | 1 | `other` | `java.util.concurrent.CompletionException: java.lang.RuntimeException: could not ` | `singleton` |
-| 90 | 1 | `mod-bug` | `net.fabricmc.fabric.impl.registry.sync.RemapException: Received 4 registry entri` | `singleton` |
-| 91 | 1 | `mod-loading` | `net.fabricmc.loader.impl.FormattedException: java.lang.IllegalArgumentException:` | `singleton` |
-| 92 | 1 | `mod-loading` | `net.fabricmc.loader.impl.FormattedException: joptsimple.MultipleArgumentsForOpti` | `singleton` |
-| 93 | 1 | `other` | `net.minecraft.ReportedException: Exception generating new chunk` | `singleton` |
-| 94 | 1 | `other` | `net.minecraft.ReportedException: Manually triggered debug crash` | `singleton` |
-| 95 | 1 | `other` | `net.minecraftforge.fml.LoadingFailedException: Loading errors encountered: [` | `singleton` |
-| 96 | 1 | `mod-loading` | `net.neoforged.neoforge.logging.CrashReportExtender$ModLoadingCrashException: Mod` | `singleton` |
-| 97 | 1 | `other` | `org.gradle.api.internal.tasks.testing.TestSuiteExecutionException: Could not sta` | `singleton` |
-| 98 | 1 | `mod-bug` | `org.gradle.api.plugins.UnknownPluginException: Plugin [id: 'fabric-loom', versio` | `singleton` |
-| 99 | 1 | `mixin` | `org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException: Inva` | `singleton` |
-| 100 | 1 | `mixin` | `org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: @Shado` | `singleton` |
-| 101 | 1 | `mixin` | `org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: @Shado` | `singleton+overfit` |
-| 102 | 1 | `mixin` | `org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError: An une` | `singleton` |
-| 103 | 1 | `other` | `org.spongepowered.asm.mixin.transformer.throwables.ReEntrantTransformerError: Re` | `singleton` |
+| 56 | 1 | `other` | `java.lang.RuntimeException: Exception thrown while executing job` | `singleton` |
+| 57 | 1 | `other` | `java.lang.RuntimeException: Fabric permissions version 0.4.0-SNAPSHOT is not sup` | `singleton` |
+| 58 | 1 | `other` | `java.lang.RuntimeException: Failed to load class file for 'net.minecraft.client.` | `singleton` |
+| 59 | 1 | `other` | `java.lang.RuntimeException: Failed to read accessWidener file from mod wurst` | `singleton` |
+| 60 | 1 | `other` | `java.lang.RuntimeException: Failed to read classTweaker file from mod fabric-bio` | `singleton` |
+| 61 | 1 | `mod-bug` | `java.lang.RuntimeException: Sodium mod config not found` | `singleton` |
+| 62 | 1 | `mod-bug` | `java.lang.RuntimeException: Unfixable conflicts` | `singleton` |
+| 63 | 1 | `mod-bug` | `java.lang.RuntimeException: Unknown variable: BIOME_PALE_GARDEN` | `singleton` |
+| 64 | 1 | `mod-bug` | `java.lang.RuntimeException: broken shader file` | `singleton` |
+| 65 | 1 | `other` | `java.lang.RuntimeException: error remapping game jars [<HOME>\AppData\Roaming\co` | `singleton+overfit` |
+| 66 | 1 | `other` | `java.lang.RuntimeException: error remapping game jars [F:\Modded MC\curseforge\m` | `singleton+overfit` |
+| 67 | 1 | `other` | `java.lang.RuntimeException: java.util.concurrent.ExecutionException: java.lang.A` | `singleton` |
+| 68 | 1 | `other` | `java.lang.RuntimeException: net.fabricmc.loader.api.VersionParsingException: Cou` | `singleton` |
+| 69 | 1 | `other` | `java.lang.StackOverflowError: Exception in server tick loop` | `singleton` |
+| 70 | 1 | `other` | `java.lang.StackOverflowError: null` | `singleton` |
+| 71 | 1 | `other` | `java.lang.StringIndexOutOfBoundsException: Range [16, 13) out of bounds for leng` | `singleton` |
+| 72 | 1 | `other` | `java.lang.Throwable: null` | `singleton` |
+| 73 | 1 | `mod-loading` | `java.lang.TypeNotPresentException: Type kts/dev/common/A not present` | `singleton+overfit` |
+| 74 | 1 | `native` | `java.lang.UnsatisfiedLinkError: Failed to locate library: liblwjgl.so` | `singleton` |
+| 75 | 1 | `other` | `java.lang.UnsupportedOperationException: Reflective setAccessible(true) disabled` | `singleton` |
+| 76 | 1 | `other` | `java.net.ConnectException: Connection timed out: connect` | `singleton` |
+| 77 | 1 | `other` | `java.net.SocketTimeoutException: connect timed out` | `singleton` |
+| 78 | 1 | `other` | `java.net.http.HttpConnectTimeoutException: HTTP connect timed out` | `singleton` |
+| 79 | 1 | `other` | `java.net.http.HttpTimeoutException: request timed out` | `singleton` |
+| 80 | 1 | `other` | `java.nio.file.NoSuchFileException: config\metadata.json` | `singleton` |
+| 81 | 1 | `other` | `java.util.ConcurrentModificationException: null` | `singleton` |
+| 82 | 1 | `other` | `java.util.ServiceConfigurationError: org.spongepowered.asm.service.IMixinService` | `singleton` |
+| 83 | 1 | `mod-bug` | `java.util.concurrent.CompletionException: java.lang.ClassCastException: class ne` | `singleton` |
+| 84 | 1 | `other` | `java.util.concurrent.CompletionException: java.lang.NoSuchMethodError: 'net.mine` | `singleton` |
+| 85 | 1 | `other` | `java.util.concurrent.CompletionException: java.lang.RuntimeException: could not ` | `singleton` |
+| 86 | 1 | `mod-bug` | `net.fabricmc.fabric.impl.registry.sync.RemapException: Received 4 registry entri` | `singleton` |
+| 87 | 1 | `mod-loading` | `net.fabricmc.loader.impl.FormattedException: java.lang.IllegalArgumentException:` | `singleton` |
+| 88 | 1 | `mod-loading` | `net.fabricmc.loader.impl.FormattedException: joptsimple.MultipleArgumentsForOpti` | `singleton` |
+| 89 | 1 | `other` | `net.minecraft.ReportedException: Exception generating new chunk` | `singleton` |
+| 90 | 1 | `other` | `net.minecraft.ReportedException: Manually triggered debug crash` | `singleton` |
+| 91 | 1 | `other` | `net.minecraftforge.fml.LoadingFailedException: Loading errors encountered: [` | `singleton` |
+| 92 | 1 | `mod-loading` | `net.neoforged.neoforge.logging.CrashReportExtender$ModLoadingCrashException: Mod` | `singleton` |
+| 93 | 1 | `other` | `org.gradle.api.internal.tasks.testing.TestSuiteExecutionException: Could not sta` | `singleton` |
+| 94 | 1 | `mod-bug` | `org.gradle.api.plugins.UnknownPluginException: Plugin [id: 'fabric-loom', versio` | `singleton` |
+| 95 | 1 | `mixin` | `org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException: Inva` | `singleton` |
+| 96 | 1 | `mixin` | `org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: @Shado` | `singleton` |
+| 97 | 1 | `mixin` | `org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: @Shado` | `singleton+overfit` |
+| 98 | 1 | `mixin` | `org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError: An une` | `singleton` |
+| 99 | 1 | `other` | `org.spongepowered.asm.mixin.transformer.throwables.ReEntrantTransformerError: Re` | `singleton` |
 
 ## 每个聚类建议的 `when` 骨架
 
@@ -996,37 +992,7 @@ when:
     - 'Could\ not\ execute\ entrypoint\ stage\ ''client''\ due\ to\ errors,\ provided\ by\ ''fabric\-r'
 ```
 
-### 56. java.lang.RuntimeException: Error creating Mixin config fabric-crash-report-info-v1.mixins.json for  — 1 份
-
-- 桶：`mixin` · 异常类：`java.lang.IllegalArgumentException`
-- 泛化判定：`singleton`
-- 报告：`FabricMC__fabric-loader/750`
-- 建议 `when`：
-
-```yaml
-when:
-  exception:
-    - '^java\.lang\.IllegalArgumentException$'
-  exception_msg:
-    - 'Error\ creating\ Mixin\ config\ fabric\-crash\-report\-info\-v1\.mixins\.json\ for\ mod\ fabr'
-```
-
-### 57. java.lang.RuntimeException: Error creating Mixin config omega-config.mixins.json for mod omega-confi — 1 份
-
-- 桶：`mixin` · 异常类：`java.lang.IllegalArgumentException`
-- 泛化判定：`singleton`
-- 报告：`FabricMC__fabric-loader/620`
-- 建议 `when`：
-
-```yaml
-when:
-  exception:
-    - '^java\.lang\.IllegalArgumentException$'
-  exception_msg:
-    - 'Error\ creating\ Mixin\ config\ omega\-config\.mixins\.json\ for\ mod\ omega\-config'
-```
-
-### 58. java.lang.RuntimeException: Exception thrown while executing job — 1 份
+### 56. java.lang.RuntimeException: Exception thrown while executing job — 1 份
 
 - 桶：`other` · 异常类：`net.minecraft.world.level.chunk.MissingPaletteEntryException`
 - 泛化判定：`singleton`
@@ -1041,7 +1007,7 @@ when:
     - 'Exception\ thrown\ while\ executing\ job'
 ```
 
-### 59. java.lang.RuntimeException: Fabric permissions version 0.4.0-SNAPSHOT is not supported. Please updat — 1 份
+### 57. java.lang.RuntimeException: Fabric permissions version 0.4.0-SNAPSHOT is not supported. Please updat — 1 份
 
 - 桶：`other` · 异常类：`java.io.IOException`
 - 泛化判定：`singleton`
@@ -1056,7 +1022,7 @@ when:
     - 'Fabric\ permissions\ version\ 0\.4\.0\-SNAPSHOT\ is\ not\ supported\.\ Please\ update\ Fabric'
 ```
 
-### 60. java.lang.RuntimeException: Failed to load class file for 'net.minecraft.client.main.Main'! — 1 份
+### 58. java.lang.RuntimeException: Failed to load class file for 'net.minecraft.client.main.Main'! — 1 份
 
 - 桶：`other` · 异常类：`java.io.FileNotFoundException`
 - 泛化判定：`singleton`
@@ -1071,7 +1037,7 @@ when:
     - 'Failed\ to\ load\ class\ file\ for\ ''net\.minecraft\.client\.main\.Main''!'
 ```
 
-### 61. java.lang.RuntimeException: Failed to read accessWidener file from mod wurst — 1 份
+### 59. java.lang.RuntimeException: Failed to read accessWidener file from mod wurst — 1 份
 
 - 桶：`other` · 异常类：`net.fabricmc.loader.impl.lib.accesswidener.AccessWidenerFormatException`
 - 泛化判定：`singleton`
@@ -1086,7 +1052,7 @@ when:
     - 'Failed\ to\ read\ accessWidener\ file\ from\ mod\ wurst'
 ```
 
-### 62. java.lang.RuntimeException: Failed to read classTweaker file from mod fabric-biome-api-v1 — 1 份
+### 60. java.lang.RuntimeException: Failed to read classTweaker file from mod fabric-biome-api-v1 — 1 份
 
 - 桶：`other` · 异常类：`net.fabricmc.loader.impl.lib.classtweaker.reader.ClassTweakerFormatException`
 - 泛化判定：`singleton`
@@ -1101,37 +1067,7 @@ when:
     - 'Failed\ to\ read\ classTweaker\ file\ from\ mod\ fabric\-biome\-api\-v1'
 ```
 
-### 63. java.lang.RuntimeException: Non-unique Mixin config name mixins.reach-entity-attributes.json used by — 1 份
-
-- 桶：`other` · 异常类：`java.lang.RuntimeException`
-- 泛化判定：`singleton`
-- 报告：`FabricMC__fabric-loader/778`
-- 建议 `when`：
-
-```yaml
-when:
-  exception:
-    - '^java\.lang\.RuntimeException$'
-  exception_msg:
-    - 'Non\-unique\ Mixin\ config\ name\ mixins\.reach\-entity\-attributes\.json\ used\ by\ the\ mod'
-```
-
-### 64. java.lang.RuntimeException: Non-unique Mixin config name xlpackets.mixins.json used by the mods thic — 1 份
-
-- 桶：`other` · 异常类：`java.lang.RuntimeException`
-- 泛化判定：`singleton`
-- 报告：`FabricMC__fabric-loader/834`
-- 建议 `when`：
-
-```yaml
-when:
-  exception:
-    - '^java\.lang\.RuntimeException$'
-  exception_msg:
-    - 'Non\-unique\ Mixin\ config\ name\ xlpackets\.mixins\.json\ used\ by\ the\ mods\ thiccpackets'
-```
-
-### 65. java.lang.RuntimeException: Sodium mod config not found — 1 份
+### 61. java.lang.RuntimeException: Sodium mod config not found — 1 份
 
 - 桶：`mod-bug` · 异常类：`java.lang.RuntimeException`
 - 泛化判定：`singleton`
@@ -1146,7 +1082,7 @@ when:
     - 'Sodium\ mod\ config\ not\ found'
 ```
 
-### 66. java.lang.RuntimeException: Unfixable conflicts — 1 份
+### 62. java.lang.RuntimeException: Unfixable conflicts — 1 份
 
 - 桶：`mod-bug` · 异常类：`java.lang.RuntimeException`
 - 泛化判定：`singleton`
@@ -1161,7 +1097,7 @@ when:
     - 'Unfixable\ conflicts'
 ```
 
-### 67. java.lang.RuntimeException: Unknown variable: BIOME_PALE_GARDEN — 1 份
+### 63. java.lang.RuntimeException: Unknown variable: BIOME_PALE_GARDEN — 1 份
 
 - 桶：`mod-bug` · 异常类：`java.lang.RuntimeException`
 - 泛化判定：`singleton`
@@ -1176,7 +1112,7 @@ when:
     - 'Unknown\ variable:\ BIOME_PALE_GARDEN'
 ```
 
-### 68. java.lang.RuntimeException: broken shader file — 1 份
+### 64. java.lang.RuntimeException: broken shader file — 1 份
 
 - 桶：`mod-bug` · 异常类：`java.lang.RuntimeException`
 - 泛化判定：`singleton`
@@ -1191,7 +1127,7 @@ when:
     - 'broken\ shader\ file'
 ```
 
-### 69. java.lang.RuntimeException: error remapping game jars [<HOME>\AppData\Roaming\com.modrinth.theseus\m — 1 份
+### 65. java.lang.RuntimeException: error remapping game jars [<HOME>\AppData\Roaming\com.modrinth.theseus\m — 1 份
 
 - 桶：`other` · 异常类：`java.nio.file.NoSuchFileException`
 - 泛化判定：`singleton+overfit` · 报告特有内容：path
@@ -1206,7 +1142,7 @@ when:
     - 'error\ remapping\ game\ jars\ \[<HOME>\\AppData\\Roaming\\com\.modrinth\.theseus\\meta\\vers'
 ```
 
-### 70. java.lang.RuntimeException: error remapping game jars [F:\Modded MC\curseforge\minecraft\Install\ver — 1 份
+### 66. java.lang.RuntimeException: error remapping game jars [F:\Modded MC\curseforge\minecraft\Install\ver — 1 份
 
 - 桶：`other` · 异常类：`java.io.IOException`
 - 泛化判定：`singleton+overfit` · 报告特有内容：path
@@ -1221,7 +1157,7 @@ when:
     - 'error\ remapping\ game\ jars\ \[F:\\Modded\ MC\\curseforge\\minecraft\\Install\\versions\\fa'
 ```
 
-### 71. java.lang.RuntimeException: java.util.concurrent.ExecutionException: java.lang.ArrayIndexOutOfBounds — 1 份
+### 67. java.lang.RuntimeException: java.util.concurrent.ExecutionException: java.lang.ArrayIndexOutOfBounds — 1 份
 
 - 桶：`other` · 异常类：`java.lang.ArrayIndexOutOfBoundsException`
 - 泛化判定：`singleton`
@@ -1236,7 +1172,7 @@ when:
     - 'java\.util\.concurrent\.ExecutionException:\ java\.lang\.ArrayIndexOutOfBoundsExceptio'
 ```
 
-### 72. java.lang.RuntimeException: net.fabricmc.loader.api.VersionParsingException: Could not parse version — 1 份
+### 68. java.lang.RuntimeException: net.fabricmc.loader.api.VersionParsingException: Could not parse version — 1 份
 
 - 桶：`other` · 异常类：`java.lang.NumberFormatException`
 - 泛化判定：`singleton`
@@ -1251,7 +1187,7 @@ when:
     - 'net\.fabricmc\.loader\.api\.VersionParsingException:\ Could\ not\ parse\ version\ number'
 ```
 
-### 73. java.lang.StackOverflowError: Exception in server tick loop — 1 份
+### 69. java.lang.StackOverflowError: Exception in server tick loop — 1 份
 
 - 桶：`other` · 异常类：`java.lang.StackOverflowError`
 - 描述：`Exception in server tick loop`
@@ -1269,7 +1205,7 @@ when:
     - 'Exception\ in\ server\ tick\ loop'
 ```
 
-### 74. java.lang.StackOverflowError: null — 1 份
+### 70. java.lang.StackOverflowError: null — 1 份
 
 - 桶：`other` · 异常类：`java.lang.StackOverflowError`
 - 泛化判定：`singleton`
@@ -1284,7 +1220,7 @@ when:
     - 'null'
 ```
 
-### 75. java.lang.StringIndexOutOfBoundsException: Range [16, 13) out of bounds for length 45 — 1 份
+### 71. java.lang.StringIndexOutOfBoundsException: Range [16, 13) out of bounds for length 45 — 1 份
 
 - 桶：`other` · 异常类：`java.lang.StringIndexOutOfBoundsException`
 - 泛化判定：`singleton`
@@ -1299,7 +1235,7 @@ when:
     - 'Range\ \[16,\ 13\)\ out\ of\ bounds\ for\ length\ 45'
 ```
 
-### 76. java.lang.Throwable: null — 1 份
+### 72. java.lang.Throwable: null — 1 份
 
 - 桶：`other` · 异常类：`java.lang.Throwable`
 - 泛化判定：`singleton`
@@ -1314,7 +1250,7 @@ when:
     - 'null'
 ```
 
-### 77. java.lang.TypeNotPresentException: Type kts/dev/common/A not present — 1 份
+### 73. java.lang.TypeNotPresentException: Type kts/dev/common/A not present — 1 份
 
 - 桶：`mod-loading` · 异常类：`java.lang.ClassNotFoundException`
 - 泛化判定：`singleton+overfit` · 报告特有内容：path
@@ -1329,7 +1265,7 @@ when:
     - 'Type\ kts/dev/common/A\ not\ present'
 ```
 
-### 78. java.lang.UnsatisfiedLinkError: Failed to locate library: liblwjgl.so — 1 份
+### 74. java.lang.UnsatisfiedLinkError: Failed to locate library: liblwjgl.so — 1 份
 
 - 桶：`native` · 异常类：`java.lang.UnsatisfiedLinkError`
 - 泛化判定：`singleton`
@@ -1344,7 +1280,7 @@ when:
     - 'Failed\ to\ locate\ library:\ liblwjgl\.so'
 ```
 
-### 79. java.lang.UnsupportedOperationException: Reflective setAccessible(true) disabled — 1 份
+### 75. java.lang.UnsupportedOperationException: Reflective setAccessible(true) disabled — 1 份
 
 - 桶：`other` · 异常类：`java.io.IOException`
 - 泛化判定：`singleton`
@@ -1359,7 +1295,7 @@ when:
     - 'Reflective\ setAccessible\(true\)\ disabled'
 ```
 
-### 80. java.net.ConnectException: Connection timed out: connect — 1 份
+### 76. java.net.ConnectException: Connection timed out: connect — 1 份
 
 - 桶：`other` · 异常类：`java.net.SocketException`
 - 泛化判定：`singleton`
@@ -1374,7 +1310,7 @@ when:
     - 'Connection\ timed\ out:\ connect'
 ```
 
-### 81. java.net.SocketTimeoutException: connect timed out — 1 份
+### 77. java.net.SocketTimeoutException: connect timed out — 1 份
 
 - 桶：`other` · 异常类：`java.net.SocketTimeoutException`
 - 泛化判定：`singleton`
@@ -1389,7 +1325,7 @@ when:
     - 'connect\ timed\ out'
 ```
 
-### 82. java.net.http.HttpConnectTimeoutException: HTTP connect timed out — 1 份
+### 78. java.net.http.HttpConnectTimeoutException: HTTP connect timed out — 1 份
 
 - 桶：`other` · 异常类：`java.net.ConnectException`
 - 泛化判定：`singleton`
@@ -1404,7 +1340,7 @@ when:
     - 'HTTP\ connect\ timed\ out'
 ```
 
-### 83. java.net.http.HttpTimeoutException: request timed out — 1 份
+### 79. java.net.http.HttpTimeoutException: request timed out — 1 份
 
 - 桶：`other` · 异常类：`java.net.http.HttpTimeoutException`
 - 泛化判定：`singleton`
@@ -1419,7 +1355,7 @@ when:
     - 'request\ timed\ out'
 ```
 
-### 84. java.nio.file.NoSuchFileException: config\metadata.json — 1 份
+### 80. java.nio.file.NoSuchFileException: config\metadata.json — 1 份
 
 - 桶：`other` · 异常类：`com.google.gson.stream.MalformedJsonException`
 - 泛化判定：`singleton`
@@ -1434,7 +1370,7 @@ when:
     - 'config\\metadata\.json'
 ```
 
-### 85. java.util.ConcurrentModificationException: null — 1 份
+### 81. java.util.ConcurrentModificationException: null — 1 份
 
 - 桶：`other` · 异常类：`java.util.ConcurrentModificationException`
 - 泛化判定：`singleton`
@@ -1449,7 +1385,7 @@ when:
     - 'null'
 ```
 
-### 86. java.util.ServiceConfigurationError: org.spongepowered.asm.service.IMixinServiceBootstrap: Provider  — 1 份
+### 82. java.util.ServiceConfigurationError: org.spongepowered.asm.service.IMixinServiceBootstrap: Provider  — 1 份
 
 - 桶：`other` · 异常类：`org.spongepowered.asm.service.ServiceNotAvailableError`
 - 泛化判定：`singleton`
@@ -1464,7 +1400,7 @@ when:
     - 'org\.spongepowered\.asm\.service\.IMixinServiceBootstrap:\ Provider\ net\.fabricmc\.load'
 ```
 
-### 87. java.util.concurrent.CompletionException: java.lang.ClassCastException: class net.minecraft.world.le — 1 份
+### 83. java.util.concurrent.CompletionException: java.lang.ClassCastException: class net.minecraft.world.le — 1 份
 
 - 桶：`mod-bug` · 异常类：`java.lang.ClassCastException`
 - 描述：`Exception in server tick loop`
@@ -1482,7 +1418,7 @@ when:
     - 'java\.lang\.ClassCastException:\ class\ net\.minecraft\.world\.level\.block\.entity\.Block'
 ```
 
-### 88. java.util.concurrent.CompletionException: java.lang.NoSuchMethodError: 'net.minecraft.nbt.ListTag co — 1 份
+### 84. java.util.concurrent.CompletionException: java.lang.NoSuchMethodError: 'net.minecraft.nbt.ListTag co — 1 份
 
 - 桶：`other` · 异常类：`java.util.concurrent.CompletionException`
 - 泛化判定：`singleton`
@@ -1497,7 +1433,7 @@ when:
     - 'java\.lang\.NoSuchMethodError:\ ''net\.minecraft\.nbt\.ListTag\ com\.simibubi\.create\.cont'
 ```
 
-### 89. java.util.concurrent.CompletionException: java.lang.RuntimeException: could not reload shaders — 1 份
+### 85. java.util.concurrent.CompletionException: java.lang.RuntimeException: could not reload shaders — 1 份
 
 - 桶：`other` · 异常类：`java.io.IOException`
 - 泛化判定：`singleton`
@@ -1512,7 +1448,7 @@ when:
     - 'java\.lang\.RuntimeException:\ could\ not\ reload\ shaders'
 ```
 
-### 90. net.fabricmc.fabric.impl.registry.sync.RemapException: Received 4 registry entries that are unknown  — 1 份
+### 86. net.fabricmc.fabric.impl.registry.sync.RemapException: Received 4 registry entries that are unknown  — 1 份
 
 - 桶：`mod-bug` · 异常类：`net.fabricmc.fabric.impl.registry.sync.RemapException`
 - 泛化判定：`singleton`
@@ -1527,7 +1463,7 @@ when:
     - 'Received\ 4\ registry\ entries\ that\ are\ unknown\ to\ this\ client\.'
 ```
 
-### 91. net.fabricmc.loader.impl.FormattedException: java.lang.IllegalArgumentException: Invalid UUID string — 1 份
+### 87. net.fabricmc.loader.impl.FormattedException: java.lang.IllegalArgumentException: Invalid UUID string — 1 份
 
 - 桶：`mod-loading` · 异常类：`java.lang.IllegalArgumentException`
 - 泛化判定：`singleton`
@@ -1542,7 +1478,7 @@ when:
     - 'java\.lang\.IllegalArgumentException:\ Invalid\ UUID\ string'
 ```
 
-### 92. net.fabricmc.loader.impl.FormattedException: joptsimple.MultipleArgumentsForOptionException: Found m — 1 份
+### 88. net.fabricmc.loader.impl.FormattedException: joptsimple.MultipleArgumentsForOptionException: Found m — 1 份
 
 - 桶：`mod-loading` · 异常类：`joptsimple.MultipleArgumentsForOptionException`
 - 泛化判定：`singleton`
@@ -1557,7 +1493,7 @@ when:
     - 'joptsimple\.MultipleArgumentsForOptionException:\ Found\ multiple\ arguments\ for\ opt'
 ```
 
-### 93. net.minecraft.ReportedException: Exception generating new chunk — 1 份
+### 89. net.minecraft.ReportedException: Exception generating new chunk — 1 份
 
 - 桶：`other` · 异常类：`java.lang.IllegalStateException`
 - 泛化判定：`singleton`
@@ -1572,7 +1508,7 @@ when:
     - 'Exception\ generating\ new\ chunk'
 ```
 
-### 94. net.minecraft.ReportedException: Manually triggered debug crash — 1 份
+### 90. net.minecraft.ReportedException: Manually triggered debug crash — 1 份
 
 - 桶：`other` · 异常类：`java.lang.Throwable`
 - 描述：`Manually triggered debug crash`
@@ -1590,7 +1526,7 @@ when:
     - 'Manually\ triggered\ debug\ crash'
 ```
 
-### 95. net.minecraftforge.fml.LoadingFailedException: Loading errors encountered: [ — 1 份
+### 91. net.minecraftforge.fml.LoadingFailedException: Loading errors encountered: [ — 1 份
 
 - 桶：`other` · 异常类：`net.minecraftforge.fml.LoadingFailedException`
 - 泛化判定：`singleton`
@@ -1605,7 +1541,7 @@ when:
     - 'Loading\ errors\ encountered:\ \['
 ```
 
-### 96. net.neoforged.neoforge.logging.CrashReportExtender$ModLoadingCrashException: Mod loading has failed — 1 份
+### 92. net.neoforged.neoforge.logging.CrashReportExtender$ModLoadingCrashException: Mod loading has failed — 1 份
 
 - 桶：`mod-loading` · 异常类：`net.neoforged.neoforge.logging.CrashReportExtender$ModLoadingCrashException`
 - 描述：`Mod loading failures have occurred; consult the issue messages for more details`
@@ -1623,7 +1559,7 @@ when:
     - 'Mod\ loading\ has\ failed'
 ```
 
-### 97. org.gradle.api.internal.tasks.testing.TestSuiteExecutionException: Could not start Gradle Test Execu — 1 份
+### 93. org.gradle.api.internal.tasks.testing.TestSuiteExecutionException: Could not start Gradle Test Execu — 1 份
 
 - 桶：`other` · 异常类：`java.lang.AssertionError`
 - 泛化判定：`singleton`
@@ -1638,7 +1574,7 @@ when:
     - 'Could\ not\ start\ Gradle\ Test\ Executor\ 15\.'
 ```
 
-### 98. org.gradle.api.plugins.UnknownPluginException: Plugin [id: 'fabric-loom', version: '1.3-SNAPSHOT'] w — 1 份
+### 94. org.gradle.api.plugins.UnknownPluginException: Plugin [id: 'fabric-loom', version: '1.3-SNAPSHOT'] w — 1 份
 
 - 桶：`mod-bug` · 异常类：`org.gradle.api.plugins.UnknownPluginException`
 - 泛化判定：`singleton`
@@ -1653,7 +1589,7 @@ when:
     - 'Plugin\ \[id:\ ''fabric\-loom'',\ version:\ ''1\.3\-SNAPSHOT''\]\ was\ not\ found\ in\ any\ of\ the'
 ```
 
-### 99. org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException: Invalid descriptor on fa — 1 份
+### 95. org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException: Invalid descriptor on fa — 1 份
 
 - 桶：`mixin` · 异常类：`org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException`
 - 泛化判定：`singleton`
@@ -1668,7 +1604,7 @@ when:
     - 'Invalid\ descriptor\ on\ fastanim\.mixins\.json:ParrotEntityModelMixin\ from\ mod\ faste'
 ```
 
-### 100. org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: @Shadow field overlay was  — 1 份
+### 96. org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: @Shadow field overlay was  — 1 份
 
 - 桶：`mixin` · 异常类：`org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException`
 - 泛化判定：`singleton`
@@ -1683,7 +1619,7 @@ when:
     - '@Shadow\ field\ overlay\ was\ not\ located\ in\ the\ target\ class\ net\.minecraft\.client\.M'
 ```
 
-### 101. org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: @Shadow field val$p_434753 — 1 份
+### 97. org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: @Shadow field val$p_434753 — 1 份
 
 - 桶：`mixin` · 异常类：`org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError`
 - 泛化判定：`singleton+overfit` · 报告特有内容：mixin shadow field
@@ -1698,7 +1634,7 @@ when:
     - '@Shadow\ field\ val\$p_434753_\ was\ not\ located\ in\ the\ target\ class\ net\.minecraft\.cl'
 ```
 
-### 102. org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError: An unexpected critical err — 1 份
+### 98. org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError: An unexpected critical err — 1 份
 
 - 桶：`mixin` · 异常类：`org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError`
 - 描述：`Initializing game`
@@ -1716,7 +1652,7 @@ when:
     - 'An\ unexpected\ critical\ error\ was\ encountered'
 ```
 
-### 103. org.spongepowered.asm.mixin.transformer.throwables.ReEntrantTransformerError: Re-entrance error. — 1 份
+### 99. org.spongepowered.asm.mixin.transformer.throwables.ReEntrantTransformerError: Re-entrance error. — 1 份
 
 - 桶：`other` · 异常类：`org.spongepowered.asm.mixin.transformer.throwables.ReEntrantTransformerError`
 - 泛化判定：`singleton`

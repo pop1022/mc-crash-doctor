@@ -96,12 +96,26 @@ def main() -> int:
 
     # logic check: the generated sample must diagnose as expected
     from mcd.cli import diagnose
-    rep, findings, t = diagnose(None, sample, source="<web-sample>")
+    from mcd.report.render import build_incident
+
+    rep, findings, t = diagnose(None, sample, source="sample")
     ids = sorted({f.rule_id for f in findings})
     sus = [s.modid for s in t.suspects]
     ok = "hang.watchdog" in ids and "lithium" in sus
     print(f"diagnosis check: findings={ids} suspects={sus[:3]} -> "
           f"{'PASS' if ok else 'FAIL'}")
+
+    # The same diagnosis, precomputed per language. The page shows this while
+    # Pyodide is still downloading, and keeps it if the CDN never answers --
+    # which turns a 9-second blank wait into an instant, real result. Generated
+    # here, by the same engine, so it cannot describe different behaviour.
+    for lang in ("zh", "en"):
+        rep_l, findings_l, t_l = diagnose(None, sample, source="sample", lang=lang)
+        doc = build_incident(rep_l, findings_l, t_l)
+        path = ROOT / "web" / f"sample-diagnosis.{lang}.json"
+        path.write_text(json.dumps(doc, ensure_ascii=False) + "\n",
+                        encoding="utf-8")
+        print(f"wrote {path.relative_to(ROOT)}: {path.stat().st_size:,} B")
     return 0 if ok else 1
 
 

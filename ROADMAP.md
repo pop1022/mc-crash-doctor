@@ -47,7 +47,7 @@
     含「崩溃报告或日志」输入框、「用示例试试」、「选择文件…」、分阶段启动提示），
     不是 404 或 Pages 错误页。
 - [x] **0.3 零触发规则清理**（2026-09-23 完成）
-  - 取证：审计 41 条规则 × 661 文件语料，零触发实为 **4 条**（非旧记的 11）：
+  - 取证：审计 46 条规则 × 661 文件语料，零触发实为 **4 条**（非旧记的 11）：
     `oom.save-time`、`oom.gc-overhead`、`disk.space`、`native.gl`——全是合法
     失败模式，只是语料恰好无样本（情况 b，非死规则）。
   - 做：4 份合成 fixture（`tests/fixtures/synthetic/`，明确标 SYNTHETIC，
@@ -159,7 +159,7 @@
     每条规则的真实触发证据 + 手写钉桩盖进 YAML（文本级插入，保留全部注释；
     幂等可重跑）。`test_gaps.py` 改为**从 YAML provenance 读钉桩**（删掉硬编码
     PINS dict，24 条钉桩单一来源），加"空钉桩=假绿"守卫。
-  - 结果：41 条全部有 fixtures；**37 verified（真实语料证据）+ 4 experimental**
+  - 结果：46 条全部有 fixtures；**37 verified（真实语料证据）+ 4 experimental**
     （oom.save-time/gc-overhead/disk.space/native.gl——仅合成 fixture 证明，
     等真实报告触发自动升级）。
   - 验收：新增 `tests/test_rule_metadata.py`（9 测试：每条有 fixtures、
@@ -357,8 +357,8 @@
     `other` 113 / 43%，`oom` 与 `plugin` 为 0（见下）。
     > **历史口径（2026-10-21），已作废。** 上面这些桶级数字不要引用：它们是
     > 1E.5 修帧解析之前的分桶结果。**唯一可引用的覆盖率数字来自
-    > `corpus/COVERAGE.md`（`corpus/coverage.json`）：75.8%（344/454），
-    > 未覆盖 110 份。** 1E.5 修掉 `TRANSFORMER/` 与 JPMS 前缀后，
+    > `corpus/COVERAGE.md`（`corpus/coverage.json`）：76.6%（348/454），
+    > 未覆盖 106 份。** 1E.5 修掉 `TRANSFORMER/` 与 JPMS 前缀后，
     > `_is_platform_frame` 才真正认得出原版帧，62 份报告从 `mod-bug` 移进
     > `other`；两份数字的差不是矛盾，是解析器修好之后的重分类。
     > `tests/test_doc_numbers.py` 会保证这两份文档不再各说一套。
@@ -674,7 +674,7 @@
    `https://pop1022.github.io/mc-crash-doctor/`（读回验证过页面标题与输入框在
    真实 HTML 里，不是 404）。Phase 0 不再是阻塞项。
 2. **1D.4 已完成**：`corpus/COVERAGE.md` 回答"下一条规则写什么"。全语料
-   454 份诊断率 **75.8%**（344/454），未覆盖 **110** 份——且集中处已经变了：
+   454 份诊断率 **76.6%**（348/454），未覆盖 **106** 份——且集中处已经变了：
    `other` 独占 71 份（41% 未覆盖），`mod-bug` 只剩 16 份（1E.5 修好帧解析后，
    62 份从 `mod-bug` 移进了 `other`，因为原版帧终于认得出来了）。
    下一个规则的靶子是 `other`，不是 `mod-bug`。顺带修掉三个采集缺陷：

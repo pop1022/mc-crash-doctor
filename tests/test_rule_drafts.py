@@ -87,6 +87,7 @@ def test_candidate_ids_cannot_be_confused_with_shipped_ids():
             assert rid not in builtin, f"{path.name}: {rid} shadows a shipped rule"
 
 
+@pytest.mark.private_corpus
 def test_every_candidate_fixture_resolves():
     """A candidate that cites nothing is untestable; one that cites a report
     which does not exist is worse, because it looks testable."""

@@ -67,6 +67,7 @@ def test_snapshot_covers_every_builtin_rule():
         "run python tools/rule_lifecycle.py --write")
 
 
+@pytest.mark.private_corpus
 def test_snapshot_is_current_for_this_corpus_revision():
     """The one test that notices new evidence arriving: ~0.15 s to hash."""
     bad = _tool().stale_reasons(_snap())

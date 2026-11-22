@@ -1,42 +1,19 @@
-name: publish
+name: publish-rehearsal
 
-# Publish to PyPI via Trusted Publishing (OIDC) -- no API token in this repo.
+# A manual, branch-safe rehearsal of the release steps. It builds and verifies
+# the same way release.yml does and uploads nothing -- there is no input that
+# can turn it into a publish, so a dispatch from a branch can never reach PyPI.
 #
-# This file is the part of ROADMAP 1C.2 that did not need credentials. The other
-# half is a one-time action in the PyPI web UI (Your projects -> Publishing ->
-# "Add a pending publisher"):
-#
-#   PyPI project name : mc-crash-doctor
-#   Owner             : pop1022
-#   Repository        : mc-crash-doctor
-#   Workflow name     : publish.yml
-#   Environment       : pypi
-#
-# Until that exists, the `publish` job fails at the OIDC exchange with
-# "Trusted publishing exchange failure" -- loudly, before anything is uploaded,
-# which is the right failure mode. The five values above must match exactly;
-# that is the whole reason they are written down here.
-#
-# UNVERIFIED: no tag has been pushed yet, so this workflow has never run. The
-# steps it mirrors (install, the three script gates, pytest, `python -m build`,
-# the YAML-in-wheel assertion) all run green in tests.yml on every push.
-
+# Real publishing lives in release.yml and only runs on a v* tag, after the
+# artifacts it publishes were built, verified and attached in that same run.
 on:
-  push:
-    tags: ["v*"]
   workflow_dispatch:
-    inputs:
-      dry_run:
-        description: "Build and check the artifacts, but do not upload"
-        type: boolean
-        default: true
 
 permissions:
   contents: read
 
 jobs:
-  gate-and-build:
-    name: gates then build sdist + wheel
+  rehearsal:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,70 +28,24 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[pretty,test]" build
 
-      # Publishing is irreversible ("yanking" is not deleting). The same three
-      # gates tests.yml runs must pass first, in this job, because a green
-      # branch push is not evidence that the *tag* is green.
-      - name: Redaction (privacy boundary)
-        run: python tests/test_redaction.py
-
-      - name: Parser accuracy vs upstream expectations
-        run: python tests/eval_parser.py --strict
-
-      - name: End-to-end + ground truth
-        run: python tests/test_e2e.py
-
-      - name: Pytest suite
-        run: python -m pytest tests/ -q
-
-      - name: The tag matches the package version
+      - name: Gates
         run: |
-          python - <<'PY'
-          import os, sys
-          sys.path.insert(0, ".")
-          import mcd
-          tag = os.environ["GITHUB_REF_NAME"].lstrip("v")
-          if tag != mcd.__version__:
-              sys.exit(f"tag {tag!r} != mcd.__version__ {mcd.__version__!r} "
-                       f"-- PyPI would publish the wrong version")
-          print(f"tag matches version {mcd.__version__}")
-          PY
+          python tests/test_redaction.py
+          python tests/eval_parser.py --strict
+          python tests/test_e2e.py
+          python -m pytest tests/ -q
+
+      - name: Tag is checked by release.yml, not here
+        run: echo "dispatch has no tag; release.yml compares GITHUB_REF_NAME to mcd.__version__"
 
       - name: Build
         run: python -m build
 
-      - name: The artifacts are what the browser wheel also ships
-        run: |
-          python - <<'PY'
-          import glob, zipfile
-          whl = sorted(glob.glob("dist/*.whl"))[-1]
-          names = zipfile.ZipFile(whl).namelist()
-          yml = [n for n in names if n.endswith((".yaml", ".yml"))]
-          assert yml, f"no YAML rule packs in {whl}"
-          assert not [n for n in names if "__pycache__" in n or n.endswith(".pyc")]
-          print(f"ok: {whl} ships {len(yml)} rule packs, no bytecode")
-          print("\n".join(sorted(glob.glob("dist/*"))))
-          PY
+      - name: Verify the artifacts
+        run: python tools/verify_release.py dist --sums
 
       - uses: actions/upload-artifact@v4
         with:
-          name: dist
+          name: rehearsal-dist
           path: dist/
-
-  publish:
-    needs: gate-and-build
-    # A manual dispatch defaults to dry_run, so the only path that uploads is a
-    # tag push -- or a dispatch where someone deliberately unticked the box.
-    if: github.event_name == 'push' || inputs.dry_run == false
-    runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/mc-crash-doctor
-    permissions:
-      id-token: write          # the OIDC token PyPI exchanges for an API call
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
-      - uses: pypa/gh-action-pypi-publish@release/v1
+          if-no-files-found: error

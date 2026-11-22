@@ -450,3 +450,28 @@ def test_pack_mode_accepts_pack_side(tmp_path):
     scanned side-agnostically."""
     root = _pack_dir(tmp_path, mixed=False)
     assert action.main(["--pack", str(root), "--pack-side", "server"]) == 0
+
+# --- the same input guards the CLI has --------------------------------------
+def test_prose_is_not_diagnosed_and_stays_quiet(tmp_path: Path, capsys) -> None:
+    p = tmp_path / "prose.txt"
+    p.write_text("我的服务器一直崩，是哪个模组？\n", encoding="utf-8")
+    assert action.main(["--path", str(p), "--json"]) == 0
+    out = capsys.readouterr()
+    assert out.out == ""                       # nothing for a workflow to comment
+    assert "no crash report found" in out.err
+
+
+def test_an_empty_file_says_it_is_empty(tmp_path: Path, capsys) -> None:
+    p = tmp_path / "empty.txt"
+    p.write_text("", encoding="utf-8")
+    assert action.main(["--path", str(p), "--json"]) == 0
+    assert "is empty" in capsys.readouterr().err
+
+
+def test_an_oversize_file_fails_the_job(tmp_path: Path, capsys) -> None:
+    # A rotated 9 MB log is a workflow mistake, not chatter: exit non-zero so
+    # the run is visibly wrong instead of silently commenting "0 findings".
+    p = tmp_path / "big.log"
+    p.write_bytes(b"x" * (9 * 1024 * 1024))
+    assert action.main(["--path", str(p), "--json"]) == 2
+    assert "limit 8 MB" in capsys.readouterr().err

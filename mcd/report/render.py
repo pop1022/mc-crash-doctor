@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import unicodedata
 from typing import IO
 
 from ..model import CrashReport, Finding, Severity
@@ -64,7 +65,11 @@ def build_summary(rep: CrashReport) -> dict:
         "mod_count": sysd.mod_count or len(rep.mods),
         "mods_parsed": len(rep.mods),
         "coremods": len(rep.coremods),
-        "root_cause": rc.signature if rc else None,
+        # headline, not signature: the signature is an 80-character grouping key
+        # and printing it cut words in half ("seconds (shoul"). Every consumer
+        # of the summary -- terminal, markdown, JSON, the web card -- wanted the
+        # readable first line.
+        "root_cause": rc.headline if rc else None,
         "exception_chain": [e.signature for e in rep.exceptions],
         "is_server": sysd.is_server,
         "is_client": sysd.is_client,
@@ -134,7 +139,7 @@ def render_markdown(rep: CrashReport, findings: list[Finding], triage,
     s = build_summary(rep)
     w = out.write
     w("# Minecraft crash diagnosis\n\n")
-    w(f"*Source:* `{rep.source_path}`\n\n")
+    w(f"*Source:* `{_basename(rep.source_path)}`\n\n")
 
     w("## Environment\n\n")
     w("| | |\n|---|---|\n")
@@ -145,7 +150,7 @@ def render_markdown(rep: CrashReport, findings: list[Finding], triage,
     w(f"| Mods | {_cell(s['mods_parsed'] or s['mod_count'] or '?')} |\n")
     w(f"| OS | {_cell(s['os'] or '?')} |\n")
     if s["root_cause"]:
-        w(f"| Root cause | `{_cell(s['root_cause'])}` |\n")
+        w(f"| Root cause | {_md_code(s['root_cause'])} |\n")
     w("\n")
 
     if triage and triage.suspects:
@@ -173,8 +178,10 @@ def render_markdown(rep: CrashReport, findings: list[Finding], triage,
                 w("\n")
             if f.fixes:
                 w("**Fixes**\n\n")
-                for fx in f.fixes:
-                    w(f"1. {fx}\n")
+                # Numbered, not "1." repeated: GitHub renumbers either way, but
+                # the raw source is also read in editors and chat windows.
+                for n, fx in enumerate(f.fixes, 1):
+                    w(f"{n}. {fx}\n")
                 w("\n")
             if f.commands:
                 w("**Check** — printed for you to run, never executed by this "
@@ -192,21 +199,25 @@ def render_markdown(rep: CrashReport, findings: list[Finding], triage,
 # plain text
 # --------------------------------------------------------------------------
 def render_plain(rep: CrashReport, findings: list[Finding], triage,
-                 out: IO[str]) -> None:
+                 out: IO[str], *, hint: bool = True) -> None:
     s = build_summary(rep)
     line = "=" * 74
     w = out.write
     w(f"\n{line}\n Minecraft crash diagnosis\n{line}\n\n")
-    w(f"  source   : {rep.source_path}\n")
+    # Basename only: the full path is in the JSON and in --explain, and 70
+    # columns of C:\Users\... pushes the actual finding off the screen.
+    w(f"  source   : {_basename(rep.source_path)}\n")
     w(f"  platform : {_fmt_platform(s, via=' via {}')}\n")
     w(f"  version  : Minecraft {s['minecraft_version'] or '?'} | "
         f"Java {s['java_version'] or '?'}\n")
     w(f"  heap     : {_fmt_heap(s)}"
         f"   mods: {s['mods_parsed'] or s['mod_count'] or '?'}\n")
-    if s["description"]:
-        w(f"  desc     : {s['description']}\n")
-    if s["root_cause"]:
-        w(f"  root     : {s['root_cause']}\n")
+    for label, value in (("desc", s["description"]),
+                         ("root", s["root_cause"])):
+        if not value:
+            continue
+        for i, ln in enumerate(_wrap(value, 60)):
+            w((f"  {label:<8} : " if i == 0 else " " * 13) + ln + "\n")
     w("\n")
 
     if triage and triage.suspects:
@@ -215,7 +226,8 @@ def render_plain(rep: CrashReport, findings: list[Finding], triage,
             w(f"  ● {sp.modid:<26} {sp.confidence:>5.0%}  "
                 f"{sp.name} {sp.version}\n".rstrip() + "\n")
             for r in sp.reasons[:3]:
-                w(f"      - {r}\n")
+                for i, ln in enumerate(_wrap(r, 62)):
+                    w((f"      - {ln}\n" if i == 0 else f"        {ln}\n"))
         for note in triage.notes:
             w(f"  ! {note}\n")
         w("\n")
@@ -227,7 +239,9 @@ def render_plain(rep: CrashReport, findings: list[Finding], triage,
         w(f"\n[{i}] {SEV_LABEL[f.severity]}  {f.title}\n")
         w(f"    rule={f.rule_id}  confidence={f.confidence:.0%}\n")
         if f.explanation:
-            for ln in _wrap(f.explanation, 70):
+            # 66 + the 4-space indent + one hanging punctuation stays under the
+            # 74-column banner; 70 used to spill past it on Chinese text.
+            for ln in _wrap(f.explanation, 66):
                 w(f"    {ln}\n")
         if f.evidence:
             w("    evidence:\n")
@@ -236,29 +250,159 @@ def render_plain(rep: CrashReport, findings: list[Finding], triage,
         if f.fixes:
             w("    fix:\n")
             for n, fx in enumerate(f.fixes, 1):
-                for j, ln in enumerate(_wrap(fx, 66)):
+                for j, ln in enumerate(_wrap(fx, 60)):
                     w(f"      {n}. {ln}\n" if j == 0 else f"         {ln}\n")
         if f.commands:
             w("    check (printed, never executed):\n")
             for cmd in f.commands:
                 w(f"      $ {cmd}\n")
-    w("\n")
+    # The two things a user can do next that the output itself does not say.
+    # Kept to one line: a footer that grows into a paragraph stops being read.
+    # The --explain half is dropped when it is already running, because telling
+    # someone to add a flag they just passed is the classic bad footer.
+    if hint:
+        w("  next: --explain  shows how the score was built\n"
+          "        --feedback opens a pre-filled issue if this is wrong\n\n")
+
+
+def _split_long(word: str, width: int) -> list[str]:
+    """Break one over-long token at dot/slash/dollar boundaries, not mid-name."""
+    if _display_width(word) <= width:
+        return [word]
+    chunks: list[str] = []
+    rest = word
+    while _display_width(rest) > width:
+        best = 0
+        for i, ch in enumerate(rest):
+            if ch in "./$" and _display_width(rest[:i + 1]) <= width:
+                best = i + 1
+        if not best:
+            # No boundary fits (a 90-char class with no dots left): cut, because
+            # overflowing the terminal is worse than a hard break here.
+            head = ""
+            for ch in rest:
+                if _display_width(head + ch) > width:
+                    break
+                head += ch
+            best = len(head) or len(rest)
+        chunks.append(rest[:best])
+        rest = rest[best:]
+    if rest:
+        chunks.append(rest)
+    return chunks
+
+
+def _wrap_words(text: str, width: int) -> list[str]:
+    """Space-delimited wrap that never splits a token mid-name.
+
+    Used for stack frames and jar names: breaking "ReflectionUtil" from
+    ".hasMethodOverride" makes the line unusable for a search or a copy. An
+    over-long token breaks at its own dots ("...reflection." / "ReflectionUtil
+    .hasMethodOverride"), which keeps every segment whole.
+    """
+    lines: list[str] = []
+    cur = ""
+    for word in text.split():
+        for piece in _split_long(word, width):
+            if not cur:
+                cur = piece
+            elif _display_width(cur) + 1 + _display_width(piece) <= width:
+                cur += " " + piece
+            else:
+                lines.append(cur)
+                cur = piece
+    if cur:
+        lines.append(cur)
+    return lines or [""]
+
+
+def _md_code(text: str) -> str:
+    """Inline code that survives a backtick inside the text.
+
+    A crash message can contain a backtick (a command, a class name in a quote),
+    which would close the span early and leave the row half-formatted.
+    """
+    # Deliberately not md_cell(): that doubles backslashes, which is right in a
+    # cell of prose and wrong inside a code span, where a Windows path would
+    # come out as C:\\Users\\....
+    body = str(text).replace("\r\n", "\n").replace("\r", "\n")
+    body = body.replace("\n", " ").replace("|", "\\|")
+    if "`" in body:
+        return f"`` {body} ``"
+    return f"`{body}`"
+
+
+def _basename(path: str) -> str:
+    """Last path component, whichever separator the report arrived with."""
+    return (path or "").replace("\\", "/").rsplit("/", 1)[-1]
+
+
+#: CJK characters that must not start a line (kinsoku). ASCII punctuation is
+#: deliberately absent: latin text wraps at spaces, and treating "." as hanging
+#: punctuation split "120.00" across two lines.
+_NO_LINE_START = set("、。，；：！？）〕】」』》〉")
+
+
+def _display_width(text: str) -> int:
+    """Columns, not characters: a CJK glyph occupies two.
+
+    This is the whole reason the wrapper was rewritten. The old one split on
+    spaces, which Chinese does not have, so a 117-character explanation became a
+    single 117-character line -- twice the width of the banner above it -- and
+    an ASCII word boundary was the only place it could ever break.
+    """
+    return sum(2 if unicodedata.east_asian_width(ch) in ("W", "F") else 1
+               for ch in text)
+
+
+def _split_mixed(word: str, width: int) -> list[str]:
+    """Split one whitespace-delimited token without breaking a latin name.
+
+    Chinese has no internal word boundaries and can break anywhere; a Java class
+    name can only break at its dots. The old character-by-character wrapper
+    produced "ReflectionUtil.ha" / "sMethodOverride", which is unsearchable and
+    uncopyable even though it fit the column budget.
+    """
+    if _display_width(word) <= width:
+        return [word]
+    if any(unicodedata.east_asian_width(ch) in ("W", "F") for ch in word):
+        out: list[str] = []
+        cur = ""
+        cur_w = 0
+        for ch in word:
+            cw = 2 if unicodedata.east_asian_width(ch) in ("W", "F") else 1
+            if cur and cur_w + cw > width:
+                if ch in _NO_LINE_START:
+                    out.append(cur + ch)
+                    cur, cur_w = "", 0
+                    continue
+                out.append(cur)
+                cur, cur_w = "", 0
+            cur += ch
+            cur_w += cw
+        if cur:
+            out.append(cur)
+        return out
+    return _split_long(word, width)
 
 
 def _wrap(text: str, width: int) -> list[str]:
-    words = text.split()
+    """Wrap to *display columns*: CJK breaks anywhere, latin names only at dots."""
     lines: list[str] = []
-    cur = ""
-    for wd in words:
-        if len(cur) + len(wd) + 1 <= width:
-            cur = f"{cur} {wd}".strip()
-        else:
-            if cur:
-                lines.append(cur)
-            cur = wd
-    if cur:
-        lines.append(cur)
-    return lines
+    for para in text.split("\n"):
+        cur = ""
+        for word in para.split():
+            for piece in _split_mixed(word, width):
+                if not cur:
+                    cur = piece
+                elif _display_width(cur) + 1 + _display_width(piece) <= width:
+                    cur += " " + piece
+                else:
+                    lines.append(cur.rstrip())
+                    cur = piece
+        if cur.strip():
+            lines.append(cur.rstrip())
+    return lines or [""]
 
 
 # --------------------------------------------------------------------------
@@ -384,8 +528,8 @@ def render_explain(triage, trace: dict[str, list[tuple[float, str]]],
                   "here: every row adds.\n")
     else:
         out.write("\n" + "=" * 74 + "\n suspicion breakdown\n" + "=" * 74 + "\n")
-        out.write("score = sum of weighted signals; confidence = share of all "
-                  "recorded evidence\n")
+        out.write("score = sum of weighted signals; confidence = share of "
+                  "evidence\n")
 
     for s in suspects[:top_suspects]:
         rows = _by_reason(trace.get(s.modid, ()))[:top_signals]
@@ -400,7 +544,11 @@ def render_explain(triage, trace: dict[str, list[tuple[float, str]]],
             out.write(f"\n{head}\n")
             for weight, count, reason in rows:
                 times = f" x{count}" if count > 1 else ""
-                out.write(f"  {weight:6.2f}{times:5s}  {reason}\n")
+                prefix = f"  {weight:6.2f}{times:5s}  "
+                for i, ln in enumerate(_wrap_words(reason,
+                                                   74 - _display_width(prefix))):
+                    out.write((prefix if i == 0 else " " * _display_width(prefix))
+                              + ln + "\n")
 
     # A near-tie is not a footnote: it says the answer is "one of these two",
     # which changes what the user should do next.
@@ -414,6 +562,16 @@ def render_explain(triage, trace: dict[str, list[tuple[float, str]]],
         for note in notes:
             out.write(f"- {md_cell(note)}\n" if markdown else f"  * {note}\n")
         if unresolved:
-            joined = ", ".join(unresolved[:8])
-            out.write((f"- {md_cell('could not resolve: ' + joined)}\n" if markdown
-                       else f"  * could not resolve: {joined}\n"))
+            shown = unresolved[:8]
+            if markdown:
+                out.write(f"- {md_cell('could not resolve: ' + ', '.join(shown))}\n")
+            else:
+                # One per line: a dozen jar names in one sentence ran to 200
+                # columns and hid the two entries that mattered.
+                out.write("  * could not resolve:\n")
+                for name in shown:
+                    for ln in _wrap_words(name, 66):
+                        out.write(f"      {ln}\n")
+            if len(unresolved) > len(shown):
+                more = f"... and {len(unresolved) - len(shown)} more"
+                out.write(f"      {more}\n" if not markdown else f"      {more}\n")
