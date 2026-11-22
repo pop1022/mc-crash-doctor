@@ -130,7 +130,9 @@ def main(argv: list[str] | None = None) -> int:
                          f"[{r['loader'] or '?'}] desc=`{r['description'] or '(空)'}` "
                          f"rules={','.join(r['rules']) or '-'}")
         lines.append("")
-    OUT_MD.write_text("\n".join(lines), encoding="utf-8", newline="\n")
+    # bytes, not write_text(newline=): that keyword is 3.10+ and this is a
+    # tool users on the declared 3.9 floor may run.
+    OUT_MD.write_bytes("\n".join(lines).encode("utf-8"))
     print(f"wrote {OUT_JSON.relative_to(ROOT)} and {OUT_MD.relative_to(ROOT)}")
 
     if "--check" in argv and mixed:

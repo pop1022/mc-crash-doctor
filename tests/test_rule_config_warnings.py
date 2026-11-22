@@ -33,11 +33,16 @@ from mcd.rules.engine import RULE_KEYS, WHEN_KEYS, RuleSet, run_rules  # noqa: E
 FIXTURE = ROOT / "tests/fixtures/synthetic/oom-save-time.txt"
 
 
+def _write_lf(path: Path, text: str) -> None:
+    """3.9-compatible LF write: Path.write_text(newline=) is 3.10+."""
+    path.write_bytes(text.encode("utf-8"))
+
+
 def _load(tmp_path: Path, rules_yaml: str) -> RuleSet:
     """Write a one-file rule dir and load it (builtin packs included)."""
     d = tmp_path / "rules"
     d.mkdir()
-    (d / "t.yml").write_text(rules_yaml, encoding="utf-8", newline="\n")
+    _write_lf(d / "t.yml", rules_yaml)
     return RuleSet.load([str(d)])
 
 
@@ -164,8 +169,7 @@ def test_strict_promotes_a_config_warning_to_an_error(tmp_path):
     exactly what a CI running --strict is there to catch."""
     d = tmp_path / "rules"
     d.mkdir()
-    (d / "t.yml").write_text(
-        _rule("t.when", when='exceptions: ["X"]'), encoding="utf-8", newline="\n")
+    _write_lf(d / "t.yml", _rule("t.when", when='exceptions: ["X"]'))
     RuleSet.load([str(d)])                       # populate the cache non-strict
     with pytest.raises(ValueError, match="unknown condition"):
         RuleSet.load([str(d)], strict=True)

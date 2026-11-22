@@ -64,10 +64,15 @@ def test_everything_else_is_refused(cmd):
 
 
 # --- a rule carries them into the finding ------------------------------------
+def _write_lf(path: Path, text: str) -> None:
+    """3.9-compatible LF write: Path.write_text(newline=) is 3.10+."""
+    path.write_bytes(text.encode("utf-8"))
+
+
 def _load(tmp_path: Path, extra: str) -> RuleSet:
     d = tmp_path / "rules"
     d.mkdir()
-    (d / "t.yml").write_text(
+    _write_lf(d / "t.yml", (
         "rules:\n"
         "  - id: t.cmd\n"
         "    title: 't'\n"
@@ -75,7 +80,7 @@ def _load(tmp_path: Path, extra: str) -> RuleSet:
         "    when:\n"
         "      exception: [\"LWJGLException\"]\n"
         "    fixes: [\"do a thing\"]\n"
-        + extra, encoding="utf-8", newline="\n")
+        + extra))
     return RuleSet.load([str(d)])
 
 
