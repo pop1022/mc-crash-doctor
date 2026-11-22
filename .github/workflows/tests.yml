@@ -19,7 +19,11 @@ on:
 jobs:
   gates:
     name: parser accuracy + ground truth + redaction
-    runs-on: ubuntu-latest
+    # 22.04, not latest: the 3.9 interpreter is not published for the 24.04
+    # runner image, so "Set up Python 3.9" failed before the suite started.
+    # Pinning the image keeps the declared >=3.9 support testable; dropping
+    # 3.9 (and the requires-python floor) would be a product decision.
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
