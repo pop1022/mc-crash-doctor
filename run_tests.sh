@@ -46,7 +46,16 @@ STAMP="$(date +%Y%m%d%H%M%S)-$$"
 PYTEST_TMP_SUITE="tmp/.pytest-tmp-suite-$STAMP"
 PYTEST_TMP_DOCS="tmp/.pytest-tmp-docs-$STAMP"
 if "$PY" -m pytest --version >/dev/null 2>&1; then
-  if ! "$PY" -m pytest tests/ -q --basetemp="$PYTEST_TMP_SUITE"; then mark_fail "4/8 pytest"; fi
+  PYTEST_LOG="tmp/.pytest-log-$STAMP.txt"
+  "$PY" -m pytest tests/ -q --basetemp="$PYTEST_TMP_SUITE" 2>&1 | tee "$PYTEST_LOG"
+  rc=${PIPESTATUS[0]}
+  if [ "$rc" -ne 0 ]; then
+    # One annotation per failing test: the job log needs repo admin rights,
+    # the annotations do not, so a red run still says which test broke.
+    grep -E "^(FAILED|ERROR) " "$PYTEST_LOG" | head -20 |
+      sed -e 's/^/::error title=pytest::/' || true
+    mark_fail "4/8 pytest"
+  fi
 else
   echo "  (pytest not installed -- skipping; pip install pytest)"
 fi
