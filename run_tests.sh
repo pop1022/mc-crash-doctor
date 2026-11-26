@@ -6,6 +6,10 @@ set -u
 cd "$(dirname "$0")"
 
 PY="${PYTHON:-python}"
+# pytest --basetemp does not create missing parents, and a fresh clone
+# has no tmp/ (gitignored). Without this line every tmp_path test errored
+# in CI while passing here, where tmp/ always exists.
+mkdir -p tmp
 fail=0
 
 # GitHub renders these as annotations on the failed check, which is the only
