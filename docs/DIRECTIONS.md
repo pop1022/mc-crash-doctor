@@ -308,3 +308,11 @@ F1 (watch) ──→ F2 (Server Doctor) ──→ F3 (前兆检测)
 现在把整张 suspects 列表传进卡片，前两名分差小于 20 个百分点时给出「两个模组分数接近」：写出各自分数，并说明二分要一次只禁一个、每次重启复现。没有 suspect 但有 finding 时，明确说这条规则只到问题类型，别为此删模组。
 
 四种情况在浏览器里实测过；阈值与文案由 tests/test_web_copy.py 钉住，防止有人删掉 0.2 判断却留着提示。
+
+### 构建可复现：wheel 与样例（2026-11-22）
+
+同一个 wheel 连build 两次哈希不同，说明产物里混进了时间戳——这直接违背“发布同一份构建”的承诺。
+setuptools 会把源文件 mtime 写进 zip；在 build_web 调 subprocess 时设 SOURCE_DATE_EPOCH=315532800 即可固定。
+样例文件另有一处：make_web_sample 用 write_text，Windows 写 CRLF，仓库里是 LF，改成写字节。
+
+验证：连续两次 build_web，wheel sha256 前 16 位都是 508b3bb7；bundle 与 sample 测试 13 项通过。

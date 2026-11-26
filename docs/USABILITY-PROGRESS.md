@@ -198,3 +198,12 @@ P1 尚未做：首页"去哪找文件"入口（默认启动器/Prism/Modrinth/�
 浏览器实测四种情况：0.97 vs 0.90 显示并列提示；0.97 vs 0.40 不显示；无 suspect 显示提示；预生成示例（单个模组）不显示。
 
 测试：`tests/test_web_copy.py` 新增 2 项（阈值与文案成对、卡片拿到全部 suspects），共 13 项。预算 app.js 68 → 70 KB，总载荷 372 KB / 385 KB。
+
+## 构建产物可复现（2026-11-22）
+
+发现两个跟行尾/时间戳有关的坑，都会让“同一份源码”产出不同字节：
+
+1. `python -m build` 用 setuptools 打包时把文件 mtime 写进 zip，连续两次构建的 wheel 哈希不同（实测 `e3926600…` vs `eafa362e…`），每次构建都会把仓库弄脏
+2. `tools/make_web_sample.py` 用 `write_text` 写样例，Windows 下是 CRLF，而仓库里是 LF
+
+修法：构建时设置 `SOURCE_DATE_EPOCH=315532800`（zip 能表示的最早时间），样例改字节写入。现在连续两次 `tools/build_web.py` 产出的 wheel 哈希一致（`508b3bb7…`），`web/sample.js` 也稳定为 LF。

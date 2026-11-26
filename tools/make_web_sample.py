@@ -90,7 +90,9 @@ def main() -> int:
         "// ground truth; this derivative adds a path scrub + the corpus redactor.\n"
         "window.MCD_SAMPLE = " + json.dumps(sample, ensure_ascii=False) + ";\n"
     )
-    OUT.write_text(js, encoding="utf-8")
+    # bytes, not write_text: Windows would write CRLF and the committed
+    # file (LF, via .gitattributes) would differ from every rebuild.
+    OUT.write_bytes(js.encode("utf-8"))
     print(f"wrote {OUT.relative_to(ROOT)}: {len(js)} bytes "
           f"(sample {len(sample)} chars, from {len(raw)} char source)")
 

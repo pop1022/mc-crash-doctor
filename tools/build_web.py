@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -219,9 +220,13 @@ def main() -> int:
         old.unlink()
 
     print("building wheel ...")
+    # setuptools stamps zip entries with file mtimes, so two builds of the same
+    # sources produced different bytes and every rebuild dirtied the repo.
+    # SOURCE_DATE_EPOCH pins them (1980-01-01, the zip floor).
+    env = dict(os.environ, SOURCE_DATE_EPOCH="315532800")
     subprocess.run(
         [sys.executable, "-m", "build", "--wheel", "--outdir", str(WEB)],
-        cwd=ROOT, check=True,
+        cwd=ROOT, check=True, env=env,
         stdout=subprocess.DEVNULL,
     )
     wheels = sorted(WEB.glob("*.whl"))
