@@ -169,3 +169,20 @@ P1 尚未做：首页"去哪找文件"入口（默认启动器/Prism/Modrinth/�
 代价与证据：卡片高度 715 → 924 px（1440×1000 仍在一屏内）；`tests/test_web_copy.py` 增加 3 项（顺序、双语标签、用最后一条证据），共 11 项。
 
 预算：app.js 67,182 / 68,000（余量 818 B）。再加卡片文案需要先压缩或调预算。
+
+## P0.1 收口：公开 CI 转绿（2026-11-22）
+
+推送后第一次运行是红的，三个原因逐个定位：
+
+| 现象 | 根因 | 修法 |
+|---|---|---|
+| 3.11 / 3.13 pytest 全红 | 提交时 .gitattributes 把两个规则包从 CRLF 转成 LF，而 wheel 与 manifest 是本机 CRLF 版本构建的，digest 在 CI 必然不匹配 | 用 LF 源码重建 wheel + manifest 并提交 |
+| 3.9 卡在 "Set up Python 3.9" | 24.04 runner 没有 3.9 的安装包 | 矩阵固定在 ubuntu-22.04，保留 >=3.9 的声明 |
+| 3.9 pytest 12 个 TypeError | 测试用了 Path.write_text(newline=)（3.10+） | 改字节写入；本机 3.9 实测 1215 passed |
+| full-gates 的 gate 4/8 | 全新 clone 没有 tmp/（gitignored），pytest --basetemp 不创建缺失的父目录，176 个 tmp_path 测试报 FileNotFoundError | run_tests.sh 开头 mkdir -p tmp；全新 clone 复跑 8/8 通过 |
+
+为了让失败点可读（GitHub 的 job 日志要仓库管理员权限），run_tests.sh 现在把每道失败门禁和每个 FAILED 测试写成 ::error:: 注解——公开 API 能读。
+
+最终：b4091fa 上 4 个 job 全绿（3.9 / 3.11 / 3.13 / full-gates），Pages 同步成功。
+
+推送方式改为 SSH（公钥在这台机器上，用户一次性授权），后续改动由我直接推送，不再需要用户手动操作。
