@@ -117,6 +117,19 @@
         <p class="out-empty__b" data-i18n="out.empty.b">粘一份崩溃报告，或点「用示例试试」——示例会在 0.2 秒内给出真实报告在浏览器里跑出的结论，不用等引擎下载完。</p>
       </div>
       <div id="out" role="region" aria-label="诊断结果"></div>
+
+      <!-- Feedback used to open a GitHub tab the moment the button was
+           clicked. The link only carries a summary, but the user should see
+           what leaves the page before it leaves. -->
+      <dialog id="fb" class="fb" aria-labelledby="fb-title">
+        <h2 id="fb-title" data-i18n="fb.title">把这个发到 GitHub？</h2>
+        <p class="fb__lead" data-i18n="fb.lead">下面是要发出去的全部内容。日志正文不在里面；需要贴报告时请自己脱敏。</p>
+        <pre id="fb-preview" class="fb__preview"></pre>
+        <div class="fb__row">
+          <button type="button" id="fb-open" data-i18n="fb.open">打开 issue</button>
+          <button type="button" class="ghost" id="fb-cancel" data-i18n="fb.cancel">取消</button>
+        </div>
+      </dialog>
     </div>
   </section>
 

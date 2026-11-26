@@ -49,7 +49,9 @@ SIZE_BUDGET = {
     # bilingual "where is the file" block. Both are copy, and copy is what the
     # two languages cost; no new dependency.
     # 68 -> 70 KB same day: the tie / no-suspect guidance, again two languages.
-    "app.js": 70_000,
+    # 70 -> 72 KB: the feedback preview dialog (decode the link, show it, open
+    # only on confirm) -- a privacy behaviour, not decoration.
+    "app.js": 72_000,
     "index.html": 30_000,
     "sample.js": 105_000,
     # 125 KB -> 145 KB on 2026-11-17: the Chinese rule copy (title_zh /

@@ -221,3 +221,30 @@ P1 尚未做：首页"去哪找文件"入口（默认启动器/Prism/Modrinth/�
 | CLI `--version` / `--explain` / `--timeline` | 93 / 181 / 95 ms | — |
 
 两点必须一起说：示例与热诊断**与网络无关**；冷启动由 ~10 MB 运行时下载支配，本机走代理接近本地 CDN，**不能外推**成“所有用户 1.7 秒”。真实弱网用户仍会看到等待，这也是页面先给预生成示例的原因。
+
+## P1 隐私行为测试（2026-11-22）
+
+**行为改动**：反馈按钮以前点了就直接开 GitHub 新标签。现在先用原生 dialog 显示「要发出去的全部内容」（标题 + 正文，来自链接参数），用户点「打开 issue」才离开页面；取消或 Esc 什么都不会发生。
+
+**测试方法**：在真实崩溃报告末尾植入四个标记——
+
+- Windows 路径：C:\Users\AlicePrivate\secret.txt
+- 内网 IP：192.168.13.37
+- 令牌样式：ghp_SECRET1234567890
+- 口令样式：password=hunter2
+
+用 Puppeteer 跑完整诊断（含 Pyodide 启动），记录所有网络请求、location.href、localStorage/sessionStorage、预览文本与最终打开的 URL。
+
+**结果**：
+
+| 检查 | 结果 |
+|---|---|
+| 请求数 / 其中含标记的 | 53 / **0** |
+| location.href 含标记 | 0 |
+| 存储（local+session）含标记 | 0 |
+| 预览文本含标记 | 0（预览从「[feedback] 堆内存耗尽…」开始） |
+| 确认前 window.open 次数 | 0 |
+| 取消后 | dialog 关闭，0 次 |
+| 确认后 | 1 次，URL 不含标记 |
+
+固定测试：`tests/test_web_privacy.py` 3 项（预览先于打开、两个按钮存在、双语四键），连同 copy 测试共 16 项通过。预算 app.js 70 → 72 KB（现值 70,191）。

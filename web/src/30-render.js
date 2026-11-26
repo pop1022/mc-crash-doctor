@@ -30,6 +30,36 @@ function envLine(s) {
   ].filter(Boolean).join(" · ");
 }
 
+// The prefilled link carries a summary, not the log -- but "trust me" is not
+// a privacy story. Show exactly what would be sent, and only open the tab when
+// the user says so.
+function showFeedback(url) {
+  const d = $("fb");
+  if (!d || typeof d.showModal !== "function") {
+    window.open(url, "_blank", "noopener");
+    return;
+  }
+  let preview = url;
+  try {
+    const u = new URL(url);
+    const title = u.searchParams.get("title") || "";
+    const body = u.searchParams.get("body") || "";
+    preview = (title ? title + "\n\n" : "") + body;
+  } catch (e) { /* keep the raw url as the preview */ }
+  $("fb-preview").textContent = preview;
+  d.dataset.url = url;
+  if (!d.dataset.wired) {
+    $("fb-cancel").addEventListener("click", () => d.close());
+    $("fb-open").addEventListener("click", () => {
+      const target = d.dataset.url;
+      d.close();
+      window.open(target, "_blank", "noopener");
+    });
+    d.dataset.wired = "1";
+  }
+  d.showModal();
+}
+
 function verdictCard(s, top, topSus, note, suspects) {
   const sev = top ? esc(sevLabel(top.severity)) : "";
   // The engine cuts a raw exception at ~85 characters, which reads as broken
@@ -308,7 +338,7 @@ function wireCopy() {
       if (!LAST_TEXT) return;
       try {
         const url = pyodide.globals.get("mcd_feedback")(LAST_TEXT, LANG);
-        window.open(url, "_blank", "noopener");
+        showFeedback(url);
       } catch (e) {
         console.error(e);
         $("copystatus").textContent = t("act.feedbackFail");

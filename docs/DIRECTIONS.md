@@ -324,3 +324,9 @@ setuptools 会把源文件 mtime 写进 zip；在 build_web 调 subprocess 时�
 结果：示例 105 ms、热诊断 95 ms、冷启动 1.66 s（含 Pyodide 10 MB）、CLI 单份 170 ms。
 
 注意：冷启动的数字取决于 CDN 距离与本机代理状态，不能当成用户侧承诺；能承诺的是示例与热诊断不受网络影响。ASSESSMENT 里 355 ms 的旧读数一并按复测值更新，未复测的“引擎内测 16 ms”保留并标注。
+
+### 反馈前先看预览（2026-11-22）
+
+原来的实现是 onclick → window.open(issue url)。链接里确实只有摘要（feedback_url 会 _scrub 根因），但用户没有任何机会看到这一点。
+
+改成原生 dialog：解析链接里的 title/body 原样显示，确认才 window.open。浏览器实测（植入路径/IP/token/口令四个标记）：53 个请求、URL、存储、预览、最终 issue 链接全部无标记；确认前 0 次打开，确认后 1 次。

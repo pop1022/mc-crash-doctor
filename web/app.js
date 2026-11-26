@@ -149,6 +149,10 @@ const I18N = {
     "act.issue": "去开 issue",
     "act.feedback": "结论不对？",
     "act.feedbackFail": "没能生成反馈链接，请直接去仓库开 issue",
+    "fb.title": "把这个发到 GitHub？",
+    "fb.lead": "下面是要发出去的全部内容。日志正文不在里面；需要贴报告时请自己脱敏。",
+    "fb.open": "打开 issue",
+    "fb.cancel": "取消",
 
     "ov.findings": (v) => `${v.n} 条问题`,
     "findings.title": "全部发现",
@@ -374,6 +378,10 @@ const I18N = {
     "act.issue": "Open an issue",
     "act.feedback": "Wrong result?",
     "act.feedbackFail": "Could not build the feedback link. Open an issue on the repo instead.",
+    "fb.title": "Send this to GitHub?",
+    "fb.lead": "Everything that leaves the page is below. The log body is not in it; redact anything you paste yourself.",
+    "fb.open": "Open issue",
+    "fb.cancel": "Cancel",
 
     "ov.findings": (v) => `${v.n} finding${v.n > 1 ? "s" : ""}`,
     "findings.title": "All findings",
@@ -1060,6 +1068,36 @@ function envLine(s) {
   ].filter(Boolean).join(" · ");
 }
 
+// The prefilled link carries a summary, not the log -- but "trust me" is not
+// a privacy story. Show exactly what would be sent, and only open the tab when
+// the user says so.
+function showFeedback(url) {
+  const d = $("fb");
+  if (!d || typeof d.showModal !== "function") {
+    window.open(url, "_blank", "noopener");
+    return;
+  }
+  let preview = url;
+  try {
+    const u = new URL(url);
+    const title = u.searchParams.get("title") || "";
+    const body = u.searchParams.get("body") || "";
+    preview = (title ? title + "\n\n" : "") + body;
+  } catch (e) { /* keep the raw url as the preview */ }
+  $("fb-preview").textContent = preview;
+  d.dataset.url = url;
+  if (!d.dataset.wired) {
+    $("fb-cancel").addEventListener("click", () => d.close());
+    $("fb-open").addEventListener("click", () => {
+      const target = d.dataset.url;
+      d.close();
+      window.open(target, "_blank", "noopener");
+    });
+    d.dataset.wired = "1";
+  }
+  d.showModal();
+}
+
 function verdictCard(s, top, topSus, note, suspects) {
   const sev = top ? esc(sevLabel(top.severity)) : "";
   // The engine cuts a raw exception at ~85 characters, which reads as broken
@@ -1338,7 +1376,7 @@ function wireCopy() {
       if (!LAST_TEXT) return;
       try {
         const url = pyodide.globals.get("mcd_feedback")(LAST_TEXT, LANG);
-        window.open(url, "_blank", "noopener");
+        showFeedback(url);
       } catch (e) {
         console.error(e);
         $("copystatus").textContent = t("act.feedbackFail");

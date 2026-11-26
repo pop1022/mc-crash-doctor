@@ -81,6 +81,10 @@ const I18N = {
     "act.issue": "去开 issue",
     "act.feedback": "结论不对？",
     "act.feedbackFail": "没能生成反馈链接，请直接去仓库开 issue",
+    "fb.title": "把这个发到 GitHub？",
+    "fb.lead": "下面是要发出去的全部内容。日志正文不在里面；需要贴报告时请自己脱敏。",
+    "fb.open": "打开 issue",
+    "fb.cancel": "取消",
 
     "ov.findings": (v) => `${v.n} 条问题`,
     "findings.title": "全部发现",
@@ -306,6 +310,10 @@ const I18N = {
     "act.issue": "Open an issue",
     "act.feedback": "Wrong result?",
     "act.feedbackFail": "Could not build the feedback link. Open an issue on the repo instead.",
+    "fb.title": "Send this to GitHub?",
+    "fb.lead": "Everything that leaves the page is below. The log body is not in it; redact anything you paste yourself.",
+    "fb.open": "Open issue",
+    "fb.cancel": "Cancel",
 
     "ov.findings": (v) => `${v.n} finding${v.n > 1 ? "s" : ""}`,
     "findings.title": "All findings",
