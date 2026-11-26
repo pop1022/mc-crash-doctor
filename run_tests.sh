@@ -8,22 +8,31 @@ cd "$(dirname "$0")"
 PY="${PYTHON:-python}"
 fail=0
 
+# GitHub renders these as annotations on the failed check, which is the only
+# part of a CI failure that can be read without admin rights on the repo.
+FAILED_GATES=()
+mark_fail() {
+  FAILED_GATES+=("$1")
+  fail=1
+  echo "::error title=Gate $1 failed::$1 - see the log above for the failing assertion"
+}
+
 echo "════════════════════════════════════════════════"
 echo " mc-crash-doctor test suite"
 echo "════════════════════════════════════════════════"
 
 echo
 echo "── [1/8] redaction (privacy boundary) ──"
-if ! "$PY" tests/test_redaction.py; then fail=1; fi
+if ! "$PY" tests/test_redaction.py; then mark_fail "1/8 redaction"; fi
 
 echo
 echo "── [2/8] parser accuracy vs upstream expectations ──"
-if ! "$PY" tests/eval_parser.py --strict; then fail=1; fi
+if ! "$PY" tests/eval_parser.py --strict; then mark_fail "2/8 parser accuracy"; fi
 
 echo
 echo "── [3/8] end-to-end + ground truth ──"
 # Ground-truth reports ship in-repo, so this runs on any machine / in CI.
-if ! "$PY" tests/test_e2e.py; then fail=1; fi
+if ! "$PY" tests/test_e2e.py; then mark_fail "3/8 end-to-end"; fi
 
 echo
 echo "── [4/8] pytest suite (per-file corpus + gap pinning) ──"
@@ -37,7 +46,7 @@ STAMP="$(date +%Y%m%d%H%M%S)-$$"
 PYTEST_TMP_SUITE="tmp/.pytest-tmp-suite-$STAMP"
 PYTEST_TMP_DOCS="tmp/.pytest-tmp-docs-$STAMP"
 if "$PY" -m pytest --version >/dev/null 2>&1; then
-  if ! "$PY" -m pytest tests/ -q --basetemp="$PYTEST_TMP_SUITE"; then fail=1; fi
+  if ! "$PY" -m pytest tests/ -q --basetemp="$PYTEST_TMP_SUITE"; then mark_fail "4/8 pytest"; fi
 else
   echo "  (pytest not installed -- skipping; pip install pytest)"
 fi
@@ -51,7 +60,7 @@ if "$PY" -c "import mcd; assert mcd.__version__; mcd.RuleSet.load()" \
    && "$PY" -m mcd --validate-rules >/dev/null 2>&1; then
   echo "  ✓ import mcd + rule load + CLI --rules + --validate-rules"
 else
-  fail=1
+  mark_fail "5/8 CLI smoke"
 fi
 
 echo
@@ -59,9 +68,9 @@ echo "── [6/8] lint (correctness rules only) ──"
 # Optional tool: the gate must not fail because a contributor has no ruff.
 # Config lives in pyproject.toml under [tool.ruff]; select = F, E9, B.
 if "$PY" -m ruff --version >/dev/null 2>&1; then
-  if ! "$PY" -m ruff check mcd/ tools/ tests/; then fail=1; fi
+  if ! "$PY" -m ruff check mcd/ tools/ tests/; then mark_fail "6/8 lint"; fi
 elif command -v ruff >/dev/null 2>&1; then
-  if ! ruff check mcd/ tools/ tests/; then fail=1; fi
+  if ! ruff check mcd/ tools/ tests/; then mark_fail "6/8 lint"; fi
 else
   echo "  (ruff not installed -- skipping; pip install ruff)"
 fi
@@ -74,7 +83,7 @@ echo "── [7/8] docs quote the numbers in corpus/*.json ──"
 # doc stopped matching -- it cannot catch a wrong sentence, only a stale number,
 # which is the drift that actually happened.
 if ! "$PY" -m pytest tests/test_doc_numbers.py -q --basetemp="$PYTEST_TMP_DOCS"; then
-  fail=1
+  mark_fail "7/8 docs numbers"
 fi
 
 echo
@@ -83,12 +92,13 @@ echo "── [8/8] coverage floors (per package, measured) ──"
 # the suite under coverage itself, so it does not depend on gate [4]'s artifacts;
 # without coverage installed it prints a skip and passes, which is why CI
 # installs .[test].
-if ! "$PY" tools/coverage_gate.py --run; then fail=1; fi
+if ! "$PY" tools/coverage_gate.py --run; then mark_fail "8/8 coverage"; fi
 
 echo
 if [ "$fail" -eq 0 ]; then
   echo "════════ ✓ ALL GATES PASSED ════════"
 else
   echo "════════ ✗ SOME GATES FAILED ════════"
+  echo "failed: ${FAILED_GATES[*]}"
 fi
 exit $fail
