@@ -30,7 +30,7 @@ function envLine(s) {
   ].filter(Boolean).join(" · ");
 }
 
-function verdictCard(s, top, topSus, note) {
+function verdictCard(s, top, topSus, note, suspects) {
   const sev = top ? esc(sevLabel(top.severity)) : "";
   // The engine cuts a raw exception at ~85 characters, which reads as broken
   // text in a 28px head. The finding's own sentence is the human version of the
@@ -68,6 +68,23 @@ function verdictCard(s, top, topSus, note) {
     // The number is a weighted score, not a calibrated probability of being
     // right. Saying "97%" alone invites reading it as "97% chance this is it".
     html += `<p class="card-note">${t("verdict.strengthNote")}</p>`;
+  }
+
+  // Two suspects within 20 points: the evidence does not pick one, and saying
+  // "lithium" anyway is how a user deletes the wrong mod. Say so, and give the
+  // one-at-a-time bisect instead of a batch removal.
+  const tie = (suspects && suspects.length > 1)
+    ? ((suspects[0].confidence || 0) - (suspects[1].confidence || 0)) < 0.2
+    : false;
+  if (tie) {
+    const a = suspects[0], b = suspects[1];
+    html += `<div class="tie"><span class="k">${t("tie.title")}</span>` +
+      `<p>${t("tie.body", {
+        a: esc(a.name || a.modid), pa: Math.round((a.confidence || 0) * 100),
+        b: esc(b.name || b.modid), pb: Math.round((b.confidence || 0) * 100),
+      })}</p></div>`;
+  } else if (!topSus && top) {
+    html += `<p class="card-note">${t("noSuspect.note")}</p>`;
   }
 
   // Order is the reader's order: what -> which line -> what to do -> how to
@@ -193,7 +210,7 @@ function render(doc, opts) {
   const html = weak
     ? notAReportCard()
     : [
-        verdictCard(s, top, suspects[0] || null, opts && opts.note),
+        verdictCard(s, top, suspects[0] || null, opts && opts.note, suspects),
         overview(findings),
         findings.length ? findingsCard(findings) : "",
         envDetails(s),

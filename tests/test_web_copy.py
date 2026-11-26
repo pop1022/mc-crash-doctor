@@ -83,3 +83,17 @@ def test_verification_uses_the_specific_evidence_line() -> None:
     """The first evidence entry is the exception class; every Java crash has it."""
     js = (WEB / "src" / "30-render.js").read_text(encoding="utf-8")
     assert "ev[ev.length - 1]" in js
+
+# --- ties and bare findings -------------------------------------------------
+def test_two_close_suspects_are_not_presented_as_a_verdict() -> None:
+    js = (WEB / "src" / "30-render.js").read_text(encoding="utf-8")
+    assert "tie.body" in js
+    assert "< 0.2" in js, "the 20-point margin must be stated where it is enforced"
+    i18n = (WEB / "src" / "10-i18n.js").read_text(encoding="utf-8")
+    for key in ("tie.title", "tie.body", "noSuspect.note"):
+        assert i18n.count(f'"{key}"') == 2, key
+
+
+def test_the_card_receives_every_suspect_not_just_the_first() -> None:
+    js = (WEB / "src" / "30-render.js").read_text(encoding="utf-8")
+    assert "verdictCard(s, top, suspects[0] || null, opts && opts.note, suspects)" in js

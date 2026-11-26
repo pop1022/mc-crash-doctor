@@ -47,7 +47,8 @@ SIZE_BUDGET = {
     # 64 -> 68 KB on 2026-11-22: two refusals (hs_err, bare exit code) plus the
     # bilingual "where is the file" block. Both are copy, and copy is what the
     # two languages cost; no new dependency.
-    "app.js": 68_000,
+    # 68 -> 70 KB same day: the tie / no-suspect guidance, again two languages.
+    "app.js": 70_000,
     "index.html": 30_000,
     "sample.js": 105_000,
     # 125 KB -> 145 KB on 2026-11-17: the Chinese rule copy (title_zh /

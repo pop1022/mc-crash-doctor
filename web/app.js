@@ -213,6 +213,9 @@ const I18N = {
     "verdict.lead": "点「用示例试试」：一台 266 模组服务器的真实报告会在 0.2 秒内出结论——根因、可疑模组、证据强度，全部由同一套引擎算出。",
     "verdict.source": "看规则源码",
     "verdict.strengthNote": "证据强度是各条线索的加权分数，不是校准过的「猜对概率」；它只说明这条线索有多硬。",
+    "tie.title": "两个模组分数接近",
+    "tie.body": "「{a}」{pa}% 与「{b}」{pb}% 相差不到 20 个百分点，证据还不足以二选一。要二分的话，一次只禁用其中一个、每次重启复现——一次删一批就不知道是谁了。",
+    "noSuspect.note": "这条规则能说出问题类型，但没有定位到具体模组。先按上面的步骤做，不要为此删模组。",
     "verdict.anchor": "依据",
     "verify.title": "怎么算修好了：",
     "verify.body": "照原样再跑一次（同一存档、同一条命令）。日志里不再出现 {line} 就算修好；如果还是同一条，说明这一步没解决，换下一条。",
@@ -435,6 +438,9 @@ const I18N = {
     "verdict.lead": "Press “Try a sample”: a real 266-mod server report produces its verdict in about 0.2 s — root cause, suspect mod, evidence strength, all from the same engine.",
     "verdict.source": "Read the rules",
     "verdict.strengthNote": "Evidence strength is a weighted score over the signals, not a calibrated chance of being right.",
+    "tie.title": "Two mods score close together",
+    "tie.body": "{a} ({pa}%) and {b} ({pb}%) are within 20 points, so the evidence does not pick one. To bisect, disable one at a time and restart between tries -- removing a batch tells you nothing about which one it was.",
+    "noSuspect.note": "This rule names the failure, but not the mod. Do the steps above; do not delete mods for it.",
     "verdict.anchor": "Evidence",
     "verify.title": "How to check:",
     "verify.body": "Run the same scenario again (same world, same command). If {line} no longer appears in the log, it is fixed; if it does, this step did not solve it -- try the next one.",
@@ -1054,7 +1060,7 @@ function envLine(s) {
   ].filter(Boolean).join(" · ");
 }
 
-function verdictCard(s, top, topSus, note) {
+function verdictCard(s, top, topSus, note, suspects) {
   const sev = top ? esc(sevLabel(top.severity)) : "";
   // The engine cuts a raw exception at ~85 characters, which reads as broken
   // text in a 28px head. The finding's own sentence is the human version of the
@@ -1092,6 +1098,23 @@ function verdictCard(s, top, topSus, note) {
     // The number is a weighted score, not a calibrated probability of being
     // right. Saying "97%" alone invites reading it as "97% chance this is it".
     html += `<p class="card-note">${t("verdict.strengthNote")}</p>`;
+  }
+
+  // Two suspects within 20 points: the evidence does not pick one, and saying
+  // "lithium" anyway is how a user deletes the wrong mod. Say so, and give the
+  // one-at-a-time bisect instead of a batch removal.
+  const tie = (suspects && suspects.length > 1)
+    ? ((suspects[0].confidence || 0) - (suspects[1].confidence || 0)) < 0.2
+    : false;
+  if (tie) {
+    const a = suspects[0], b = suspects[1];
+    html += `<div class="tie"><span class="k">${t("tie.title")}</span>` +
+      `<p>${t("tie.body", {
+        a: esc(a.name || a.modid), pa: Math.round((a.confidence || 0) * 100),
+        b: esc(b.name || b.modid), pb: Math.round((b.confidence || 0) * 100),
+      })}</p></div>`;
+  } else if (!topSus && top) {
+    html += `<p class="card-note">${t("noSuspect.note")}</p>`;
   }
 
   // Order is the reader's order: what -> which line -> what to do -> how to
@@ -1217,7 +1240,7 @@ function render(doc, opts) {
   const html = weak
     ? notAReportCard()
     : [
-        verdictCard(s, top, suspects[0] || null, opts && opts.note),
+        verdictCard(s, top, suspects[0] || null, opts && opts.note, suspects),
         overview(findings),
         findings.length ? findingsCard(findings) : "",
         envDetails(s),
