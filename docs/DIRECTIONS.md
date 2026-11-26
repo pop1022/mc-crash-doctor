@@ -316,3 +316,11 @@ setuptools 会把源文件 mtime 写进 zip；在 build_web 调 subprocess 时�
 样例文件另有一处：make_web_sample 用 write_text，Windows 写 CRLF，仓库里是 LF，改成写字节。
 
 验证：连续两次 build_web，wheel sha256 前 16 位都是 508b3bb7；bundle 与 sample 测试 13 项通过。
+
+### 四项性能计时（2026-11-22）
+
+做法：Puppeteer 打开页面，分别测「点示例 → 结论」「首次真实诊断 → 结论」「再次诊断 → 结论」，CLI 另用 5 次 subprocess 计时。每项 3 次取中位。
+
+结果：示例 105 ms、热诊断 95 ms、冷启动 1.66 s（含 Pyodide 10 MB）、CLI 单份 170 ms。
+
+注意：冷启动的数字取决于 CDN 距离与本机代理状态，不能当成用户侧承诺；能承诺的是示例与热诊断不受网络影响。ASSESSMENT 里 355 ms 的旧读数一并按复测值更新，未复测的“引擎内测 16 ms”保留并标注。
